@@ -1,11 +1,6 @@
-id,name,photo,product_count
-1,Овочі,c_01.jpg,1219
-2,Зелень,c_02.jpg,60
-3,Квіти,c_03.jpg,0
-4,Трави,c_04.jpg,0
-5,Фрукти,c_05.jpg,0
-6,Ягоди,c_06.jpg,0
-7,Гриби,c_07.jpg,0
-8,Зернові,c_08.jpg,0
-9,Бобові,c_09.jpg,0
-10,Прянощі,c_10.jpg,0
+id,name,photo,product_count,type,parent_id
+1,Овочі,c_01.jpg,243,main,
+2,Зелень,c_02.jpg,172,main,
+3,Квіти,c_03.jpg,1,main,
+4,Трави,c_04.jpg,5,main,
+401,Капуста,c_401.jpg,1,subcategory,4
