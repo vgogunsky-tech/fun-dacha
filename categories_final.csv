@@ -1,0 +1,11 @@
+id,name_ua,name_en,name_ru,photo,product_count
+1,Овочі,Vegetables,Овощи,c_01.jpg,1529
+2,Зелень,Greens,Зелень,c_02.jpg,128
+3,Квіти,Flowers,Цветы,c_03.jpg,1
+4,Трави,Herbs,Травы,c_04.jpg,0
+5,Фрукти,Fruits,Фрукты,c_05.jpg,1
+6,Ягоди,Berries,Ягоды,c_06.jpg,0
+7,Гриби,Mushrooms,Грибы,c_07.jpg,0
+8,Зернові,Grains,Зерновые,c_08.jpg,0
+9,Бобові,Legumes,Бобовые,c_09.jpg,6
+10,Прянощі,Spices,Пряности,c_10.jpg,0
