@@ -293,6 +293,69 @@ def product_save():
     return redirect(url_for("product", category_id=cat_int, index=next_index))
 
 
+# -------------------- Category creation --------------------
+
+@app.post("/categories/create")
+def categories_create():
+    form = request.form
+    files = request.files
+
+    cid_raw = (form.get("id") or "").strip()
+    name = (form.get("name") or "").strip()
+    parentId = (form.get("parentId") or "").strip()
+    tag = (form.get("tag") or "").strip()
+    description = (form.get("description") or "").strip()
+
+    if not cid_raw or not name:
+        flash("Category ID and name are required.")
+        return redirect(url_for("index"))
+
+    try:
+        cid_int = int(float(cid_raw))
+    except Exception:
+        flash("Category ID must be an integer.")
+        return redirect(url_for("index"))
+
+    # Load existing categories
+    rows, fields = read_csv(CATEGORIES_CSV)
+
+    # Ensure primary_image column exists
+    if "primary_image" not in fields:
+        fields.append("primary_image")
+        for r in rows:
+            r["primary_image"] = ""
+
+    # Check uniqueness
+    for r in rows:
+        if (r.get("id") or "").strip() == str(cid_int):
+            flash("Category ID already exists.")
+            return redirect(url_for("index"))
+
+    # Handle optional image upload
+    image_file = files.get("image")
+    primary_image = ""
+    if image_file and image_file.filename:
+        os.makedirs(CATEGORY_IMAGES_DIR, exist_ok=True)
+        primary_image = f"c{cid_int}.jpg"
+        dest_path = os.path.join(CATEGORY_IMAGES_DIR, primary_image)
+        image_file.save(dest_path)
+
+    # Append new row
+    new_row = {
+        "id": str(cid_int),
+        "name": name,
+        "parentId": str(int(float(parentId))) if parentId else "",
+        "tag": tag,
+        "description (ukr)": description,
+        "primary_image": primary_image,
+    }
+    rows.append(new_row)
+
+    write_csv(CATEGORIES_CSV, rows, fields)
+    flash("Category created.")
+    return redirect(url_for("index"))
+
+
 if __name__ == "__main__":
     os.makedirs(PRODUCT_IMAGES_DIR, exist_ok=True)
     os.makedirs(CATEGORY_IMAGES_DIR, exist_ok=True)
