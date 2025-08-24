@@ -239,6 +239,19 @@ def _github_api_put_file(repo: str, token: str, branch: str, local_path: str, pa
         _log_git(f"[api] skip {path_rel}: read error {e}")
         return
     sha = _github_api_get_file_sha(repo, token, path_rel, branch)
+    # If remote has same content, skip
+    if sha:
+        # Fetch current content to compare
+        status, body, _ = _github_http("GET", f"https://api.github.com/repos/{repo}/contents/{urlparse.quote(path_rel)}?ref={urlparse.quote(branch)}", headers)
+        if status == 200:
+            try:
+                data = json.loads(body)
+                remote_content_b64 = data.get("content", "").replace("\n", "")
+                if remote_content_b64 == content_b64:
+                    _log_git(f"[api] SKIP {path_rel}: unchanged")
+                    return
+            except Exception:
+                pass
     payload = {
         "message": message,
         "content": content_b64,
@@ -755,6 +768,7 @@ def product_save():
     target["year"] = form.get("year", "").strip()
     target["availability"] = form.get("availability", "").strip()
 
+    changed_paths: List[str] = []
     # Handle image upload
     image_file = files.get("image")
     if image_file and image_file.filename:
@@ -765,6 +779,7 @@ def product_save():
         target["primary_image"] = dest_name
         # Update SKU on image/category change
         target["SKU Number"] = build_sku(target.get("category_id", ""), target.get("id", ""))
+        changed_paths.append(dest_path)
 
     action = (form.get("action") or "").strip()
     advanced = False
@@ -773,7 +788,8 @@ def product_save():
         advanced = True
 
     written_paths = write_products_csv(rows, fields)
-    commit_and_push([DATA_DIR], f"Update product {product_id} via webapp")
+    changed_paths.extend(written_paths)
+    commit_and_push(changed_paths, f"Update product {product_id} via webapp")
     flash(("Saved and validated." if advanced else "Saved.") + " Files: " + ', '.join(os.path.relpath(p, BASE_DIR) for p in written_paths))
 
     # Redirect
@@ -934,7 +950,7 @@ def categories_create():
     rows.append(new_row)
 
     write_csv(CATEGORIES_CSV, rows, fields)
-    commit_and_push([DATA_DIR], f"Create category {cid_int} via webapp")
+    commit_and_push([CATEGORIES_CSV, os.path.join(CATEGORY_IMAGES_DIR, primary_image) if primary_image else CATEGORIES_CSV], f"Create category {cid_int} via webapp")
     flash("Category created.")
     return redirect(return_to if return_to.startswith("/") else url_for("index"))
 
@@ -1016,7 +1032,11 @@ def category_update(cid: int):
 
     if changed:
         write_csv(CATEGORIES_CSV, rows, fields)
-        commit_and_push([DATA_DIR], f"Update category {cid} via webapp")
+        changed_paths: List[str] = [CATEGORIES_CSV]
+        # If image updated or removed, include potential image path
+        if target.get("primary_image"):
+            changed_paths.append(os.path.join(CATEGORY_IMAGES_DIR, target.get("primary_image")))
+        commit_and_push(changed_paths, f"Update category {cid} via webapp")
         flash("Category updated.")
     else:
         flash("No changes.")
