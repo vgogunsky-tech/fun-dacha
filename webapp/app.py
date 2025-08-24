@@ -30,7 +30,6 @@ REQUIRED_PRODUCT_COLS = [
     "validated",
     "year",
     "availability",
-    "ID",
 ]
 
 app = Flask(__name__)
@@ -431,15 +430,19 @@ def ensure_product_columns() -> None:
             for r in rows:
                 r[col] = ""
             changed = True
-    # Migrate legacy "SKU Number" to "ID"
-    if "SKU Number" in fields and "ID" not in fields:
-        fields.append("ID")
-        for r in rows:
-            r["ID"] = r.get("SKU Number", "")
-        changed = True
+    # Migrate legacy "SKU Number" to lowercase "id" and drop the legacy column
     if "SKU Number" in fields:
-        # Keep legacy column but can be hidden in UI; optionally remove if needed
-        pass
+        if "id" not in fields:
+            fields.append("id")
+        for r in rows:
+            legacy_val = (r.get("SKU Number") or "").strip()
+            if legacy_val:
+                r["id"] = legacy_val
+        try:
+            fields.remove("SKU Number")
+        except ValueError:
+            pass
+        changed = True
     if changed:
         write_products_csv(rows, fields)
 
@@ -935,7 +938,7 @@ def product_create():
     # Load existing
     rows, fields, _ = read_products_csv()
     # Ensure columns present
-    for col in ["primary_image", "images", "SKU Number"] + REQUIRED_PRODUCT_COLS:
+    for col in ["primary_image", "images"] + REQUIRED_PRODUCT_COLS:
         if col not in fields:
             fields.append(col)
             for r in rows:
@@ -968,7 +971,7 @@ def product_create():
         "images": "",
         "category_id": str(int(float(cat_id))),
         "subcategory_id": (form.get("subcategory_id") or "").strip(),
-        "SKU Number": sku,
+        "id": str(new_id),
         "validated": "0",
         "year": (form.get("year") or "").strip(),
         "availability": (form.get("availability") or "").strip(),
