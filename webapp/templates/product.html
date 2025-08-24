@@ -21,7 +21,11 @@
   <body>
     <header class="container nav">
       <div>
-        <a href="{{ url_for('index') }}">← До категорій</a>
+        {% if request.args.get('return_to') %}
+          <a href="{{ request.args.get('return_to') }}">← Назад до списку</a>
+        {% else %}
+          <a href="{{ url_for('index') }}">← До категорій</a>
+        {% endif %}
       </div>
       <div>Категорія: {{ category_id }}</div>
       <div>{{ index + 1 }} / {{ total }}</div>
@@ -47,6 +51,9 @@
 
           <form action="{{ url_for('product_save', index=index) }}" method="post" enctype="multipart/form-data">
             <input type="hidden" name="id" value="{{ product['id'] }}" />
+            {% if request.args.get('return_to') %}
+              <input type="hidden" name="return_to" value="{{ request.args.get('return_to') }}" />
+            {% endif %}
 
             <div class="form-grid">
               <div>

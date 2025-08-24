@@ -255,6 +255,131 @@ def category(category_id: int):
     return redirect(url_for("product", category_id=category_id, index=0))
 
 
+@app.get("/products")
+def products_list():
+    """List all products with filters, sorting, and search."""
+    ensure_product_columns()
+    # Query params
+    q = (request.args.get("q") or "").strip()
+    filter_category = (request.args.get("category_id") or "").strip()
+    sort_key = (request.args.get("sort") or "").strip()  # "name" or "category"
+    sort_order = (request.args.get("order") or "asc").strip()  # "asc" or "desc"
+
+    rows, fields, _ = read_products_csv()
+    categories = load_categories()
+    # Map category id -> name
+    category_name_by_id: Dict[str, str] = {}
+    for c in categories:
+        cid = (c.get("id") or "").strip()
+        if cid:
+            category_name_by_id[cid] = c.get("name") or ""
+
+    # Filter by search query in Ukrainian name
+    if q:
+        q_low = q.lower()
+        rows = [r for r in rows if (r.get("Название (укр)") or "").lower().find(q_low) != -1]
+
+    # Filter by category id
+    if filter_category:
+        try:
+            filter_cat_norm = str(int(float(filter_category)))
+        except Exception:
+            filter_cat_norm = filter_category
+        rows = [r for r in rows if (r.get("category_id") or "").strip() == filter_cat_norm]
+
+    # Sorting
+    reverse = sort_order == "desc"
+    if sort_key == "name":
+        rows.sort(key=lambda r: (r.get("Название (укр)") or "").lower())
+    elif sort_key == "category":
+        rows.sort(key=lambda r: ((r.get("category_id") or ""), (r.get("Название (укр)") or "").lower()))
+    else:
+        # default sort by numeric id
+        def _id_key(r: Dict[str, str]) -> float:
+            try:
+                return float(r.get("id", "0") or 0.0)
+            except Exception:
+                return 0.0
+        rows.sort(key=_id_key)
+    if reverse:
+        rows.reverse()
+
+    # Build image URLs for preview
+    def _image_url(name: str) -> Optional[str]:
+        name = (name or "").strip()
+        if not name:
+            return None
+        if os.path.isfile(os.path.join(PRODUCT_IMAGES_DIR, name)):
+            return url_for("serve_product_image", filename=name)
+        return None
+
+    rows_with_images: List[Dict[str, str]] = []
+    for r in rows:
+        augmented = dict(r)
+        augmented["_image_url"] = _image_url(r.get("primary_image") or "")
+        rows_with_images.append(augmented)
+
+    return render_template(
+        "products_list.html",
+        rows=rows_with_images,
+        fields=fields,
+        categories=categories,
+        category_name_by_id=category_name_by_id,
+        q=q,
+        filter_category=filter_category,
+        sort_key=sort_key,
+        sort_order=sort_order,
+    )
+
+
+@app.get("/product/<int:pid>")
+def product_by_id(pid: int):
+    """Open product edit page for a specific product id."""
+    ensure_product_columns()
+    rows, fields, _ = read_products_csv()
+    target: Optional[Dict[str, str]] = None
+    for r in rows:
+        try:
+            if int(float((r.get("id") or "0").strip() or 0)) == pid:
+                target = r
+                break
+        except Exception:
+            continue
+    if target is None:
+        abort(404)
+
+    # Image URL
+    img_name = (target.get("primary_image") or "").strip()
+    img_url = None
+    if img_name and os.path.isfile(os.path.join(PRODUCT_IMAGES_DIR, img_name)):
+        img_url = url_for("serve_product_image", filename=img_name)
+
+    cats = load_categories()
+    parent_to_children: Dict[str, List[Dict[str, str]]] = {}
+    for c in cats:
+        pid_val = (c.get("parentId") or "").strip()
+        if pid_val:
+            parent_to_children.setdefault(pid_val, []).append(c)
+
+    # Determine category id for header
+    category_id = None
+    try:
+        category_id = int(float(target.get("category_id", "") or 0))
+    except Exception:
+        category_id = None
+
+    return render_template(
+        "product.html",
+        category_id=category_id or 0,
+        product=target,
+        index=0,
+        total=1,
+        image_url=img_url,
+        categories=cats,
+        parent_to_children=parent_to_children,
+    )
+
+
 @app.route("/product")
 def product():
     category_id = request.args.get("category_id", type=int)
@@ -374,6 +499,9 @@ def product_save():
     flash(("Saved and validated." if advanced else "Saved.") + " Files: " + ', '.join(os.path.relpath(p, BASE_DIR) for p in written_paths))
 
     # Redirect
+    return_to = (form.get("return_to") or "").strip()
+    if return_to.startswith("/"):
+        return redirect(return_to)
     category_id = target.get("category_id", "")
     try:
         cat_int = int(float(category_id)) if category_id else None
