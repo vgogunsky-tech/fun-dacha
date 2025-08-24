@@ -6,6 +6,11 @@ import subprocess
 from typing import Dict, List, Optional, Tuple
 import logging
 import shutil
+import base64
+import json
+from urllib import request as urlrequest
+from urllib import parse as urlparse
+from urllib.error import HTTPError, URLError
 
 from flask import Flask, render_template, request, redirect, url_for, send_from_directory, abort, flash
 
@@ -88,7 +93,8 @@ def commit_and_push(paths: List[str], message: str) -> None:
     try:
         _log_git("[git] commit_and_push start")
         if not _has_git():
-            _log_git("[git] git executable not found in PATH; skipping commit/push")
+            _log_git("[git] git executable not found in PATH; attempting GitHub API fallback")
+            _github_api_commit(paths, message)
             return
         _ensure_git_identity()
         target_remote = os.environ.get("GIT_TARGET_REMOTE", "origin")
@@ -121,6 +127,171 @@ def commit_and_push(paths: List[str], message: str) -> None:
         # Never let git failures break the request path
         _log_git(f"[git] commit_and_push exception: {e}")
         pass
+
+
+# -------------------- GitHub API fallback --------------------
+
+def _github_api_headers(token: str) -> Dict[str, str]:
+    return {
+        "Authorization": f"token {token}",
+        "Accept": "application/vnd.github+json",
+        "User-Agent": "fun-dacha-webapp",
+        "X-GitHub-Api-Version": "2022-11-28",
+        "Content-Type": "application/json",
+    }
+
+
+def _github_http(method: str, url: str, headers: Dict[str, str], payload: Optional[Dict] = None) -> Tuple[int, str, Dict[str, str]]:
+    data_bytes = None
+    if payload is not None:
+        data_bytes = json.dumps(payload).encode("utf-8")
+    req = urlrequest.Request(url, data=data_bytes, method=method)
+    for k, v in headers.items():
+        req.add_header(k, v)
+    try:
+        with urlrequest.urlopen(req, timeout=30) as resp:
+            status = resp.getcode()
+            body = (resp.read() or b"").decode("utf-8", errors="replace")
+            return status, body, dict(resp.headers)
+    except HTTPError as e:
+        body = (e.read() or b"").decode("utf-8", errors="replace")
+        return e.code, body, dict(e.headers or {})
+    except URLError as e:
+        return 0, str(e), {}
+
+
+def _github_api_repo() -> Optional[str]:
+    repo = os.environ.get("GIT_REPOSITORY", "").strip()
+    if repo:
+        return repo
+    # Try to infer from Procfile remote url if present
+    try:
+        proc = os.path.join(BASE_DIR, "Procfile")
+        if os.path.isfile(proc):
+            with open(proc, "r", encoding="utf-8") as f:
+                content = f.read()
+            # look for github.com/{owner}/{repo}.git
+            import re
+            m = re.search(r"github\.com/([\w.-]+/[\w.-]+)\.git", content)
+            if m:
+                return m.group(1)
+    except Exception:
+        pass
+    return None
+
+
+def _github_api_ensure_branch(repo: str, token: str, branch: str) -> None:
+    headers = _github_api_headers(token)
+    # Check branch exists
+    status, body, _ = _github_http("GET", f"https://api.github.com/repos/{repo}/git/ref/heads/{urlparse.quote(branch)}", headers)
+    if status == 200:
+        return
+    # Get repo default branch
+    status, body, _ = _github_http("GET", f"https://api.github.com/repos/{repo}", headers)
+    if status != 200:
+        _log_git(f"[api] failed to load repo metadata: {status} {body[:500]}")
+        return
+    try:
+        meta = json.loads(body)
+        default_branch = meta.get("default_branch") or "main"
+    except Exception:
+        default_branch = "main"
+    # Get default branch head SHA
+    status, body, _ = _github_http("GET", f"https://api.github.com/repos/{repo}/git/ref/heads/{urlparse.quote(default_branch)}", headers)
+    if status != 200:
+        _log_git(f"[api] failed to load default branch ref: {status} {body[:500]}")
+        return
+    try:
+        ref = json.loads(body)
+        sha = ref.get("object", {}).get("sha")
+    except Exception:
+        sha = None
+    if not sha:
+        _log_git("[api] could not determine base sha for new branch")
+        return
+    # Create branch
+    payload = {"ref": f"refs/heads/{branch}", "sha": sha}
+    status, body, _ = _github_http("POST", f"https://api.github.com/repos/{repo}/git/refs", headers, payload)
+    if status not in (200, 201):
+        _log_git(f"[api] failed to create branch {branch}: {status} {body[:500]}")
+
+
+def _github_api_get_file_sha(repo: str, token: str, path_rel: str, branch: str) -> Optional[str]:
+    headers = _github_api_headers(token)
+    url = f"https://api.github.com/repos/{repo}/contents/{urlparse.quote(path_rel)}?ref={urlparse.quote(branch)}"
+    status, body, _ = _github_http("GET", url, headers)
+    if status == 200:
+        try:
+            data = json.loads(body)
+            return data.get("sha")
+        except Exception:
+            return None
+    return None
+
+
+def _github_api_put_file(repo: str, token: str, branch: str, local_path: str, path_rel: str, message: str) -> None:
+    headers = _github_api_headers(token)
+    # Read content
+    try:
+        with open(local_path, "rb") as f:
+            content_b64 = base64.b64encode(f.read()).decode("ascii")
+    except Exception as e:
+        _log_git(f"[api] skip {path_rel}: read error {e}")
+        return
+    sha = _github_api_get_file_sha(repo, token, path_rel, branch)
+    payload = {
+        "message": message,
+        "content": content_b64,
+        "branch": branch,
+    }
+    if sha:
+        payload["sha"] = sha
+    url = f"https://api.github.com/repos/{repo}/contents/{urlparse.quote(path_rel)}"
+    status, body, _ = _github_http("PUT", url, headers, payload)
+    if status not in (200, 201):
+        _log_git(f"[api] PUT {path_rel} failed: {status} {body[:500]}")
+    else:
+        _log_git(f"[api] PUT {path_rel} ok: {status}")
+
+
+def _github_api_commit(paths: List[str], message: str) -> None:
+    token = os.environ.get("GIT_AUTH_TOKEN", "").strip()
+    repo = _github_api_repo()
+    branch = os.environ.get("GIT_TARGET_BRANCH", "develop")
+    if not token:
+        _log_git("[api] GIT_AUTH_TOKEN missing; cannot push via API")
+        return
+    if not repo:
+        _log_git("[api] GIT_REPOSITORY missing and could not infer; cannot push via API")
+        return
+    _log_git(f"[api] push via API repo={repo} branch={branch}")
+    # Ensure branch exists
+    _github_api_ensure_branch(repo, token, branch)
+    # Collect files
+    sent: Dict[str, bool] = {}
+    for p in paths:
+        abs_p = p
+        if not os.path.isabs(abs_p):
+            abs_p = os.path.join(BASE_DIR, p)
+        if not os.path.exists(abs_p):
+            continue
+        if os.path.isdir(abs_p):
+            for root, _, files in os.walk(abs_p):
+                for fname in files:
+                    local_path = os.path.join(root, fname)
+                    rel = os.path.relpath(local_path, BASE_DIR)
+                    if rel.replace(os.sep, "/").startswith(".git/"):
+                        continue
+                    rel = rel.replace(os.sep, "/")
+                    if sent.get(rel):
+                        continue
+                    _github_api_put_file(repo, token, branch, local_path, rel, message)
+                    sent[rel] = True
+        else:
+            rel = os.path.relpath(abs_p, BASE_DIR).replace(os.sep, "/")
+            if not sent.get(rel):
+                _github_api_put_file(repo, token, branch, abs_p, rel, message)
+                sent[rel] = True
 
 
 def _redact_remote(url: str) -> str:
