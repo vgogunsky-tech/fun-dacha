@@ -14,10 +14,7 @@
       textarea { min-height: 100px; }
       .muted { color: #666; font-size: 0.9em; }
       .ro { background: #f7f7f7; }
-      .page-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 24px; align-items: start; }
-      .sidebar { border-left: 1px solid #eee; padding-left: 16px; }
-      .sidebar .hint { color: #777; font-size: 0.9em; margin-top: -8px; margin-bottom: 12px; }
-      .actions { display: flex; gap: 12px; }
+      .page-grid { display: grid; grid-template-columns: 1fr; gap: 24px; align-items: start; }
     </style>
   </head>
   <body>
@@ -140,41 +137,6 @@
             </footer>
           </form>
         </article>
-
-        <aside class="sidebar">
-          <h3>Створити категорію (опційно)</h3>
-          <p class="hint">Якщо не знайшли потрібну категорію — додайте нову. Після створення сторінка оновиться.</p>
-          <form action="{{ url_for('categories_create') }}" method="post" enctype="multipart/form-data">
-            <input type="hidden" name="return_to" value="{{ request.full_path }}" />
-            <div style="display:grid; grid-template-columns: 1fr; gap: 12px;">
-              <div>
-                <label>ID</label>
-                <input type="text" name="id" placeholder="Напр. 350" />
-              </div>
-              <div>
-                <label>Назва</label>
-                <input type="text" name="name" placeholder="Назва категорії" />
-              </div>
-              <div>
-                <label>Батьківська категорія (опц.)</label>
-                <input type="text" name="parentId" placeholder="ID" />
-              </div>
-              <div>
-                <label>Тег (опц.)</label>
-                <input type="text" name="tag" placeholder="tag" />
-              </div>
-              <div>
-                <label>Опис (укр) (опц.)</label>
-                <textarea name="description" placeholder="Опис"></textarea>
-              </div>
-              <div>
-                <label>Зображення (опц.)</label>
-                <input type="file" name="image" accept="image/*" />
-              </div>
-            </div>
-            <button type="submit">Створити категорію</button>
-          </form>
-        </aside>
       </div>
       {% endif %}
     </main>
