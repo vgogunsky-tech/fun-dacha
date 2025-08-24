@@ -11,7 +11,9 @@ if getattr(sys, "_MEIPASS", None):
 else:
     BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 DATA_DIR = os.path.join(BASE_DIR, "data")
-PRODUCTS_CSV = os.path.join(DATA_DIR, "list.csv")
+# Support either list.csv (current) or lists.csv (legacy)
+PRODUCTS_CSV_PRIMARY = os.path.join(DATA_DIR, "list.csv")
+PRODUCTS_CSV_ALT = os.path.join(DATA_DIR, "lists.csv")
 CATEGORIES_CSV = os.path.join(DATA_DIR, "categories_list.csv")
 CATEGORY_IMAGES_DIR = os.path.join(DATA_DIR, "images", "categories")
 PRODUCT_IMAGES_DIR = os.path.join(DATA_DIR, "images", "products")
@@ -49,8 +51,36 @@ def write_csv(path: str, rows: List[Dict[str, str]], fields: List[str]) -> None:
     os.replace(tmp, path)
 
 
+def existing_product_csvs() -> List[str]:
+    paths: List[str] = []
+    if os.path.isfile(PRODUCTS_CSV_PRIMARY):
+        paths.append(PRODUCTS_CSV_PRIMARY)
+    if os.path.isfile(PRODUCTS_CSV_ALT):
+        paths.append(PRODUCTS_CSV_ALT)
+    if not paths:
+        # default to primary if nothing exists yet
+        paths.append(PRODUCTS_CSV_PRIMARY)
+    return paths
+
+
+def read_products_csv() -> Tuple[List[Dict[str, str]], List[str], str]:
+    paths = existing_product_csvs()
+    # Read from the first path
+    rows, fields = read_csv(paths[0])
+    return rows, fields, paths[0]
+
+
+def write_products_csv(rows: List[Dict[str, str]], fields: List[str]) -> List[str]:
+    paths = existing_product_csvs()
+    for p in paths:
+        # Ensure directory exists
+        os.makedirs(os.path.dirname(p), exist_ok=True)
+        write_csv(p, rows, fields)
+    return paths
+
+
 def ensure_product_columns() -> None:
-    rows, fields = read_csv(PRODUCTS_CSV)
+    rows, fields, _ = read_products_csv()
     changed = False
     for col in REQUIRED_PRODUCT_COLS:
         if col not in fields:
@@ -59,7 +89,7 @@ def ensure_product_columns() -> None:
                 r[col] = ""
             changed = True
     if changed:
-        write_csv(PRODUCTS_CSV, rows, fields)
+        write_products_csv(rows, fields)
 
 
 # -------------------- Data helpers --------------------
@@ -70,7 +100,7 @@ def load_categories() -> List[Dict[str, str]]:
 
 
 def load_products() -> List[Dict[str, str]]:
-    rows, _ = read_csv(PRODUCTS_CSV)
+    rows, _, _ = read_products_csv()
     return rows
 
 
@@ -226,7 +256,7 @@ def product_save():
         abort(400)
 
     # Load CSV
-    rows, fields = read_csv(PRODUCTS_CSV)
+    rows, fields, read_from = read_products_csv()
 
     # Ensure required columns
     for col in REQUIRED_PRODUCT_COLS:
@@ -245,7 +275,6 @@ def product_save():
         abort(404)
 
     # Update editable fields
-    # Titles/descriptions
     for key in [
         "Название (укр)",
         "Название (рус)",
@@ -273,7 +302,6 @@ def product_save():
     # Handle image upload
     image_file = files.get("image")
     if image_file and image_file.filename:
-        # Compute destination filename
         dest_name = build_product_image_name(target.get("category_id", ""), target.get("id", ""))
         os.makedirs(PRODUCT_IMAGES_DIR, exist_ok=True)
         dest_path = os.path.join(PRODUCT_IMAGES_DIR, dest_name)
@@ -283,7 +311,8 @@ def product_save():
     # Mark validated
     target["validated"] = "1"
 
-    write_csv(PRODUCTS_CSV, rows, fields)
+    written_paths = write_products_csv(rows, fields)
+    flash(f"Saved to: {', '.join(os.path.relpath(p, BASE_DIR) for p in written_paths)}")
 
     # Redirect to next product in category
     category_id = target.get("category_id", "")
