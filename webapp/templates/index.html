@@ -6,7 +6,7 @@
     <title>Вибір категорії</title>
     <link rel="stylesheet" href="https://unpkg.com/mvp.css">
     <style>
-      .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 16px; }
+      .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
       .card { border: 1px solid #ddd; border-radius: 8px; padding: 8px; text-align: center; background: #fff; }
       img { max-width: 100%; height: 150px; object-fit: cover; border-radius: 4px; }
       a.card { text-decoration: none; color: inherit; }
@@ -29,6 +29,40 @@
             </a>
           {% endfor %}
         </div>
+      </section>
+
+      <section>
+        <h2>Додати категорію</h2>
+        <form action="{{ url_for('categories_create') }}" method="post" enctype="multipart/form-data">
+          <input type="hidden" name="return_to" value="{{ request.path }}" />
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+            <div>
+              <label>ID</label>
+              <input type="text" name="id" placeholder="Напр. 350" />
+            </div>
+            <div>
+              <label>Назва</label>
+              <input type="text" name="name" placeholder="Назва категорії" />
+            </div>
+            <div>
+              <label>Батьківська категорія (опц.)</label>
+              <input type="text" name="parentId" placeholder="ID" />
+            </div>
+            <div>
+              <label>Тег (опц.)</label>
+              <input type="text" name="tag" placeholder="tag" />
+            </div>
+            <div style="grid-column: 1 / -1;">
+              <label>Опис (укр) (опц.)</label>
+              <textarea name="description" placeholder="Опис"></textarea>
+            </div>
+            <div>
+              <label>Зображення (опц.)</label>
+              <input type="file" name="image" accept="image/*" />
+            </div>
+          </div>
+          <button type="submit">Створити</button>
+        </form>
       </section>
     </main>
   </body>

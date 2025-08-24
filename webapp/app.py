@@ -305,16 +305,17 @@ def categories_create():
     parentId = (form.get("parentId") or "").strip()
     tag = (form.get("tag") or "").strip()
     description = (form.get("description") or "").strip()
+    return_to = (form.get("return_to") or "").strip()
 
     if not cid_raw or not name:
         flash("Category ID and name are required.")
-        return redirect(url_for("index"))
+        return redirect(return_to if return_to.startswith("/") else url_for("index"))
 
     try:
         cid_int = int(float(cid_raw))
     except Exception:
         flash("Category ID must be an integer.")
-        return redirect(url_for("index"))
+        return redirect(return_to if return_to.startswith("/") else url_for("index"))
 
     # Load existing categories
     rows, fields = read_csv(CATEGORIES_CSV)
@@ -329,7 +330,7 @@ def categories_create():
     for r in rows:
         if (r.get("id") or "").strip() == str(cid_int):
             flash("Category ID already exists.")
-            return redirect(url_for("index"))
+            return redirect(return_to if return_to.startswith("/") else url_for("index"))
 
     # Handle optional image upload
     image_file = files.get("image")
@@ -353,7 +354,7 @@ def categories_create():
 
     write_csv(CATEGORIES_CSV, rows, fields)
     flash("Category created.")
-    return redirect(url_for("index"))
+    return redirect(return_to if return_to.startswith("/") else url_for("index"))
 
 
 if __name__ == "__main__":

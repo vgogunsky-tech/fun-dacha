@@ -14,6 +14,7 @@
       textarea { min-height: 100px; }
       .muted { color: #666; font-size: 0.9em; }
       .ro { background: #f7f7f7; }
+      .inline-card { border: 1px dashed #bbb; padding: 12px; border-radius: 8px; }
     </style>
   </head>
   <body>
@@ -126,6 +127,41 @@
                 {% endif %}
                 <input type="file" name="image" accept="image/*" />
               </div>
+
+              <div class="inline-card" style="grid-column: 1 / -1;">
+                <h3>Не бачите потрібну категорію?</h3>
+                <form action="{{ url_for('categories_create') }}" method="post" enctype="multipart/form-data">
+                  <input type="hidden" name="return_to" value="{{ request.full_path }}" />
+                  <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                    <div>
+                      <label>ID</label>
+                      <input type="text" name="id" placeholder="Напр. 350" />
+                    </div>
+                    <div>
+                      <label>Назва</label>
+                      <input type="text" name="name" placeholder="Назва категорії" />
+                    </div>
+                    <div>
+                      <label>Батьківська категорія (опц.)</label>
+                      <input type="text" name="parentId" placeholder="ID" />
+                    </div>
+                    <div>
+                      <label>Тег (опц.)</label>
+                      <input type="text" name="tag" placeholder="tag" />
+                    </div>
+                    <div style="grid-column: 1 / -1;">
+                      <label>Опис (укр) (опц.)</label>
+                      <textarea name="description" placeholder="Опис"></textarea>
+                    </div>
+                    <div>
+                      <label>Зображення (опц.)</label>
+                      <input type="file" name="image" accept="image/*" />
+                    </div>
+                  </div>
+                  <button type="submit">Створити категорію</button>
+                </form>
+              </div>
+
             </div>
 
             <footer>
