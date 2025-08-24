@@ -20,6 +20,8 @@
         <p>Remote: <strong>{{ target_remote }}</strong> — Branch: <strong>{{ target_branch }}</strong></p>
         <p>Token present: <strong>{{ 'yes' if token_present else 'no' }}</strong></p>
         <p>Remote URL: <code>{{ redacted_remote }}</code></p>
+        <p>which git: <code>{{ which_git }}</code></p>
+        <p>PATH: <code>{{ path_env }}</code></p>
       </article>
       <section class="grid">
         {% for key, triple in info.items() %}

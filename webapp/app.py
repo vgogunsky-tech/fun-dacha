@@ -5,6 +5,7 @@ import sys
 import subprocess
 from typing import Dict, List, Optional, Tuple
 import logging
+import shutil
 
 from flask import Flask, render_template, request, redirect, url_for, send_from_directory, abort, flash
 
@@ -79,9 +80,16 @@ def _ensure_git_identity() -> None:
         _run_git(["config", "user.email", os.environ.get("GIT_AUTHOR_EMAIL", "server-bot@example.com")])
 
 
+def _has_git() -> bool:
+    return bool(shutil.which("git"))
+
+
 def commit_and_push(paths: List[str], message: str) -> None:
     try:
         _log_git("[git] commit_and_push start")
+        if not _has_git():
+            _log_git("[git] git executable not found in PATH; skipping commit/push")
+            return
         _ensure_git_identity()
         target_remote = os.environ.get("GIT_TARGET_REMOTE", "origin")
         target_branch = os.environ.get("GIT_TARGET_BRANCH", "develop")
@@ -135,15 +143,18 @@ def debug_git():
     target_remote = os.environ.get("GIT_TARGET_REMOTE", "origin")
     target_branch = os.environ.get("GIT_TARGET_BRANCH", "develop")
     token_present = bool(os.environ.get("GIT_AUTH_TOKEN"))
+    which_git = shutil.which("git") or "<not found>"
+    path_env = os.environ.get("PATH", "")
 
     info: Dict[str, Tuple[int, str, str]] = {}
-    info["git_version"] = _run_git(["--version"])
-    info["remote_get_url"] = _run_git(["remote", "get-url", target_remote])
-    info["rev_parse_head"] = _run_git(["rev-parse", "--abbrev-ref", "HEAD"]) 
-    info["last_commit"] = _run_git(["log", "-1", "--oneline"]) 
-    info["status"] = _run_git(["status", "--porcelain"]) 
-    info["remotes_v"] = _run_git(["remote", "-v"]) 
-    info["push_dryrun"] = _run_git(["push", "--dry-run", target_remote, f"HEAD:refs/heads/{target_branch}"]) 
+    if _has_git():
+        info["git_version"] = _run_git(["--version"])
+        info["remote_get_url"] = _run_git(["remote", "get-url", target_remote])
+        info["rev_parse_head"] = _run_git(["rev-parse", "--abbrev-ref", "HEAD"]) 
+        info["last_commit"] = _run_git(["log", "-1", "--oneline"]) 
+        info["status"] = _run_git(["status", "--porcelain"]) 
+        info["remotes_v"] = _run_git(["remote", "-v"]) 
+        info["push_dryrun"] = _run_git(["push", "--dry-run", target_remote, f"HEAD:refs/heads/{target_branch}"]) 
 
     redacted_remote = _redact_remote(info["remote_get_url"][1]) if info.get("remote_get_url") else ""
 
@@ -153,6 +164,8 @@ def debug_git():
         target_branch=target_branch,
         token_present=token_present,
         redacted_remote=redacted_remote,
+        which_git=which_git,
+        path_env=path_env,
         info=info,
     )
 
