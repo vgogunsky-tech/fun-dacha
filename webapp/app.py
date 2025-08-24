@@ -17,6 +17,8 @@ REQUIRED_PRODUCT_COLS = [
     "price",
     "quantity",
     "year",
+    "weight",
+    "availability",
 ]
 
 app = Flask(__name__)
@@ -260,6 +262,9 @@ def product_save():
     target["price"] = form.get("price", "").strip()
     target["quantity"] = form.get("quantity", "").strip()
     target["year"] = form.get("year", "").strip()
+    # Weight (grams) and availability (0/1/2)
+    target["weight"] = form.get("weight", "").strip()
+    target["availability"] = form.get("availability", "").strip()
 
     # Handle image upload
     image_file = files.get("image")

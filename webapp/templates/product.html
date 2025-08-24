@@ -76,6 +76,20 @@
                 <label>Рік</label>
                 <input type="text" name="year" value="{{ product['year'] if product.get('year') else '' }}" />
               </div>
+              <div>
+                <label>Вага (г)</label>
+                <input type="text" name="weight" value="{{ product['weight'] if product.get('weight') else '' }}" />
+              </div>
+
+              <div>
+                <label>Наявність</label>
+                <select name="availability">
+                  <option value="">—</option>
+                  <option value="0" {% if product.get('availability') == '0' %}selected{% endif %}>0 — немає в наявності</option>
+                  <option value="1" {% if product.get('availability') == '1' %}selected{% endif %}>1 — в наявності</option>
+                  <option value="2" {% if product.get('availability') == '2' %}selected{% endif %}>2 — під замовлення</option>
+                </select>
+              </div>
               <div></div>
 
               <div>
