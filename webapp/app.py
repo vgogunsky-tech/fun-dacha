@@ -30,6 +30,7 @@ REQUIRED_PRODUCT_COLS = [
     "validated",
     "year",
     "availability",
+    "product_id",
 ]
 
 app = Flask(__name__)
@@ -430,14 +431,13 @@ def ensure_product_columns() -> None:
             for r in rows:
                 r[col] = ""
             changed = True
-    # Migrate legacy "SKU Number" to lowercase "id" and drop the legacy column
-    if "SKU Number" in fields:
-        if "id" not in fields:
-            fields.append("id")
+    # Rename legacy "SKU Number" to "product_id" without altering existing numeric id
+    if "SKU Number" in fields and "product_id" not in fields:
+        # Append new column name and copy values
+        fields.append("product_id")
         for r in rows:
-            legacy_val = (r.get("SKU Number") or "").strip()
-            if legacy_val:
-                r["id"] = legacy_val
+            r["product_id"] = r.get("SKU Number", "")
+        # Remove legacy field from header
         try:
             fields.remove("SKU Number")
         except ValueError:
@@ -847,8 +847,8 @@ def product_save():
         dest_path = os.path.join(PRODUCT_IMAGES_DIR, dest_name)
         image_file.save(dest_path)
         target["primary_image"] = dest_name
-        # Update SKU on image/category change
-        target["ID"] = build_sku(target.get("category_id", ""), target.get("id", ""))
+        # Update product_id on image/category change
+        target["product_id"] = build_sku(target.get("category_id", ""), target.get("id", ""))
         changed_paths.append(dest_path)
 
     # Handle up to 5 secondary images
@@ -971,7 +971,7 @@ def product_create():
         "images": "",
         "category_id": str(int(float(cat_id))),
         "subcategory_id": (form.get("subcategory_id") or "").strip(),
-        "id": str(new_id),
+        "product_id": sku,
         "validated": "0",
         "year": (form.get("year") or "").strip(),
         "availability": (form.get("availability") or "").strip(),
