@@ -20,10 +20,7 @@ PRODUCT_IMAGES_DIR = os.path.join(DATA_DIR, "images", "products")
 
 REQUIRED_PRODUCT_COLS = [
     "validated",
-    "price",
-    "quantity",
     "year",
-    "weight",
     "availability",
     "SKU Number",
 ]
@@ -305,12 +302,8 @@ def product_save():
         sub_val = form.get("subcategory_id", "").strip()
         target["subcategory_id"] = sub_val
 
-    # Price, quantity, year
-    target["price"] = form.get("price", "").strip()
-    target["quantity"] = form.get("quantity", "").strip()
+    # Year and availability
     target["year"] = form.get("year", "").strip()
-    # Weight (grams) and availability (0/1/2)
-    target["weight"] = form.get("weight", "").strip()
     target["availability"] = form.get("availability", "").strip()
 
     # Handle image upload
@@ -417,10 +410,7 @@ def product_create():
         "subcategory_id": (form.get("subcategory_id") or "").strip(),
         "SKU Number": sku,
         "validated": "0",
-        "price": (form.get("price") or "").strip(),
-        "quantity": (form.get("quantity") or "").strip(),
         "year": (form.get("year") or "").strip(),
-        "weight": (form.get("weight") or "").strip(),
         "availability": (form.get("availability") or "").strip(),
     }
 
