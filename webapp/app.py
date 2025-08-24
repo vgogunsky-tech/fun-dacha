@@ -282,6 +282,7 @@ def _github_api_commit(paths: List[str], message: str) -> None:
     _github_api_ensure_branch(repo, token, branch)
     # Collect files
     sent: Dict[str, bool] = {}
+    uploaded_any = False
     for p in paths:
         abs_p = p
         if not os.path.isabs(abs_p):
@@ -298,13 +299,19 @@ def _github_api_commit(paths: List[str], message: str) -> None:
                     rel = rel.replace(os.sep, "/")
                     if sent.get(rel):
                         continue
+                    before = len(sent)
                     _github_api_put_file(repo, token, branch, local_path, rel, message)
+                    uploaded_any = uploaded_any or (len(sent) != before)
                     sent[rel] = True
         else:
             rel = os.path.relpath(abs_p, BASE_DIR).replace(os.sep, "/")
             if not sent.get(rel):
+                before = len(sent)
                 _github_api_put_file(repo, token, branch, abs_p, rel, message)
+                uploaded_any = uploaded_any or (len(sent) != before)
                 sent[rel] = True
+    if not uploaded_any:
+        _log_git("[api] no changes uploaded; skipping commit")
 
 
 def _redact_remote(url: str) -> str:
@@ -365,12 +372,24 @@ def read_csv(path: str) -> Tuple[List[Dict[str, str]], List[str]]:
 
 
 def write_csv(path: str, rows: List[Dict[str, str]], fields: List[str]) -> None:
+    """Write CSV only if content changes to avoid unnecessary commits."""
     tmp = path + ".tmp"
     with open(tmp, "w", encoding="utf-8", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=fields)
         writer.writeheader()
         for r in rows:
             writer.writerow(r)
+    # Compare with existing file (if any)
+    try:
+        if os.path.isfile(path):
+            with open(path, "rb") as old, open(tmp, "rb") as new:
+                if old.read() == new.read():
+                    # No change; remove tmp and return
+                    os.remove(tmp)
+                    return
+    except Exception:
+        # If compare fails, proceed to replace
+        pass
     os.replace(tmp, path)
 
 
