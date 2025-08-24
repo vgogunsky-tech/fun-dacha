@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="uk">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Перевірка товару</title>
+    <link rel="stylesheet" href="https://unpkg.com/mvp.css">
+    <style>
+      .container { max-width: 960px; margin: 0 auto; }
+      .nav { display: flex; justify-content: space-between; align-items: center; }
+      .image { max-width: 320px; }
+      .image img { width: 100%; border-radius: 8px; border: 1px solid #ddd; }
+      .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+      textarea { min-height: 100px; }
+      .muted { color: #666; font-size: 0.9em; }
+    </style>
+  </head>
+  <body>
+    <header class="container nav">
+      <div>
+        <a href="{{ url_for('index') }}">← До категорій</a>
+      </div>
+      <div>Категорія: {{ category_id }}</div>
+      <div>{{ index + 1 }} / {{ total }}</div>
+    </header>
+
+    <main class="container">
+      {% with messages = get_flashed_messages() %}
+        {% if messages %}
+          <aside>
+            {% for m in messages %}<p>{{ m }}</p>{% endfor %}
+          </aside>
+        {% endif %}
+      {% endwith %}
+
+      {% if not product %}
+        <p>Немає товарів для перевірки.</p>
+      {% else %}
+        <article>
+          <header>
+            <h2>{{ product['Название (укр)'] or 'Без назви' }} <span class="muted">(ID: {{ product['id'] }})</span></h2>
+          </header>
+
+          <form action="{{ url_for('product_save', index=index) }}" method="post" enctype="multipart/form-data">
+            <input type="hidden" name="id" value="{{ product['id'] }}" />
+
+            <div class="form-grid">
+              <div>
+                <label>Назва (укр)</label>
+                <input type="text" name="Название (укр)" value="{{ product['Название (укр)'] }}" />
+              </div>
+              <div>
+                <label>Название (рус)</label>
+                <input type="text" name="Название (рус)" value="{{ product['Название (рус)'] }}" />
+              </div>
+
+              <div>
+                <label>Опис (укр)</label>
+                <textarea name="Описание (укр)">{{ product['Описание (укр)'] }}</textarea>
+              </div>
+              <div>
+                <label>Описание (рус)</label>
+                <textarea name="Описание (рус)">{{ product['Описание (рус)'] }}</textarea>
+              </div>
+
+              <div>
+                <label>Ціна</label>
+                <input type="text" name="price" value="{{ product['price'] if product.get('price') else '' }}" />
+              </div>
+              <div>
+                <label>Кількість</label>
+                <input type="text" name="quantity" value="{{ product['quantity'] if product.get('quantity') else '' }}" />
+              </div>
+
+              <div>
+                <label>Рік</label>
+                <input type="text" name="year" value="{{ product['year'] if product.get('year') else '' }}" />
+              </div>
+              <div></div>
+
+              <div>
+                <label>Категорія</label>
+                <select name="category_id">
+                  {% for c in categories %}
+                    {% if not c.parentId %}
+                      <option value="{{ c.id }}" {% if c.id == product['category_id'] %}selected{% endif %}>{{ c.id }} — {{ c.name }}</option>
+                    {% endif %}
+                  {% endfor %}
+                </select>
+              </div>
+              <div>
+                <label>Підкатегорія</label>
+                <select name="subcategory_id">
+                  <option value=""></option>
+                  {% set parent = product['category_id'] %}
+                  {% for c in parent_to_children.get(parent, []) %}
+                    <option value="{{ c.id }}" {% if c.id == product['subcategory_id'] %}selected{% endif %}>{{ c.id }} — {{ c.name }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+
+              <div class="image">
+                <label>Зображення</label>
+                {% if image_url %}
+                  <img src="{{ image_url }}" alt="image" />
+                {% endif %}
+                <input type="file" name="image" accept="image/*" />
+              </div>
+            </div>
+
+            <footer>
+              <button type="submit">Зберегти і позначити як перевірений</button>
+            </footer>
+          </form>
+
+          <nav class="nav" style="margin-top: 16px;">
+            <a href="{{ url_for('product', category_id=category_id, index=(index-1 if index>0 else 0)) }}">← Попередній</a>
+            <a href="{{ url_for('product', category_id=category_id, index=(index+1 if index+1 < total else index)) }}">Наступний →</a>
+          </nav>
+        </article>
+      {% endif %}
+    </main>
+  </body>
+</html>
