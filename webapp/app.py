@@ -634,7 +634,7 @@ def products_list():
             return url_for("serve_product_image", filename=name)
         return None
 
-    # Compute visible fields (remove RU/UA descriptions, image filename, and SKU)
+    # Compute visible fields (remove RU/UA descriptions, image filename, and legacy SKU)
     hidden_fields = {"Название (рус)", "Описание (рус)", "Описание (укр)", "primary_image", "SKU Number"}
     visible_fields = [f for f in fields if f not in hidden_fields]
 
@@ -845,7 +845,7 @@ def product_save():
         image_file.save(dest_path)
         target["primary_image"] = dest_name
         # Update SKU on image/category change
-        target["SKU Number"] = build_sku(target.get("category_id", ""), target.get("id", ""))
+        target["ID"] = build_sku(target.get("category_id", ""), target.get("id", ""))
         changed_paths.append(dest_path)
 
     # Handle up to 5 secondary images
