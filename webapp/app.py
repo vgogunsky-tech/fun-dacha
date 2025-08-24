@@ -308,21 +308,31 @@ def product_save():
         image_file.save(dest_path)
         target["primary_image"] = dest_name
 
-    # Mark validated
-    target["validated"] = "1"
+    action = (form.get("action") or "").strip()
+    advanced = False
+    if action == "save_validate":
+        target["validated"] = "1"
+        advanced = True
+    else:
+        # Do NOT set validated
+        pass
 
     written_paths = write_products_csv(rows, fields)
-    flash(f"Saved to: {', '.join(os.path.relpath(p, BASE_DIR) for p in written_paths)}")
+    flash(("Saved and validated." if advanced else "Saved.") + " Files: " + ', '.join(os.path.relpath(p, BASE_DIR) for p in written_paths))
 
-    # Redirect to next product in category
+    # Redirect
     category_id = target.get("category_id", "")
     try:
         cat_int = int(float(category_id)) if category_id else None
     except Exception:
         cat_int = None
-    next_index = (request.args.get("index", type=int) or 0) + 1
     if cat_int is None:
         return redirect(url_for("index"))
+
+    if advanced:
+        next_index = (request.args.get("index", type=int) or 0) + 1
+    else:
+        next_index = (request.args.get("index", type=int) or 0)
     return redirect(url_for("product", category_id=cat_int, index=next_index))
 
 

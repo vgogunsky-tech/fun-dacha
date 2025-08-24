@@ -17,6 +17,7 @@
       .page-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 24px; align-items: start; }
       .sidebar { border-left: 1px solid #eee; padding-left: 16px; }
       .sidebar .hint { color: #777; font-size: 0.9em; margin-top: -8px; margin-bottom: 12px; }
+      .actions { display: flex; gap: 12px; }
     </style>
   </head>
   <body>
@@ -133,8 +134,9 @@
               </div>
             </div>
 
-            <footer>
-              <button type="submit">Зберегти і позначити як перевірений</button>
+            <footer class="actions">
+              <button type="submit" name="action" value="save">Зберегти</button>
+              <button type="submit" name="action" value="save_validate">Зберегти і позначити як перевірений</button>
             </footer>
           </form>
         </article>
