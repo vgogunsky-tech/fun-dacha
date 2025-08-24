@@ -2,7 +2,7 @@
 import csv
 import os
 import sys
-from typing import Dict, List, Tuple, Optional
+from typing import Dict, List, Tuple, Optional, Set
 
 WORKSPACE_DIR = "/workspace"
 CSV_PATH = os.path.join(WORKSPACE_DIR, "list.csv")
@@ -13,7 +13,7 @@ RANGE_TO_CATEGORY = [
     ((0, 99.9999), 100),           # 0-99.999 tomatoes
     ((101, 200), 110),             # cucumbers
     ((201, 244), 120),             # cabbage
-    ((241, 274), 130),             # radish (overlaps, but later rules will overwrite)
+    ((241, 274), 130),             # radish (overlaps: later rules should override earlier ones)
     ((275, 295), 140),             # pepper
     ((296, 303), 150),             # eggplant
     ((304, 324), 160),             # onion
@@ -52,22 +52,41 @@ HEURISTIC_SUBCATS: Dict[int, List[Tuple[int, List[str]]]] = {
 }
 
 
-def load_categories() -> Dict[int, Dict[str, str]]:
+def load_categories() -> Tuple[Dict[int, Dict[str, str]], Dict[int, Set[int]]]:
     with open(CATEGORIES_PATH, "r", encoding="utf-8") as f:
         reader = csv.DictReader(f)
-        return {int(row["id"]): row for row in reader}
+        id_to_row: Dict[int, Dict[str, str]] = {}
+        parent_to_children: Dict[int, Set[int]] = {}
+        for row in reader:
+            try:
+                cid = int(row["id"]) if row.get("id") else None
+            except Exception:
+                continue
+            id_to_row[cid] = row
+            parent_raw = (row.get("parentId") or "").strip()
+            if parent_raw:
+                try:
+                    pid = int(parent_raw)
+                except Exception:
+                    continue
+                parent_to_children.setdefault(pid, set()).add(cid)
+        return id_to_row, parent_to_children
 
 
 def determine_category_id(product_id: float) -> Optional[int]:
-    # Prefer exact range rules provided by user. First rule match wins.
+    # Walk all rules; last match wins to honor later overrides in RANGE_TO_CATEGORY
+    chosen: Optional[int] = None
     for (start, end), cat in RANGE_TO_CATEGORY:
-        # Inclusive for integer ranges; float ids are used in CSV like 7.5
         if product_id >= start and product_id <= end:
-            return cat
-    return None
+            chosen = cat
+    return chosen
 
 
-def infer_subcategory_id(category_id: int, row: Dict[str, str]) -> Optional[int]:
+def infer_subcategory_id(category_id: int, row: Dict[str, str], allowed_subcats: Set[int]) -> Optional[int]:
+    # If no allowed subcategories defined for this category, do not infer
+    if not allowed_subcats:
+        return None
+
     text = " ".join([
         row.get("Название (укр)", ""),
         row.get("Название (рус)", ""),
@@ -75,25 +94,15 @@ def infer_subcategory_id(category_id: int, row: Dict[str, str]) -> Optional[int]
         row.get("Описание (рус)", ""),
     ]).lower()
 
-    # Tomato special-case by fruit color/size keywords if heuristic list doesn't match
     rules = HEURISTIC_SUBCATS.get(category_id, [])
     for subcat_id, keywords in rules:
+        if subcat_id not in allowed_subcats:
+            continue
         for kw in keywords:
             if kw.lower() in text:
                 return subcat_id
 
-    # Fallbacks
-    if category_id == 100:
-        # If no clear signal, default to medium height
-        return 102
-    if category_id == 120:
-        # Default to generic cabbage types
-        return 124
-    if category_id == 140:
-        # Default to sweet pepper unless keywords indicate hot
-        return 141
-
-    # For categories without subcategory list, leave None
+    # No valid heuristic match
     return None
 
 
@@ -105,7 +114,7 @@ def main() -> int:
         print("categories_list.csv not found")
         return 1
 
-    categories = load_categories()
+    id_to_row, parent_to_children = load_categories()
 
     with open(CSV_PATH, "r", encoding="utf-8", newline="") as f:
         reader = csv.DictReader(f)
@@ -122,7 +131,9 @@ def main() -> int:
         for r in rows:
             r["subcategory_id"] = ""
 
-    updated = 0
+    updated_categories = 0
+    updated_subcats = 0
+
     for r in rows:
         try:
             pid_str = r.get("id", "").strip()
@@ -134,15 +145,30 @@ def main() -> int:
 
         base_category = determine_category_id(product_id)
         if base_category is not None:
-            prev = r.get("category_id", "")
-            if str(prev).strip() != str(base_category):
+            prev_cat = (r.get("category_id") or "").strip()
+            if prev_cat != str(base_category):
                 r["category_id"] = str(base_category)
-                updated += 1
+                updated_categories += 1
 
-            # Attempt subcategory inference only when category matches known categories with subcats
-            sub_inferred = infer_subcategory_id(base_category, r)
-            if sub_inferred is not None:
-                r["subcategory_id"] = str(sub_inferred)
+            # Validate and infer subcategory strictly by parentId mapping
+            allowed = parent_to_children.get(base_category, set())
+            inferred = infer_subcategory_id(base_category, r, allowed)
+
+            prev_sub = (r.get("subcategory_id") or "").strip()
+            if inferred is not None and inferred in allowed:
+                if prev_sub != str(inferred):
+                    r["subcategory_id"] = str(inferred)
+                    updated_subcats += 1
+            else:
+                # No valid subcategory -> clear
+                if prev_sub != "":
+                    r["subcategory_id"] = ""
+                    updated_subcats += 1
+        else:
+            # If no base category determined, clear subcategory as well (safety)
+            if (r.get("subcategory_id") or "").strip() != "":
+                r["subcategory_id"] = ""
+                updated_subcats += 1
 
     tmp_path = CSV_PATH + ".tmp"
     with open(tmp_path, "w", encoding="utf-8", newline="") as f:
@@ -152,7 +178,10 @@ def main() -> int:
             writer.writerow(r)
     os.replace(tmp_path, CSV_PATH)
 
-    print(f"Updated category_id for ~{updated} products. Wrote subcategory_id where inferred.")
+    print(
+        f"Updated category_id for ~{updated_categories} products. "
+        f"Validated/updated subcategory_id for ~{updated_subcats} products."
+    )
     return 0
 
 
