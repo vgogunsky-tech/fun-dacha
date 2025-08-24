@@ -57,6 +57,8 @@ def _ensure_git_identity() -> None:
 def commit_and_push(paths: List[str], message: str) -> None:
     try:
         _ensure_git_identity()
+        target_remote = os.environ.get("GIT_TARGET_REMOTE", "origin")
+        target_branch = os.environ.get("GIT_TARGET_BRANCH", "develop")
         # Stage specified paths
         _run_git(["add"] + paths)
         # Skip if nothing staged
@@ -65,16 +67,9 @@ def commit_and_push(paths: List[str], message: str) -> None:
             return
         # Commit
         _run_git(["commit", "-m", message])
-        # Push (set upstream if missing)
-        code, _, _ = _run_git(["rev-parse", "@{u}"])
-        if code != 0:
-            _, branch, _ = _run_git(["rev-parse", "--abbrev-ref", "HEAD"])
-            if branch:
-                _run_git(["push", "-u", "origin", branch])
-            else:
-                _run_git(["push"])  # best effort
-        else:
-            _run_git(["push"])  # upstream exists
+        # Push HEAD to target branch without changing current branch
+        # This will create the branch on remote if it does not exist yet
+        _run_git(["push", target_remote, f"HEAD:refs/heads/{target_branch}"])
     except Exception:
         # Never let git failures break the request path
         pass
