@@ -9,10 +9,20 @@
       .container { max-width: 1400px; margin: 0 auto; }
       table img { height: 56px; width: 56px; object-fit: cover; border-radius: 6px; border: 1px solid #ddd; }
       .controls { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr auto; gap: 12px; align-items: end; }
+      @media (min-width: 900px) {
+        .controls { grid-template-columns: 2fr 1fr 1fr 1fr auto; }
+      }
+      @media (max-width: 899px) {
+        .controls { grid-template-columns: 1fr; }
+      }
+      main section:first-of-type form.controls { width: 100%; }
+      table { width: 100%; border-collapse: collapse; }
+      th, td { text-align: left; }
       .nowrap { white-space: nowrap; }
       .sticky { position: sticky; top: 0; background: #fff; }
       th { position: sticky; top: 0; background: #fff; }
       .muted { color: #666; }
+      .status { width: 28px; text-align: left; }
     </style>
   </head>
   <body>
@@ -64,6 +74,7 @@
         <table>
           <thead>
             <tr>
+              <th class="status">Статус</th>
               <th class="nowrap">Зображення</th>
               {% for f in fields %}
                 <th>{{ f }}</th>
@@ -74,6 +85,9 @@
             {% for r in rows %}
               {% set return_to = request.full_path %}
               <tr>
+                <td class="status">
+                  {% if r._not_validated %}❗{% else %}✅{% endif %}
+                </td>
                 <td>
                   <a href="{{ url_for('product_by_id', pid=r['_pid']) }}?return_to={{ return_to | urlencode }}">
                     {% if r._image_url %}

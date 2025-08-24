@@ -338,6 +338,10 @@ def products_list():
             return url_for("serve_product_image", filename=name)
         return None
 
+    # Compute visible fields (remove Russian title/description and Ukrainian description)
+    hidden_fields = {"Название (рус)", "Описание (рус)", "Описание (укр)"}
+    visible_fields = [f for f in fields if f not in hidden_fields]
+
     rows_with_images: List[Dict[str, str]] = []
     for r in rows:
         augmented = dict(r)
@@ -347,12 +351,15 @@ def products_list():
             augmented["_pid"] = int(float((r.get("id") or "0").strip() or 0))
         except Exception:
             augmented["_pid"] = 0
+        # Mark not validated (anything other than explicit "1")
+        val = (r.get("validated") or "").strip()
+        augmented["_not_validated"] = not (val == "1")
         rows_with_images.append(augmented)
 
     return render_template(
         "products_list.html",
         rows=rows_with_images,
-        fields=fields,
+        fields=visible_fields,
         categories=categories,
         category_name_by_id=category_name_by_id,
         q=q,
