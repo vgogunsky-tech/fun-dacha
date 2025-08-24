@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="uk">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Новий товар</title>
+    <link rel="stylesheet" href="https://unpkg.com/mvp.css">
+    <style>
+      .container { max-width: 960px; margin: 0 auto; }
+      .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    </style>
+  </head>
+  <body>
+    <header class="container">
+      <h1>Додати товар</h1>
+      <a href="{{ url_for('index') }}">← До категорій</a>
+    </header>
+    <main class="container">
+      {% with messages = get_flashed_messages() %}
+        {% if messages %}
+          <aside>
+            {% for m in messages %}<p>{{ m }}</p>{% endfor %}
+          </aside>
+        {% endif %}
+      {% endwith %}
+
+      <form action="{{ url_for('product_create') }}" method="post" enctype="multipart/form-data">
+        <div class="grid">
+          <div>
+            <label>Назва (укр) *</label>
+            <input type="text" name="Название (укр)" required />
+          </div>
+          <div>
+            <label>Название (рус)</label>
+            <input type="text" name="Название (рус)" />
+          </div>
+
+          <div>
+            <label>Опис (укр) *</label>
+            <textarea name="Описание (укр)" required></textarea>
+          </div>
+          <div>
+            <label>Описание (рус)</label>
+            <textarea name="Описание (рус)"></textarea>
+          </div>
+
+          <div>
+            <label>Категорія *</label>
+            <select name="category_id" required>
+              {% for c in categories %}
+                {% if not c.parentId %}
+                  <option value="{{ c.id }}" {% if c.id == category_id %}selected{% endif %}>{{ c.id }} — {{ c.name }}</option>
+                {% endif %}
+              {% endfor %}
+            </select>
+          </div>
+          <div>
+            <label>Підкатегорія</label>
+            <select name="subcategory_id">
+              <option value=""></option>
+              {% if category_id %}
+                {% for c in parent_to_children.get(category_id|string, []) %}
+                  <option value="{{ c.id }}">{{ c.id }} — {{ c.name }}</option>
+                {% endfor %}
+              {% endif %}
+            </select>
+          </div>
+
+          <div>
+            <label>Ціна</label>
+            <input type="text" name="price" />
+          </div>
+          <div>
+            <label>Кількість</label>
+            <input type="text" name="quantity" />
+          </div>
+
+          <div>
+            <label>Рік</label>
+            <input type="text" name="year" />
+          </div>
+          <div>
+            <label>Вага (г)</label>
+            <input type="text" name="weight" />
+          </div>
+
+          <div>
+            <label>Наявність</label>
+            <select name="availability">
+              <option value="">—</option>
+              <option value="0">0 — немає в наявності</option>
+              <option value="1">1 — в наявності</option>
+              <option value="2">2 — під замовлення</option>
+            </select>
+          </div>
+          <div>
+            <label>Зображення *</label>
+            <input type="file" name="image" accept="image/*" required />
+          </div>
+        </div>
+        <button type="submit">Створити</button>
+      </form>
+    </main>
+  </body>
+</html>

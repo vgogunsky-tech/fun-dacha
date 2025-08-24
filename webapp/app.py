@@ -25,6 +25,7 @@ REQUIRED_PRODUCT_COLS = [
     "year",
     "weight",
     "availability",
+    "SKU Number",
 ]
 
 app = Flask(__name__)
@@ -82,7 +83,8 @@ def write_products_csv(rows: List[Dict[str, str]], fields: List[str]) -> List[st
 def ensure_product_columns() -> None:
     rows, fields, _ = read_products_csv()
     changed = False
-    for col in REQUIRED_PRODUCT_COLS:
+    # Ensure essential columns
+    for col in ["primary_image"] + REQUIRED_PRODUCT_COLS:
         if col not in fields:
             fields.append(col)
             for r in rows:
@@ -127,6 +129,18 @@ def build_product_image_name(category_id: str, product_id: str) -> str:
     cat3 = f"{cat_int:03d}"
     pid3 = f"{pid_int % 1000:03d}"
     return f"p{cat3}{pid3}.jpg"
+
+
+def build_sku(category_id: str, product_id: str) -> str:
+    try:
+        cat_int = int(float(category_id))
+    except Exception:
+        cat_int = 0
+    try:
+        pid_int = int(float(product_id))
+    except Exception:
+        pid_int = 0
+    return f"p{cat_int:03d}{pid_int % 1000:03d}"
 
 
 def get_unvalidated_products_by_category(category_id: str) -> List[Dict[str, str]]:
@@ -259,7 +273,7 @@ def product_save():
     rows, fields, read_from = read_products_csv()
 
     # Ensure required columns
-    for col in REQUIRED_PRODUCT_COLS:
+    for col in REQUIRED_PRODUCT_COLS + ["primary_image"]:
         if col not in fields:
             fields.append(col)
             for r in rows:
@@ -307,15 +321,14 @@ def product_save():
         dest_path = os.path.join(PRODUCT_IMAGES_DIR, dest_name)
         image_file.save(dest_path)
         target["primary_image"] = dest_name
+        # Update SKU on image/category change
+        target["SKU Number"] = build_sku(target.get("category_id", ""), target.get("id", ""))
 
     action = (form.get("action") or "").strip()
     advanced = False
     if action == "save_validate":
         target["validated"] = "1"
         advanced = True
-    else:
-        # Do NOT set validated
-        pass
 
     written_paths = write_products_csv(rows, fields)
     flash(("Saved and validated." if advanced else "Saved.") + " Files: " + ', '.join(os.path.relpath(p, BASE_DIR) for p in written_paths))
@@ -334,6 +347,87 @@ def product_save():
     else:
         next_index = (request.args.get("index", type=int) or 0)
     return redirect(url_for("product", category_id=cat_int, index=next_index))
+
+
+# -------------------- Product creation --------------------
+
+@app.get("/product/new")
+def product_new():
+    category_id = request.args.get("category_id", type=int)
+    cats = load_categories()
+    parent_to_children: Dict[str, List[Dict[str, str]]] = {}
+    for c in cats:
+        pid = (c.get("parentId") or "").strip()
+        if pid:
+            parent_to_children.setdefault(pid, []).append(c)
+    return render_template("product_new.html", category_id=category_id, categories=cats, parent_to_children=parent_to_children)
+
+
+@app.post("/product/new")
+def product_create():
+    form = request.form
+    files = request.files
+
+    name_uk = (form.get("Название (укр)") or "").strip()
+    desc_uk = (form.get("Описание (укр)") or "").strip()
+    cat_id = (form.get("category_id") or "").strip()
+    if not name_uk or not desc_uk or not cat_id:
+        flash("Image, title and description and category are required.")
+        return redirect(request.referrer or url_for('index'))
+
+    image_file = files.get("image")
+    if not image_file or not image_file.filename:
+        flash("Image is required.")
+        return redirect(request.referrer or url_for('index'))
+
+    # Load existing
+    rows, fields, _ = read_products_csv()
+    # Ensure columns present
+    for col in ["primary_image", "SKU Number"] + REQUIRED_PRODUCT_COLS:
+        if col not in fields:
+            fields.append(col)
+            for r in rows:
+                r[col] = ""
+
+    # Compute new unique id
+    max_id = 0
+    for r in rows:
+        try:
+            max_id = max(max_id, int(float((r.get("id") or "0").strip() or 0)))
+        except Exception:
+            pass
+    new_id = max_id + 1
+
+    # Save image and compute SKU
+    image_name = build_product_image_name(cat_id, str(new_id))
+    os.makedirs(PRODUCT_IMAGES_DIR, exist_ok=True)
+    image_file.save(os.path.join(PRODUCT_IMAGES_DIR, image_name))
+
+    sku = build_sku(cat_id, str(new_id))
+
+    # Build new row
+    new_row: Dict[str, str] = {
+        "id": str(new_id),
+        "Название (укр)": name_uk,
+        "Название (рус)": (form.get("Название (рус)") or "").strip(),
+        "Описание (укр)": desc_uk,
+        "Описание (рус)": (form.get("Описание (рус)") or "").strip(),
+        "primary_image": image_name,
+        "category_id": str(int(float(cat_id))),
+        "subcategory_id": (form.get("subcategory_id") or "").strip(),
+        "SKU Number": sku,
+        "validated": "0",
+        "price": (form.get("price") or "").strip(),
+        "quantity": (form.get("quantity") or "").strip(),
+        "year": (form.get("year") or "").strip(),
+        "weight": (form.get("weight") or "").strip(),
+        "availability": (form.get("availability") or "").strip(),
+    }
+
+    rows.append(new_row)
+    write_products_csv(rows, fields)
+    flash(f"Product created with ID {new_id}.")
+    return redirect(url_for('product', category_id=int(float(cat_id)), index=0))
 
 
 # -------------------- Category creation --------------------
