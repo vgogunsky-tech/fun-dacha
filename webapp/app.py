@@ -30,7 +30,7 @@ REQUIRED_PRODUCT_COLS = [
     "validated",
     "year",
     "availability",
-    "SKU Number",
+    "ID",
 ]
 
 app = Flask(__name__)
@@ -431,6 +431,15 @@ def ensure_product_columns() -> None:
             for r in rows:
                 r[col] = ""
             changed = True
+    # Migrate legacy "SKU Number" to "ID"
+    if "SKU Number" in fields and "ID" not in fields:
+        fields.append("ID")
+        for r in rows:
+            r["ID"] = r.get("SKU Number", "")
+        changed = True
+    if "SKU Number" in fields:
+        # Keep legacy column but can be hidden in UI; optionally remove if needed
+        pass
     if changed:
         write_products_csv(rows, fields)
 
