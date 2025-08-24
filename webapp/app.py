@@ -483,6 +483,90 @@ def categories_create():
     flash("Category created.")
     return redirect(return_to if return_to.startswith("/") else url_for("index"))
 
+# -------------------- Category edit --------------------
+
+@app.get("/category/<int:cid>/edit")
+def category_edit(cid: int):
+    rows, fields = read_csv(CATEGORIES_CSV)
+    target: Optional[Dict[str, str]] = None
+    for r in rows:
+        try:
+            if int(float((r.get("id") or "").strip() or 0)) == cid:
+                target = r
+                break
+        except Exception:
+            continue
+    if target is None:
+        abort(404)
+    # Determine image
+    img = target.get("primary_image") or ""
+    if not img:
+        # try to find by convention c{cid}.jpg
+        candidate = f"c{cid}.jpg"
+        if os.path.isfile(os.path.join(CATEGORY_IMAGES_DIR, candidate)):
+            img = candidate
+    return render_template("category_edit.html", category=target, cid=cid, image=img)
+
+
+@app.post("/category/<int:cid>/edit")
+def category_update(cid: int):
+    form = request.form
+    files = request.files
+
+    rows, fields = read_csv(CATEGORIES_CSV)
+    changed = False
+    # Ensure primary_image column
+    if "primary_image" not in fields:
+        fields.append("primary_image")
+        for r in rows:
+            r["primary_image"] = ""
+        changed = True
+
+    target: Optional[Dict[str, str]] = None
+    for r in rows:
+        try:
+            if int(float((r.get("id") or "").strip() or 0)) == cid:
+                target = r
+                break
+        except Exception:
+            continue
+    if target is None:
+        abort(404)
+
+    # Update editable fields
+    name = (form.get("name") or "").strip()
+    descr = (form.get("description") or "").strip()
+    tag = (form.get("tag") or "").strip()
+    parentId = (form.get("parentId") or "").strip()
+
+    if name:
+        target["name"] = name
+        changed = True
+    target["description (ukr)"] = descr
+    target["tag"] = tag
+    target["parentId"] = str(int(float(parentId))) if parentId else ""
+
+    # Image handling
+    image_file = files.get("image")
+    remove_image = (form.get("remove_image") or "") == "1"
+    if remove_image:
+        target["primary_image"] = ""
+        changed = True
+    if image_file and image_file.filename:
+        os.makedirs(CATEGORY_IMAGES_DIR, exist_ok=True)
+        dest_name = f"c{cid}.jpg"
+        image_file.save(os.path.join(CATEGORY_IMAGES_DIR, dest_name))
+        target["primary_image"] = dest_name
+        changed = True
+
+    if changed:
+        write_csv(CATEGORIES_CSV, rows, fields)
+        flash("Category updated.")
+    else:
+        flash("No changes.")
+
+    return redirect(url_for('index'))
+
 
 if __name__ == "__main__":
     os.makedirs(PRODUCT_IMAGES_DIR, exist_ok=True)

@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="uk">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Редагувати категорію {{ cid }}</title>
+    <link rel="stylesheet" href="https://unpkg.com/mvp.css">
+    <style>
+      .container { max-width: 960px; margin: 0 auto; }
+      .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+      .image { max-width: 240px; }
+      .image img { width: 100%; border: 1px solid #ddd; border-radius: 6px; }
+    </style>
+  </head>
+  <body>
+    <header class="container">
+      <h1>Редагувати категорію {{ cid }}</h1>
+      <a href="{{ url_for('index') }}">← До категорій</a>
+    </header>
+
+    <main class="container">
+      {% with messages = get_flashed_messages() %}
+        {% if messages %}
+          <aside>
+            {% for m in messages %}<p>{{ m }}</p>{% endfor %}
+          </aside>
+        {% endif %}
+      {% endwith %}
+
+      <form action="{{ url_for('category_update', cid=cid) }}" method="post" enctype="multipart/form-data">
+        <div class="grid">
+          <div>
+            <label>Назва</label>
+            <input type="text" name="name" value="{{ category['name'] }}" />
+          </div>
+          <div>
+            <label>Тег</label>
+            <input type="text" name="tag" value="{{ category['tag'] if category.get('tag') else '' }}" />
+          </div>
+          <div>
+            <label>Батьківська категорія</label>
+            <input type="text" name="parentId" value="{{ category['parentId'] if category.get('parentId') else '' }}" />
+          </div>
+          <div>
+            <label>Опис (укр)</label>
+            <textarea name="description">{{ category['description (ukr)'] if category.get('description (ukr)') else '' }}</textarea>
+          </div>
+
+          <div class="image">
+            <label>Зображення</label>
+            {% if image %}
+              <img src="{{ url_for('serve_category_image', filename=image) }}" alt="image" />
+            {% else %}
+              <p>Немає зображення</p>
+            {% endif %}
+            <label><input type="checkbox" name="remove_image" value="1" /> Видалити зображення</label>
+            <input type="file" name="image" accept="image/*" />
+          </div>
+        </div>
+        <button type="submit">Зберегти</button>
+      </form>
+    </main>
+  </body>
+</html>
