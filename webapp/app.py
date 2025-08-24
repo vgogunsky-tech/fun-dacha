@@ -406,7 +406,7 @@ def ensure_product_columns() -> None:
     rows, fields, _ = read_products_csv()
     changed = False
     # Ensure essential columns
-    for col in ["primary_image"] + REQUIRED_PRODUCT_COLS:
+    for col in ["primary_image", "images"] + REQUIRED_PRODUCT_COLS:
         if col not in fields:
             fields.append(col)
             for r in rows:
@@ -451,6 +451,20 @@ def build_product_image_name(category_id: str, product_id: str) -> str:
     cat3 = f"{cat_int:03d}"
     pid3 = f"{pid_int % 1000:03d}"
     return f"p{cat3}{pid3}.jpg"
+
+
+def build_secondary_image_name(category_id: str, product_id: str, seq: int) -> str:
+    try:
+        cat_int = int(float(category_id))
+    except Exception:
+        cat_int = 0
+    try:
+        pid_int = int(float(product_id))
+    except Exception:
+        pid_int = 0
+    cat3 = f"{cat_int:03d}"
+    pid3 = f"{pid_int % 1000:03d}"
+    return f"p{cat3}{pid3}_{seq}.jpg"
 
 
 def build_sku(category_id: str, product_id: str) -> str:
@@ -659,6 +673,16 @@ def product_by_id(pid: int):
     except Exception:
         category_id = None
 
+    # Secondary images
+    sec_names = [s.strip() for s in (target.get("images") or "").split(",") if s.strip()]
+    secondary_items: List[Dict[str, str]] = []
+    for name in sec_names:
+        if os.path.isfile(os.path.join(PRODUCT_IMAGES_DIR, name)):
+            secondary_items.append({
+                "name": name,
+                "url": url_for("serve_product_image", filename=name),
+            })
+
     return render_template(
         "product.html",
         category_id=category_id or 0,
@@ -666,6 +690,7 @@ def product_by_id(pid: int):
         index=0,
         total=1,
         image_url=img_url,
+        secondary_items=secondary_items,
         categories=cats,
         parent_to_children=parent_to_children,
     )
@@ -707,6 +732,16 @@ def product():
         if pid:
             parent_to_children.setdefault(pid, []).append(c)
 
+    # Secondary images
+    sec_names = [s.strip() for s in (p.get("images") or "").split(",") if s.strip()]
+    secondary_items: List[Dict[str, str]] = []
+    for name in sec_names:
+        if os.path.isfile(os.path.join(PRODUCT_IMAGES_DIR, name)):
+            secondary_items.append({
+                "name": name,
+                "url": url_for("serve_product_image", filename=name),
+            })
+
     return render_template(
         "product.html",
         category_id=category_id,
@@ -714,6 +749,7 @@ def product():
         index=index,
         total=total,
         image_url=img_url,
+        secondary_items=secondary_items,
         categories=cats,
         parent_to_children=parent_to_children,
     )
@@ -769,7 +805,10 @@ def product_save():
     target["availability"] = form.get("availability", "").strip()
 
     changed_paths: List[str] = []
-    # Handle image upload
+    # Handle primary image remove
+    if (form.get("remove_primary_image") or "") == "1":
+        target["primary_image"] = ""
+    # Handle primary image upload
     image_file = files.get("image")
     if image_file and image_file.filename:
         dest_name = build_product_image_name(target.get("category_id", ""), target.get("id", ""))
@@ -780,6 +819,29 @@ def product_save():
         # Update SKU on image/category change
         target["SKU Number"] = build_sku(target.get("category_id", ""), target.get("id", ""))
         changed_paths.append(dest_path)
+
+    # Handle up to 5 secondary images
+    existing_sec = [s.strip() for s in (target.get("images") or "").split(",") if s.strip()]
+    # Remove selected
+    # From checkboxes in UI
+    remove_list = request.form.getlist("remove_images_list")
+    to_remove = set(remove_list)
+    to_remove = {s.strip() for s in to_remove if s.strip()}
+    existing_sec = [s for s in existing_sec if s not in to_remove]
+    # Add new uploads
+    for idx in range(1, 6):
+        f = files.get(f"image_secondary_{idx}")
+        if f and f.filename:
+            dest_name = build_secondary_image_name(target.get("category_id", ""), target.get("id", ""), idx)
+            os.makedirs(PRODUCT_IMAGES_DIR, exist_ok=True)
+            dest_path = os.path.join(PRODUCT_IMAGES_DIR, dest_name)
+            f.save(dest_path)
+            if dest_name not in existing_sec:
+                existing_sec.append(dest_name)
+            changed_paths.append(dest_path)
+    # Ensure at most 5 secondary
+    existing_sec = existing_sec[:5]
+    target["images"] = ",".join(existing_sec)
 
     action = (form.get("action") or "").strip()
     advanced = False
@@ -845,7 +907,7 @@ def product_create():
     # Load existing
     rows, fields, _ = read_products_csv()
     # Ensure columns present
-    for col in ["primary_image", "SKU Number"] + REQUIRED_PRODUCT_COLS:
+    for col in ["primary_image", "images", "SKU Number"] + REQUIRED_PRODUCT_COLS:
         if col not in fields:
             fields.append(col)
             for r in rows:
@@ -875,6 +937,7 @@ def product_create():
         "Описание (укр)": desc_uk,
         "Описание (рус)": (form.get("Описание (рус)") or "").strip(),
         "primary_image": image_name,
+        "images": "",
         "category_id": str(int(float(cat_id))),
         "subcategory_id": (form.get("subcategory_id") or "").strip(),
         "SKU Number": sku,

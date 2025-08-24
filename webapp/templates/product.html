@@ -10,6 +10,9 @@
       .nav { display: flex; justify-content: space-between; align-items: center; }
       .image { max-width: 320px; }
       .image img { width: 100%; border-radius: 8px; border: 1px solid #ddd; }
+      .thumbs { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+      .thumb { text-align: center; }
+      .thumb img { width: 100%; height: 64px; object-fit: cover; border-radius: 6px; border: 1px solid #ddd; }
       .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
       textarea { min-height: 100px; }
       .muted { color: #666; font-size: 0.9em; }
@@ -116,11 +119,33 @@
               </div>
 
               <div class="image" style="grid-column: 1 / -1;">
-                <label>Зображення</label>
+                <label>Головне зображення</label>
                 {% if image_url %}
                   <img src="{{ image_url }}" alt="image" />
+                  <label><input type="checkbox" name="remove_primary_image" value="1" /> Видалити поточне</label>
                 {% endif %}
                 <input type="file" name="image" accept="image/*" />
+              </div>
+
+              <div style="grid-column: 1 / -1;">
+                <label>Додаткові зображення (до 5)</label>
+                {% if secondary_items and secondary_items|length %}
+                  <div class="thumbs">
+                    {% for it in secondary_items %}
+                      <div class="thumb">
+                        <img src="{{ it.url }}" alt="secondary" />
+                        <div><label><input type="checkbox" name="remove_images_list" value="{{ it.name }}" /> Видалити</label></div>
+                      </div>
+                    {% endfor %}
+                  </div>
+                {% endif %}
+                <div class="thumbs" style="margin-top:8px;">
+                  {% for i in range(1,6) %}
+                    <div class="thumb">
+                      <input type="file" name="image_secondary_{{ i }}" accept="image/*" />
+                    </div>
+                  {% endfor %}
+                </div>
               </div>
             </div>
 
