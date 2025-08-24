@@ -18,6 +18,7 @@
       main section:first-of-type form.controls { width: 100%; }
       table { width: 100%; border-collapse: collapse; }
       th, td { text-align: left; }
+      .col-id { width: 80px; }
       .nowrap { white-space: nowrap; }
       .sticky { position: sticky; top: 0; background: #fff; }
       th { position: sticky; top: 0; background: #fff; }
@@ -77,7 +78,7 @@
               <th class="status">Статус</th>
               <th class="nowrap">Зображення</th>
               {% for f in fields %}
-                <th>{{ f }}</th>
+                <th class="{% if f == 'id' %}col-id{% endif %}">{{ f }}</th>
               {% endfor %}
             </tr>
           </thead>
@@ -104,7 +105,7 @@
                       </a>
                     </td>
                   {% else %}
-                    <td>
+                    <td class="{% if f == 'id' %}col-id{% endif %}">
                       <a href="{{ url_for('product_by_id', pid=r['_pid']) }}?return_to={{ return_to | urlencode }}">{{ val }}</a>
                     </td>
                   {% endif %}

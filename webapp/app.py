@@ -4,6 +4,7 @@ import os
 import sys
 import subprocess
 from typing import Dict, List, Optional, Tuple
+import logging
 
 from flask import Flask, render_template, request, redirect, url_for, send_from_directory, abort, flash
 
@@ -28,6 +29,20 @@ REQUIRED_PRODUCT_COLS = [
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", "dev-secret-key")
+# Configure logging to ensure visibility on servers
+logging.basicConfig(level=getattr(logging, os.environ.get("LOG_LEVEL", "INFO"), logging.INFO))
+app.logger.setLevel(getattr(logging, os.environ.get("LOG_LEVEL", "INFO"), logging.INFO))
+
+
+def _log_git(message: str) -> None:
+    try:
+        app.logger.info(message)
+    except Exception:
+        pass
+    try:
+        print(message, flush=True)
+    except Exception:
+        pass
 
 # -------------------- Git helpers --------------------
 
@@ -43,19 +58,19 @@ def _run_git(args: List[str]) -> Tuple[int, str, str]:
         code = result.returncode
         out = (result.stdout or "").strip()
         err = (result.stderr or "").strip()
-        print(f"[git] cmd: git {' '.join(args)} | code={code}")
+        _log_git(f"[git] cmd: git {' '.join(args)} | code={code}")
         if out:
-            print(f"[git] stdout: {out[:2000]}")
+            _log_git(f"[git] stdout: {out[:2000]}")
         if err:
-            print(f"[git] stderr: {err[:2000]}")
+            _log_git(f"[git] stderr: {err[:2000]}")
         return code, out, err
     except Exception as e:
-        print(f"[git] exception running git {' '.join(args)}: {e}")
+        _log_git(f"[git] exception running git {' '.join(args)}: {e}")
         return 1, "", str(e)
 
 
 def _ensure_git_identity() -> None:
-    print("[git] ensuring identity...")
+    _log_git("[git] ensuring identity...")
     code, out, _ = _run_git(["config", "--get", "user.name"])
     if code != 0 or not out:
         _run_git(["config", "user.name", os.environ.get("GIT_AUTHOR_NAME", "server-bot")])
@@ -66,38 +81,80 @@ def _ensure_git_identity() -> None:
 
 def commit_and_push(paths: List[str], message: str) -> None:
     try:
-        print("[git] commit_and_push start")
+        _log_git("[git] commit_and_push start")
         _ensure_git_identity()
         target_remote = os.environ.get("GIT_TARGET_REMOTE", "origin")
         target_branch = os.environ.get("GIT_TARGET_BRANCH", "develop")
         token_present = bool(os.environ.get("GIT_AUTH_TOKEN"))
-        print(f"[git] remote={target_remote} branch={target_branch} token_present={token_present}")
+        _log_git(f"[git] remote={target_remote} branch={target_branch} token_present={token_present}")
         # Show remote url but redact token if present
         code, remote_url, _ = _run_git(["remote", "get-url", target_remote])
         if code == 0 and remote_url:
             redacted = remote_url
             if "x-access-token:" in redacted:
                 redacted = "https://x-access-token:***@" + redacted.split("@", 1)[-1]
-            print(f"[git] remote url: {redacted}")
+            _log_git(f"[git] remote url: {redacted}")
         # Stage specified paths
         _run_git(["add"] + paths)
         # Check status
         code, status, _ = _run_git(["status", "--porcelain"])
         if code != 0:
-            print("[git] status failed; skip commit")
+            _log_git("[git] status failed; skip commit")
             return
         if not (status or "").strip():
-            print("[git] nothing to commit")
+            _log_git("[git] nothing to commit")
             return
         # Commit
         _run_git(["commit", "-m", message])
         # Push HEAD to target branch
         code, out, err = _run_git(["push", target_remote, f"HEAD:refs/heads/{target_branch}"])
-        print(f"[git] push done code={code}")
+        _log_git(f"[git] push done code={code}")
     except Exception as e:
         # Never let git failures break the request path
-        print(f"[git] commit_and_push exception: {e}")
+        _log_git(f"[git] commit_and_push exception: {e}")
         pass
+
+
+def _redact_remote(url: str) -> str:
+    if not url:
+        return url
+    if "@" in url and "://" in url:
+        try:
+            prefix, rest = url.split("://", 1)
+            creds, host = rest.split("@", 1)
+            return f"{prefix}://***@{host}"
+        except Exception:
+            pass
+    if "x-access-token:" in url:
+        return "https://x-access-token:***@" + url.split("@", 1)[-1]
+    return url
+
+
+@app.get("/debug/git")
+def debug_git():
+    target_remote = os.environ.get("GIT_TARGET_REMOTE", "origin")
+    target_branch = os.environ.get("GIT_TARGET_BRANCH", "develop")
+    token_present = bool(os.environ.get("GIT_AUTH_TOKEN"))
+
+    info: Dict[str, Tuple[int, str, str]] = {}
+    info["git_version"] = _run_git(["--version"])
+    info["remote_get_url"] = _run_git(["remote", "get-url", target_remote])
+    info["rev_parse_head"] = _run_git(["rev-parse", "--abbrev-ref", "HEAD"]) 
+    info["last_commit"] = _run_git(["log", "-1", "--oneline"]) 
+    info["status"] = _run_git(["status", "--porcelain"]) 
+    info["remotes_v"] = _run_git(["remote", "-v"]) 
+    info["push_dryrun"] = _run_git(["push", "--dry-run", target_remote, f"HEAD:refs/heads/{target_branch}"]) 
+
+    redacted_remote = _redact_remote(info["remote_get_url"][1]) if info.get("remote_get_url") else ""
+
+    return render_template(
+        "debug_git.html",
+        target_remote=target_remote,
+        target_branch=target_branch,
+        token_present=token_present,
+        redacted_remote=redacted_remote,
+        info=info,
+    )
 
 
 # -------------------- CSV helpers --------------------

@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Git Diagnostics</title>
+    <link rel="stylesheet" href="https://unpkg.com/mvp.css">
+    <style>
+      pre { white-space: pre-wrap; word-break: break-word; }
+      .grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Git Diagnostics</h1>
+      <p><a href="{{ url_for('index') }}">← Back</a></p>
+    </header>
+    <main>
+      <article>
+        <p>Remote: <strong>{{ target_remote }}</strong> — Branch: <strong>{{ target_branch }}</strong></p>
+        <p>Token present: <strong>{{ 'yes' if token_present else 'no' }}</strong></p>
+        <p>Remote URL: <code>{{ redacted_remote }}</code></p>
+      </article>
+      <section class="grid">
+        {% for key, triple in info.items() %}
+          <article>
+            <h3>{{ key }}</h3>
+            <p>Exit code: {{ triple[0] }}</p>
+            {% if triple[1] %}
+              <h4>stdout</h4>
+              <pre>{{ triple[1] }}</pre>
+            {% endif %}
+            {% if triple[2] %}
+              <h4>stderr</h4>
+              <pre>{{ triple[2] }}</pre>
+            {% endif %}
+          </article>
+        {% endfor %}
+      </section>
+    </main>
+  </body>
+  </html>
+
