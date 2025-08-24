@@ -13,6 +13,7 @@
       .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
       textarea { min-height: 100px; }
       .muted { color: #666; font-size: 0.9em; }
+      .ro { background: #f7f7f7; }
     </style>
   </head>
   <body>
@@ -45,6 +46,11 @@
             <input type="hidden" name="id" value="{{ product['id'] }}" />
 
             <div class="form-grid">
+              <div>
+                <label>SKU Number</label>
+                <input class="ro" type="text" value="{{ product['SKU Number'] }}" readonly />
+              </div>
+              <div></div>
               <div>
                 <label>Назва (укр)</label>
                 <input type="text" name="Название (укр)" value="{{ product['Название (укр)'] }}" />
