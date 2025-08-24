@@ -75,7 +75,7 @@
               {% set return_to = request.full_path %}
               <tr>
                 <td>
-                  <a href="{{ url_for('product_by_id', pid=(r['id']|float)|int) }}?return_to={{ return_to | urlencode }}">
+                  <a href="{{ url_for('product_by_id', pid=r['_pid']) }}?return_to={{ return_to | urlencode }}">
                     {% if r._image_url %}
                       <img src="{{ r._image_url }}" alt="image" />
                     {% endif %}
@@ -85,13 +85,13 @@
                   {% set val = r.get(f, '') %}
                   {% if f == 'category_id' %}
                     <td>
-                      <a href="{{ url_for('product_by_id', pid=(r['id']|float)|int) }}?return_to={{ return_to | urlencode }}">
+                      <a href="{{ url_for('product_by_id', pid=r['_pid']) }}?return_to={{ return_to | urlencode }}">
                         {{ val }}{% if category_name_by_id.get(val) %} — {{ category_name_by_id.get(val) }}{% endif %}
                       </a>
                     </td>
                   {% else %}
                     <td>
-                      <a href="{{ url_for('product_by_id', pid=(r['id']|float)|int) }}?return_to={{ return_to | urlencode }}">{{ val }}</a>
+                      <a href="{{ url_for('product_by_id', pid=r['_pid']) }}?return_to={{ return_to | urlencode }}">{{ val }}</a>
                     </td>
                   {% endif %}
                 {% endfor %}

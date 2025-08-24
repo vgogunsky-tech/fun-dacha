@@ -342,6 +342,11 @@ def products_list():
     for r in rows:
         augmented = dict(r)
         augmented["_image_url"] = _image_url(r.get("primary_image") or "")
+        # Precompute integer product id tolerant to values like "123.0"
+        try:
+            augmented["_pid"] = int(float((r.get("id") or "0").strip() or 0))
+        except Exception:
+            augmented["_pid"] = 0
         rows_with_images.append(augmented)
 
     return render_template(
