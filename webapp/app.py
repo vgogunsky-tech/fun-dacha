@@ -2,6 +2,7 @@
 import csv
 import os
 import sys
+import subprocess
 from typing import Dict, List, Optional, Tuple
 
 from flask import Flask, render_template, request, redirect, url_for, send_from_directory, abort, flash
@@ -27,6 +28,56 @@ REQUIRED_PRODUCT_COLS = [
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", "dev-secret-key")
+
+# -------------------- Git helpers --------------------
+
+def _run_git(args: List[str]) -> Tuple[int, str, str]:
+    try:
+        result = subprocess.run(
+            ["git"] + args,
+            cwd=BASE_DIR,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        return result.returncode, (result.stdout or "").strip(), (result.stderr or "").strip()
+    except Exception as e:
+        return 1, "", str(e)
+
+
+def _ensure_git_identity() -> None:
+    code, out, _ = _run_git(["config", "--get", "user.name"])
+    if code != 0 or not out:
+        _run_git(["config", "user.name", os.environ.get("GIT_AUTHOR_NAME", "server-bot")])
+    code, out, _ = _run_git(["config", "--get", "user.email"])
+    if code != 0 or not out:
+        _run_git(["config", "user.email", os.environ.get("GIT_AUTHOR_EMAIL", "server-bot@example.com")])
+
+
+def commit_and_push(paths: List[str], message: str) -> None:
+    try:
+        _ensure_git_identity()
+        # Stage specified paths
+        _run_git(["add"] + paths)
+        # Skip if nothing staged
+        code, status, _ = _run_git(["status", "--porcelain"])
+        if code != 0 or not (status or "").strip():
+            return
+        # Commit
+        _run_git(["commit", "-m", message])
+        # Push (set upstream if missing)
+        code, _, _ = _run_git(["rev-parse", "@{u}"])
+        if code != 0:
+            _, branch, _ = _run_git(["rev-parse", "--abbrev-ref", "HEAD"])
+            if branch:
+                _run_git(["push", "-u", "origin", branch])
+            else:
+                _run_git(["push"])  # best effort
+        else:
+            _run_git(["push"])  # upstream exists
+    except Exception:
+        # Never let git failures break the request path
+        pass
 
 
 # -------------------- CSV helpers --------------------
@@ -324,6 +375,7 @@ def product_save():
         advanced = True
 
     written_paths = write_products_csv(rows, fields)
+    commit_and_push([DATA_DIR], f"Update product {product_id} via webapp")
     flash(("Saved and validated." if advanced else "Saved.") + " Files: " + ', '.join(os.path.relpath(p, BASE_DIR) for p in written_paths))
 
     # Redirect
@@ -416,6 +468,7 @@ def product_create():
 
     rows.append(new_row)
     write_products_csv(rows, fields)
+    commit_and_push([DATA_DIR], f"Create product {new_id} via webapp")
     flash(f"Product created with ID {new_id}.")
     return redirect(url_for('product', category_id=int(float(cat_id)), index=0))
 
@@ -480,6 +533,7 @@ def categories_create():
     rows.append(new_row)
 
     write_csv(CATEGORIES_CSV, rows, fields)
+    commit_and_push([DATA_DIR], f"Create category {cid_int} via webapp")
     flash("Category created.")
     return redirect(return_to if return_to.startswith("/") else url_for("index"))
 
@@ -561,6 +615,7 @@ def category_update(cid: int):
 
     if changed:
         write_csv(CATEGORIES_CSV, rows, fields)
+        commit_and_push([DATA_DIR], f"Update category {cid} via webapp")
         flash("Category updated.")
     else:
         flash("No changes.")
