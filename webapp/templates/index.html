@@ -11,6 +11,8 @@
       img { max-width: 100%; height: 150px; object-fit: cover; border-radius: 4px; }
       a.card { text-decoration: none; color: inherit; }
       .title { margin-top: 8px; font-weight: 600; }
+      main { padding-top: 8px; }
+      .add-category { margin-top: 32px; padding-top: 12px; border-top: 1px solid #eee; }
     </style>
   </head>
   <body>
@@ -31,7 +33,7 @@
         </div>
       </section>
 
-      <section>
+      <section class="add-category">
         <h2>Додати категорію</h2>
         <form action="{{ url_for('categories_create') }}" method="post" enctype="multipart/form-data">
           <input type="hidden" name="return_to" value="{{ request.path }}" />
