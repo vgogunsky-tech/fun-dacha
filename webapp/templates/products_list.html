@@ -79,9 +79,12 @@
           <thead>
             <tr>
               <th class="status">Статус</th>
+              <th class="col-id">ID</th>
               <th class="nowrap">Зображення</th>
               {% for f in fields %}
-                <th class="{% if f == 'id' %}col-id{% endif %}">{{ f }}</th>
+                {% if f != 'id' %}
+                  <th>{{ f }}</th>
+                {% endif %}
               {% endfor %}
             </tr>
           </thead>
@@ -92,6 +95,9 @@
                 <td class="status">
                   {% if r._not_validated %}❗{% else %}✅{% endif %}
                 </td>
+                <td class="col-id">
+                  <a href="{{ url_for('product_by_id', pid=r['_pid']) }}?return_to={{ return_to | urlencode }}">{{ r['id'] }}</a>
+                </td>
                 <td>
                   <a href="{{ url_for('product_by_id', pid=r['_pid']) }}?return_to={{ return_to | urlencode }}">
                     {% if r._image_url %}
@@ -100,17 +106,19 @@
                   </a>
                 </td>
                 {% for f in fields %}
-                  {% set val = r.get(f, '') %}
-                  {% if f == 'category_id' %}
-                    <td>
-                      <a href="{{ url_for('product_by_id', pid=r['_pid']) }}?return_to={{ return_to | urlencode }}">
-                        {{ val }}{% if category_name_by_id.get(val) %} — {{ category_name_by_id.get(val) }}{% endif %}
-                      </a>
-                    </td>
-                  {% else %}
-                    <td class="{% if f == 'id' %}col-id{% endif %}">
-                      <a href="{{ url_for('product_by_id', pid=r['_pid']) }}?return_to={{ return_to | urlencode }}">{{ val }}</a>
-                    </td>
+                  {% if f != 'id' %}
+                    {% set val = r.get(f, '') %}
+                    {% if f == 'category_id' %}
+                      <td>
+                        <a href="{{ url_for('product_by_id', pid=r['_pid']) }}?return_to={{ return_to | urlencode }}">
+                          {{ val }}{% if category_name_by_id.get(val) %} — {{ category_name_by_id.get(val) }}{% endif %}
+                        </a>
+                      </td>
+                    {% else %}
+                      <td>
+                        <a href="{{ url_for('product_by_id', pid=r['_pid']) }}?return_to={{ return_to | urlencode }}">{{ val }}</a>
+                      </td>
+                    {% endif %}
                   {% endif %}
                 {% endfor %}
               </tr>

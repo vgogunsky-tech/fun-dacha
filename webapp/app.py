@@ -625,8 +625,8 @@ def products_list():
             return url_for("serve_product_image", filename=name)
         return None
 
-    # Compute visible fields (remove Russian title/description and Ukrainian description)
-    hidden_fields = {"Название (рус)", "Описание (рус)", "Описание (укр)"}
+    # Compute visible fields (remove RU/UA descriptions, image filename, and SKU)
+    hidden_fields = {"Название (рус)", "Описание (рус)", "Описание (укр)", "primary_image", "SKU Number"}
     visible_fields = [f for f in fields if f not in hidden_fields]
 
     rows_with_images: List[Dict[str, str]] = []
