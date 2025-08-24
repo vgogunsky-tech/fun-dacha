@@ -1,11 +1,15 @@
 #!/usr/bin/env python3
 import csv
 import os
+import sys
 from typing import Dict, List, Optional, Tuple
 
 from flask import Flask, render_template, request, redirect, url_for, send_from_directory, abort, flash
 
-BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+if getattr(sys, "_MEIPASS", None):
+    BASE_DIR = sys._MEIPASS
+else:
+    BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 DATA_DIR = os.path.join(BASE_DIR, "data")
 PRODUCTS_CSV = os.path.join(DATA_DIR, "list.csv")
 CATEGORIES_CSV = os.path.join(DATA_DIR, "categories_list.csv")
