@@ -21,7 +21,7 @@ def read_products(path: str) -> Tuple[List[Dict[str, str]], List[str]]:
 
 def write_tags_csv(path: str, rows: List[Dict[str, str]]) -> None:
     os.makedirs(os.path.dirname(path), exist_ok=True)
-    fieldnames = ["category", "group", "key", "ua", "ru"]
+    fieldnames = ["category", "group_id", "group", "tag_id", "key", "ua", "ru"]
     tmp = path + ".tmp"
     with open(tmp, "w", encoding="utf-8", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames)
@@ -214,11 +214,14 @@ def main() -> int:
     for cat in sorted(cat_tags.keys(), key=lambda x: (len(x), x)):
         group_map = cat_tags[cat]
         for group_name in sorted(group_map.keys()):
+            group_id = group_name.strip().lower()
             for key in sorted(group_map[group_name]):
                 meta = catalog[group_name][key]
                 out_rows.append({
                     "category": cat,
+                    "group_id": group_id,
                     "group": group_name,
+                    "tag_id": key,
                     "key": key,
                     "ua": meta["ua"],
                     "ru": meta["ru"],
