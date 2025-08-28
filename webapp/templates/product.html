@@ -87,6 +87,30 @@
                 <textarea name="Описание (рус)" id="textarea-ru">{{ product['Описание (рус)'] }}</textarea>
               </div>
 
+              <div style="grid-column: 1 / -1;">
+                <label>Теги</label>
+                <div id="tags-editor" class="thumbs-vertical" style="gap:6px;">
+                  <div id="tags-list" class="thumb-row" style="flex-wrap: wrap;">
+                    {% set raw_tags = (product.get('tags') or '') %}
+                    {% set tags = raw_tags.split(',') if raw_tags else [] %}
+                    {% for t in tags %}
+                      {% set tt = t.strip() %}
+                      {% if tt %}
+                        <span data-tag="{{ tt }}" style="display:inline-flex; align-items:center; gap:6px; padding:4px 8px; border:1px solid #ddd; border-radius:14px;">
+                          <span>{{ tt }}</span>
+                          <button type="button" class="tag-remove"   style="font-size:12px; width:20px; height:20px; line-height:18px; padding:0; border:none; background:transparent; cursor:pointer; border-radius:50%;" data-tag="{{ tt }}" aria-label="Remove">×</button>
+                        </span>
+                      {% endif %}
+                    {% endfor %}
+                  </div>
+                  <div class="thumb-row" style="gap:8px;">
+                    <input type="text" id="tag-input" placeholder="Додати тег..." />
+                    <button type="button" id="tag-add">Додати</button>
+                  </div>
+                </div>
+                <input type="hidden" name="tags" id="tags-hidden" value="{{ (product.get('tags') or '').strip() }}" />
+              </div>
+
               <div>
                 <label>Рік</label>
                 <input type="text" name="year" value="{{ product['year'] if product.get('year') else '' }}" />
@@ -189,6 +213,63 @@
                   btn.disabled = false; btn.textContent = old;
                 }
               });
+            })();
+
+            (function(){
+              const hidden = document.getElementById('tags-hidden');
+              const list = document.getElementById('tags-list');
+              const input = document.getElementById('tag-input');
+              const addBtn = document.getElementById('tag-add');
+              if (!hidden || !list || !input || !addBtn) return;
+
+              function parseTags() {
+                return (hidden.value || '').split(',').map(s => (s || '').trim()).filter(Boolean);
+              }
+
+              function render() {
+                const tags = parseTags();
+                list.innerHTML = '';
+                for (const tt of tags) {
+                  const wrap = document.createElement('span');
+                  wrap.setAttribute('data-tag', tt);
+                  wrap.setAttribute('style', 'display:inline-flex; align-items:center; gap:6px; padding:4px 8px; border:1px solid #ddd; border-radius:14px; margin:2px;');
+                  const label = document.createElement('span');
+                  label.textContent = tt;
+                  const remove = document.createElement('button');
+                  remove.type = 'button';
+                  remove.className = 'tag-remove';
+                  remove.setAttribute('data-tag', tt);
+                  remove.textContent = '×';
+                  remove.addEventListener('click', () => {
+                    const cur = parseTags();
+                    const next = cur.filter(x => x.toLowerCase() !== tt.toLowerCase());
+                    hidden.value = next.join(',');
+                    render();
+                  });
+                  wrap.appendChild(label);
+                  wrap.appendChild(remove);
+                  list.appendChild(wrap);
+                }
+              }
+
+              addBtn.addEventListener('click', () => {
+                const val = (input.value || '').trim();
+                if (!val) return;
+                const cur = parseTags();
+                if (!cur.find(x => x.toLowerCase() === val.toLowerCase())) {
+                  cur.push(val);
+                  hidden.value = cur.join(',');
+                  render();
+                }
+                input.value = '';
+                input.focus();
+              });
+
+              input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') { e.preventDefault(); addBtn.click(); }
+              });
+
+              render();
             })();
           </script>
         </article>

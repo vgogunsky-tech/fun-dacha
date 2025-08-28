@@ -530,7 +530,7 @@ def ensure_product_columns() -> None:
     rows, fields, _ = read_products_csv()
     changed = False
     # Ensure essential columns
-    for col in ["primary_image", "images"] + REQUIRED_PRODUCT_COLS:
+    for col in ["primary_image", "images", "tags"] + REQUIRED_PRODUCT_COLS:
         if col not in fields:
             fields.append(col)
             for r in rows:
@@ -925,6 +925,7 @@ def product_save():
         "Название (рус)",
         "Описание (укр)",
         "Описание (рус)",
+        "tags",
     ]:
         if key in form:
             target[key] = form.get(key, "")
