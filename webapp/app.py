@@ -40,6 +40,95 @@ logging.basicConfig(level=getattr(logging, os.environ.get("LOG_LEVEL", "INFO"), 
 app.logger.setLevel(getattr(logging, os.environ.get("LOG_LEVEL", "INFO"), logging.INFO))
 
 
+# -------------------- Translation helpers --------------------
+
+def _http_json_post(url: str, payload: Dict[str, str]) -> Tuple[int, str]:
+    data = json.dumps(payload).encode("utf-8")
+    req = urlrequest.Request(url, data=data, method="POST")
+    req.add_header("Content-Type", "application/json")
+    req.add_header("Accept", "application/json")
+    req.add_header("User-Agent", "fun-dacha-webapp")
+    try:
+        with urlrequest.urlopen(req, timeout=25) as resp:
+            status = resp.getcode()
+            body = (resp.read() or b"").decode("utf-8", errors="replace")
+            return status, body
+    except HTTPError as e:
+        body = (e.read() or b"").decode("utf-8", errors="replace")
+        return e.code, body
+    except URLError as e:
+        return 0, str(e)
+
+
+def _translate_via_libretranslate(text: str) -> Optional[str]:
+    if not text:
+        return ""
+    endpoints = [
+        "https://libretranslate.de/translate",
+        "https://translate.argosopentech.com/translate",
+    ]
+    for ep in endpoints:
+        try:
+            status, body = _http_json_post(ep, {
+                "q": text,
+                "source": "ru",
+                "target": "uk",
+                "format": "text",
+            })
+            if status == 200 and body:
+                try:
+                    data = json.loads(body)
+                    translated = data.get("translatedText")
+                    if isinstance(translated, str) and translated.strip():
+                        return translated.strip()
+                except Exception:
+                    pass
+        except Exception:
+            continue
+    return None
+
+
+def _translate_via_mymemory(text: str) -> Optional[str]:
+    if not text:
+        return ""
+    try:
+        params = {
+            "q": text,
+            "langpair": "ru|uk",
+        }
+        url = "https://api.mymemory.translated.net/get?" + urlparse.urlencode(params)
+        req = urlrequest.Request(url, method="GET")
+        req.add_header("Accept", "application/json")
+        req.add_header("User-Agent", "fun-dacha-webapp")
+        with urlrequest.urlopen(req, timeout=25) as resp:
+            status = resp.getcode()
+            body = (resp.read() or b"").decode("utf-8", errors="replace")
+        if status == 200 and body:
+            try:
+                data = json.loads(body)
+                translated = (data.get("responseData") or {}).get("translatedText")
+                if isinstance(translated, str) and translated.strip():
+                    return translated.strip()
+            except Exception:
+                pass
+    except Exception:
+        return None
+    return None
+
+
+def translate_text_ru_to_uk(text: str) -> Optional[str]:
+    if not (text or "").strip():
+        return ""
+    # Try LibreTranslate first for better consistency, then fall back to MyMemory
+    res = _translate_via_libretranslate(text)
+    if isinstance(res, str) and res.strip():
+        return res
+    res = _translate_via_mymemory(text)
+    if isinstance(res, str) and res.strip():
+        return res
+    return None
+
+
 def _log_git(message: str) -> None:
     try:
         app.logger.info(message)
@@ -876,6 +965,35 @@ def product_save():
 
     action = (form.get("action") or "").strip()
     advanced = False
+    if action == "translate_ru_to_ua":
+        # Perform translation from RU description to UA and save
+        src = (target.get("Описание (рус)") or "").strip()
+        if not src:
+            flash("Немає російського опису для перекладу.")
+        else:
+            translated = translate_text_ru_to_uk(src)
+            if isinstance(translated, str) and translated.strip():
+                target["Описание (укр)"] = translated.strip()
+                flash("Опис перекладено з RU на UA та збережено.")
+            else:
+                flash("Не вдалося перекласти опис. Спробуйте пізніше.")
+        # Persist changes regardless of success to keep any other edits
+        written_paths = write_products_csv(rows, fields)
+        changed_paths.extend(written_paths)
+        commit_and_push(changed_paths, f"Translate RU→UA description for product {product_id}")
+        # Redirect back to the same product view without advancing index
+        return_to = (form.get("return_to") or "").strip()
+        if return_to.startswith("/"):
+            return redirect(return_to)
+        category_id = target.get("category_id", "")
+        try:
+            cat_int = int(float(category_id)) if category_id else None
+        except Exception:
+            cat_int = None
+        if cat_int is None:
+            return redirect(url_for("index"))
+        next_index = (request.args.get("index", type=int) or 0)
+        return redirect(url_for("product", category_id=cat_int, index=next_index))
     if action == "save_validate":
         target["validated"] = "1"
         advanced = True
