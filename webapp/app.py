@@ -564,6 +564,36 @@ def load_products() -> List[Dict[str, str]]:
     return rows
 
 
+def load_tag_ua_map(category_id: int) -> Dict[str, str]:
+    """Load mapping of tag key -> UA display name for a given category.
+
+    Falls back to empty mapping if tags.csv is missing.
+    """
+    tags_path = os.path.join(DATA_DIR, "tags.csv")
+    mapping: Dict[str, str] = {}
+    try:
+        with open(tags_path, "r", encoding="utf-8", newline="") as f:
+            reader = csv.DictReader(f)
+            # Normalize category id like other code: tolerate values like "100.0"
+            try:
+                cat_norm = str(int(float(category_id)))
+            except Exception:
+                cat_norm = str(category_id)
+            for row in reader:
+                if (row.get("category") or "").strip() != cat_norm:
+                    continue
+                key = (row.get("key") or "").strip()
+                ua = (row.get("ua") or "").strip()
+                if key and ua:
+                    mapping[key] = ua
+    except FileNotFoundError:
+        pass
+    except Exception:
+        # Be resilient in UI if tags file has unexpected issues
+        pass
+    return mapping
+
+
 def find_category_image(cid: str) -> Optional[str]:
     # Prefer c{cid}.jpg then {cid}.jpg
     candidates = [f"c{cid}.jpg", f"{cid}.jpg"]
@@ -819,6 +849,14 @@ def product_by_id(pid: int):
                 "url": url_for("serve_product_image", filename=name),
             })
 
+    # Tag UA map for this product's category
+    tag_ua_map = {}
+    try:
+        if category_id is not None:
+            tag_ua_map = load_tag_ua_map(int(float(category_id)))
+    except Exception:
+        tag_ua_map = {}
+
     return render_template(
         "product.html",
         category_id=category_id or 0,
@@ -829,6 +867,7 @@ def product_by_id(pid: int):
         secondary_items=secondary_items,
         categories=cats,
         parent_to_children=parent_to_children,
+        tag_ua_map=tag_ua_map,
     )
 
 
@@ -878,6 +917,13 @@ def product():
                 "url": url_for("serve_product_image", filename=name),
             })
 
+    # Tag UA map for this category
+    tag_ua_map = {}
+    try:
+        tag_ua_map = load_tag_ua_map(int(float(category_id)))
+    except Exception:
+        tag_ua_map = {}
+
     return render_template(
         "product.html",
         category_id=category_id,
@@ -888,6 +934,7 @@ def product():
         secondary_items=secondary_items,
         categories=cats,
         parent_to_children=parent_to_children,
+        tag_ua_map=tag_ua_map,
     )
 
 
