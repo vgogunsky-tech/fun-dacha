@@ -1,368 +1,368 @@
-category,group_id,group,tag_id,key,ua,ru
-100,color,Color,black,black,Чорний,Чёрный
-100,color,Color,brown,brown,Коричневий,Коричневый
-100,color,Color,orange,orange,Оранжевий,Оранжевый
-100,color,Color,pink,pink,Рожевий,Розовый
-100,color,Color,raspberry,raspberry,Малиновий,Малиновый
-100,color,Color,red,red,Червоний,Красный
-100,color,Color,yellow,yellow,Жовтий,Жёлтый
-100,cultivation,Cultivation,bee_pollinated,bee_pollinated,Бджолозапилюваний,Пчелоопыляемый
-100,cultivation,Cultivation,greenhouse,greenhouse,Теплиця/укриття,Теплица/укрытия
-100,cultivation,Cultivation,needs_trellis,needs_trellis,Потребує підв'язки,Требует подвязки
-100,cultivation,Cultivation,no_pinch,no_pinch,Без пасинкування,Без пасынкования
-100,cultivation,Cultivation,open_field,open_field,Відкритий ґрунт,Открытый грунт
-100,cultivation,Cultivation,parthenocarpic,parthenocarpic,Партенокарпічний,Партенокарпический
-100,growth,Growth,compact,compact,Компактний,Компактный
-100,growth,Growth,determinate,determinate,Детермінантний,Детерминантный
-100,growth,Growth,indeterminate,indeterminate,Індетермінантний,Индетерминантный
-100,growth,Growth,short,short,Низькорослий,Низкорослый
-100,growth,Growth,sprawling,sprawling,Розлогий,Раскидистый
-100,growth,Growth,tall,tall,Високорослий,Высокорослый
-100,maturity,Maturity,early,early,Ранній,Ранний
-100,maturity,Maturity,early_maturing,early_maturing,Ранньостиглий,Раннеспелый
-100,maturity,Maturity,late,late,Пізній,Поздний
-100,maturity,Maturity,mid_early,mid_early,Середньоранній,Среднеранний
-100,maturity,Maturity,mid_late,mid_late,Середньопізній,Среднепоздний
-100,maturity,Maturity,mid_maturing,mid_maturing,Середньостиглий,Среднеспелый
-100,resistance,Resistance,alternaria,alternaria,Альтернаріоз,Альтернариоз
-100,resistance,Resistance,cold_tolerant,cold_tolerant,Холодостійкий,Холодостойкий
-100,resistance,Resistance,disease_resistant,disease_resistant,Стійкий до хвороб,Устойчив к болезням
-100,resistance,Resistance,drought_tolerant,drought_tolerant,Посухостійкий,Засухоустойчивый
-100,resistance,Resistance,fusarium,fusarium,Фузаріоз,Фузариоз
-100,resistance,Resistance,late_blight,late_blight,Фітофтороз,Фитофтороз
-100,resistance,Resistance,powdery_mildew,powdery_mildew,Мучниста роса,Мучнистая роса
-100,resistance,Resistance,septoria,septoria,Септоріоз,Септориоз
-100,resistance,Resistance,shade_tolerant,shade_tolerant,Тіньовитривалий,Теневыносливый
-100,shape,Shape,cylindrical,cylindrical,Циліндричний,Цилиндрический
-100,shape,Shape,elongated,elongated,Подовжений,Удлинённый
-100,shape,Shape,flat_round,flat_round,Плоскоокруглий,Плоскоокруглый
-100,shape,Shape,oval,oval,Овальний,Овальный
-100,shape,Shape,pear,pear,Грушоподібний,Грушевидный
-100,shape,Shape,plum,plum,Сливка,Сливка
-100,shape,Shape,round,round,Округлий,Округлый
-100,texture,Texture,crunchy,crunchy,Хрусткий,Хрустящий
-100,texture,Texture,firm,firm,Щільний,Плотный
-100,texture,Texture,juicy,juicy,Соковитий,Сочный
-100,texture,Texture,keeping,keeping,Лежкий,Лёжкий
-100,texture,Texture,meaty,meaty,М'ясистий,Мясистый
-100,texture,Texture,sweet,sweet,Солодкий,Сладкий
-100,texture,Texture,transportable,transportable,Транспортабельний,Транспортабельный
-100,traits,Traits,few_seeds,few_seeds,Малонасінневий,Малосемянный
-100,traits,Traits,long_storage,long_storage,Довге зберігання,Долгое хранение
-100,traits,Traits,no_green_shoulder,no_green_shoulder,Без зеленої плями біля плодоніжки,Без зелёного пятна у плодоножки
-100,traits,Traits,thin_skin,thin_skin,Тонка шкірка,Тонкая кожура
-100,usage,Usage,baby_food,baby_food,Дитяче харчування,Детское питание
-100,usage,Usage,canning,canning,Консервування,Консервирование
-100,usage,Usage,fresh,fresh,Свіже споживання,Свежее потребление
-100,usage,Usage,juice,juice,Сік,Сок
-100,usage,Usage,paste,paste,Паста,Паста
-100,usage,Usage,pickling,pickling,Засолювання,Засолка
-100,usage,Usage,salad,salad,Салатний,Салатный
-100,usage,Usage,sauce,sauce,Соус,Соус
-100,usage,Usage,universal,universal,Універсальний,Универсальный
-100,yield,Yield,high_yield,high_yield,Високоврожайний,Высокоурожайный
-100,yield,Yield,long_fruiting,long_fruiting,Тривале плодоношення,Длительное плодоношение
-100,yield,Yield,uniform_ripening,uniform_ripening,Дружнє дозрівання,Дружное созревание
-110,color,Color,black,black,Чорний,Чёрный
-110,color,Color,orange,orange,Оранжевий,Оранжевый
-110,color,Color,red,red,Червоний,Красный
-110,color,Color,yellow,yellow,Жовтий,Жёлтый
-110,cultivation,Cultivation,bee_pollinated,bee_pollinated,Бджолозапилюваний,Пчелоопыляемый
-110,cultivation,Cultivation,greenhouse,greenhouse,Теплиця/укриття,Теплица/укрытия
-110,cultivation,Cultivation,open_field,open_field,Відкритий ґрунт,Открытый грунт
-110,cultivation,Cultivation,parthenocarpic,parthenocarpic,Партенокарпічний,Партенокарпический
-110,growth,Growth,compact,compact,Компактний,Компактный
-110,growth,Growth,determinate,determinate,Детермінантний,Детерминантный
-110,growth,Growth,tall,tall,Високорослий,Высокорослый
-110,maturity,Maturity,early,early,Ранній,Ранний
-110,maturity,Maturity,early_maturing,early_maturing,Ранньостиглий,Раннеспелый
-110,maturity,Maturity,late,late,Пізній,Поздний
-110,maturity,Maturity,mid_early,mid_early,Середньоранній,Среднеранний
-110,maturity,Maturity,mid_late,mid_late,Середньопізній,Среднепоздний
-110,maturity,Maturity,mid_maturing,mid_maturing,Середньостиглий,Среднеспелый
-110,resistance,Resistance,disease_resistant,disease_resistant,Стійкий до хвороб,Устойчив к болезням
-110,resistance,Resistance,drought_tolerant,drought_tolerant,Посухостійкий,Засухоустойчивый
-110,resistance,Resistance,powdery_mildew,powdery_mildew,Мучниста роса,Мучнистая роса
-110,resistance,Resistance,shade_tolerant,shade_tolerant,Тіньовитривалий,Теневыносливый
-110,shape,Shape,cylindrical,cylindrical,Циліндричний,Цилиндрический
-110,shape,Shape,elongated,elongated,Подовжений,Удлинённый
-110,shape,Shape,oval,oval,Овальний,Овальный
-110,shape,Shape,round,round,Округлий,Округлый
-110,texture,Texture,crunchy,crunchy,Хрусткий,Хрустящий
-110,texture,Texture,firm,firm,Щільний,Плотный
-110,texture,Texture,juicy,juicy,Соковитий,Сочный
-110,texture,Texture,keeping,keeping,Лежкий,Лёжкий
-110,texture,Texture,transportable,transportable,Транспортабельний,Транспортабельный
-110,traits,Traits,long_storage,long_storage,Довге зберігання,Долгое хранение
-110,traits,Traits,marketable,marketable,Товарний вигляд,Товарный вид
-110,traits,Traits,thin_skin,thin_skin,Тонка шкірка,Тонкая кожура
-110,usage,Usage,canning,canning,Консервування,Консервирование
-110,usage,Usage,fresh,fresh,Свіже споживання,Свежее потребление
-110,usage,Usage,juice,juice,Сік,Сок
-110,usage,Usage,pickling,pickling,Засолювання,Засолка
-110,usage,Usage,salad,salad,Салатний,Салатный
-110,usage,Usage,universal,universal,Універсальний,Универсальный
-110,yield,Yield,high_yield,high_yield,Високоврожайний,Высокоурожайный
-110,yield,Yield,uniform_ripening,uniform_ripening,Дружнє дозрівання,Дружное созревание
-120,color,Color,black,black,Чорний,Чёрный
-120,color,Color,raspberry,raspberry,Малиновий,Малиновый
-120,color,Color,red,red,Червоний,Красный
-120,cultivation,Cultivation,greenhouse,greenhouse,Теплиця/укриття,Теплица/укрытия
-120,cultivation,Cultivation,open_field,open_field,Відкритий ґрунт,Открытый грунт
-120,maturity,Maturity,early,early,Ранній,Ранний
-120,maturity,Maturity,early_maturing,early_maturing,Ранньостиглий,Раннеспелый
-120,maturity,Maturity,late,late,Пізній,Поздний
-120,maturity,Maturity,mid_early,mid_early,Середньоранній,Среднеранний
-120,maturity,Maturity,mid_late,mid_late,Середньопізній,Среднепоздний
-120,maturity,Maturity,mid_maturing,mid_maturing,Середньостиглий,Среднеспелый
-120,resistance,Resistance,cold_tolerant,cold_tolerant,Холодостійкий,Холодостойкий
-120,resistance,Resistance,disease_resistant,disease_resistant,Стійкий до хвороб,Устойчив к болезням
-120,shape,Shape,cylindrical,cylindrical,Циліндричний,Цилиндрический
-120,shape,Shape,elongated,elongated,Подовжений,Удлинённый
-120,shape,Shape,flat_round,flat_round,Плоскоокруглий,Плоскоокруглый
-120,shape,Shape,oval,oval,Овальний,Овальный
-120,shape,Shape,round,round,Округлий,Округлый
-120,texture,Texture,firm,firm,Щільний,Плотный
-120,texture,Texture,juicy,juicy,Соковитий,Сочный
-120,texture,Texture,keeping,keeping,Лежкий,Лёжкий
-120,texture,Texture,meaty,meaty,М'ясистий,Мясистый
-120,texture,Texture,sweet,sweet,Солодкий,Сладкий
-120,traits,Traits,marketable,marketable,Товарний вигляд,Товарный вид
-120,usage,Usage,canning,canning,Консервування,Консервирование
-120,usage,Usage,fresh,fresh,Свіже споживання,Свежее потребление
-120,usage,Usage,juice,juice,Сік,Сок
-120,usage,Usage,universal,universal,Універсальний,Универсальный
-120,yield,Yield,high_yield,high_yield,Високоврожайний,Высокоурожайный
-130,color,Color,pink,pink,Рожевий,Розовый
-130,color,Color,raspberry,raspberry,Малиновий,Малиновый
-130,color,Color,red,red,Червоний,Красный
-130,color,Color,yellow,yellow,Жовтий,Жёлтый
-130,cultivation,Cultivation,greenhouse,greenhouse,Теплиця/укриття,Теплица/укрытия
-130,cultivation,Cultivation,needs_trellis,needs_trellis,Потребує підв'язки,Требует подвязки
-130,cultivation,Cultivation,open_field,open_field,Відкритий ґрунт,Открытый грунт
-130,growth,Growth,compact,compact,Компактний,Компактный
-130,growth,Growth,short,short,Низькорослий,Низкорослый
-130,growth,Growth,sprawling,sprawling,Розлогий,Раскидистый
-130,growth,Growth,tall,tall,Високорослий,Высокорослый
-130,maturity,Maturity,early,early,Ранній,Ранний
-130,maturity,Maturity,early_maturing,early_maturing,Ранньостиглий,Раннеспелый
-130,maturity,Maturity,mid_early,mid_early,Середньоранній,Среднеранний
-130,maturity,Maturity,mid_maturing,mid_maturing,Середньостиглий,Среднеспелый
-130,resistance,Resistance,cold_tolerant,cold_tolerant,Холодостійкий,Холодостойкий
-130,resistance,Resistance,disease_resistant,disease_resistant,Стійкий до хвороб,Устойчив к болезням
-130,resistance,Resistance,drought_tolerant,drought_tolerant,Посухостійкий,Засухоустойчивый
-130,shape,Shape,cylindrical,cylindrical,Циліндричний,Цилиндрический
-130,shape,Shape,elongated,elongated,Подовжений,Удлинённый
-130,shape,Shape,flat_round,flat_round,Плоскоокруглий,Плоскоокруглый
-130,shape,Shape,oval,oval,Овальний,Овальный
-130,shape,Shape,round,round,Округлий,Округлый
-130,texture,Texture,firm,firm,Щільний,Плотный
-130,texture,Texture,juicy,juicy,Соковитий,Сочный
-130,texture,Texture,meaty,meaty,М'ясистий,Мясистый
-130,texture,Texture,sweet,sweet,Солодкий,Сладкий
-130,usage,Usage,juice,juice,Сік,Сок
-130,usage,Usage,universal,universal,Універсальний,Универсальный
-130,yield,Yield,high_yield,high_yield,Високоврожайний,Высокоурожайный
-140,color,Color,black,black,Чорний,Чёрный
-140,color,Color,brown,brown,Коричневий,Коричневый
-140,color,Color,pink,pink,Рожевий,Розовый
-140,color,Color,red,red,Червоний,Красный
-140,color,Color,yellow,yellow,Жовтий,Жёлтый
-140,cultivation,Cultivation,greenhouse,greenhouse,Теплиця/укриття,Теплица/укрытия
-140,cultivation,Cultivation,open_field,open_field,Відкритий ґрунт,Открытый грунт
-140,growth,Growth,compact,compact,Компактний,Компактный
-140,growth,Growth,tall,tall,Високорослий,Высокорослый
-140,maturity,Maturity,early,early,Ранній,Ранний
-140,maturity,Maturity,early_maturing,early_maturing,Ранньостиглий,Раннеспелый
-140,maturity,Maturity,mid_early,mid_early,Середньоранній,Среднеранний
-140,maturity,Maturity,mid_maturing,mid_maturing,Середньостиглий,Среднеспелый
-140,resistance,Resistance,disease_resistant,disease_resistant,Стійкий до хвороб,Устойчив к болезням
-140,resistance,Resistance,powdery_mildew,powdery_mildew,Мучниста роса,Мучнистая роса
-140,shape,Shape,cylindrical,cylindrical,Циліндричний,Цилиндрический
-140,shape,Shape,elongated,elongated,Подовжений,Удлинённый
-140,shape,Shape,flat_round,flat_round,Плоскоокруглий,Плоскоокруглый
-140,shape,Shape,oval,oval,Овальний,Овальный
-140,shape,Shape,pear,pear,Грушоподібний,Грушевидный
-140,shape,Shape,round,round,Округлий,Округлый
-140,texture,Texture,firm,firm,Щільний,Плотный
-140,texture,Texture,juicy,juicy,Соковитий,Сочный
-140,texture,Texture,keeping,keeping,Лежкий,Лёжкий
-140,texture,Texture,transportable,transportable,Транспортабельний,Транспортабельный
-140,usage,Usage,fresh,fresh,Свіже споживання,Свежее потребление
-140,usage,Usage,juice,juice,Сік,Сок
-140,usage,Usage,salad,salad,Салатний,Салатный
-140,usage,Usage,universal,universal,Універсальний,Универсальный
-140,yield,Yield,high_yield,high_yield,Високоврожайний,Высокоурожайный
-150,color,Color,black,black,Чорний,Чёрный
-150,color,Color,yellow,yellow,Жовтий,Жёлтый
-150,maturity,Maturity,early_maturing,early_maturing,Ранньостиглий,Раннеспелый
-150,shape,Shape,round,round,Округлий,Округлый
-150,texture,Texture,firm,firm,Щільний,Плотный
-150,texture,Texture,juicy,juicy,Соковитий,Сочный
-150,texture,Texture,keeping,keeping,Лежкий,Лёжкий
-150,texture,Texture,sweet,sweet,Солодкий,Сладкий
-150,traits,Traits,marketable,marketable,Товарний вигляд,Товарный вид
-150,usage,Usage,juice,juice,Сік,Сок
-150,yield,Yield,high_yield,high_yield,Високоврожайний,Высокоурожайный
-160,color,Color,orange,orange,Оранжевий,Оранжевый
-160,color,Color,red,red,Червоний,Красный
-160,maturity,Maturity,early,early,Ранній,Ранний
-160,maturity,Maturity,early_maturing,early_maturing,Ранньостиглий,Раннеспелый
-160,maturity,Maturity,mid_early,mid_early,Середньоранній,Среднеранний
-160,maturity,Maturity,mid_late,mid_late,Середньопізній,Среднепоздний
-160,maturity,Maturity,mid_maturing,mid_maturing,Середньостиглий,Среднеспелый
-160,shape,Shape,cylindrical,cylindrical,Циліндричний,Цилиндрический
-160,shape,Shape,elongated,elongated,Подовжений,Удлинённый
-160,shape,Shape,round,round,Округлий,Округлый
-160,texture,Texture,juicy,juicy,Соковитий,Сочный
-160,texture,Texture,keeping,keeping,Лежкий,Лёжкий
-160,texture,Texture,sweet,sweet,Солодкий,Сладкий
-160,usage,Usage,canning,canning,Консервування,Консервирование
-160,usage,Usage,fresh,fresh,Свіже споживання,Свежее потребление
-160,usage,Usage,juice,juice,Сік,Сок
-160,yield,Yield,high_yield,high_yield,Високоврожайний,Высокоурожайный
-170,color,Color,red,red,Червоний,Красный
-170,maturity,Maturity,early_maturing,early_maturing,Ранньостиглий,Раннеспелый
-170,maturity,Maturity,mid_early,mid_early,Середньоранній,Среднеранний
-170,maturity,Maturity,mid_late,mid_late,Середньопізній,Среднепоздний
-170,maturity,Maturity,mid_maturing,mid_maturing,Середньостиглий,Среднеспелый
-170,resistance,Resistance,disease_resistant,disease_resistant,Стійкий до хвороб,Устойчив к болезням
-170,resistance,Resistance,drought_tolerant,drought_tolerant,Посухостійкий,Засухоустойчивый
-170,shape,Shape,cylindrical,cylindrical,Циліндричний,Цилиндрический
-170,shape,Shape,round,round,Округлий,Округлый
-170,texture,Texture,juicy,juicy,Соковитий,Сочный
-170,texture,Texture,keeping,keeping,Лежкий,Лёжкий
-170,texture,Texture,sweet,sweet,Солодкий,Сладкий
-170,texture,Texture,transportable,transportable,Транспортабельний,Транспортабельный
-170,usage,Usage,canning,canning,Консервування,Консервирование
-170,usage,Usage,fresh,fresh,Свіже споживання,Свежее потребление
-170,usage,Usage,juice,juice,Сік,Сок
-170,yield,Yield,high_yield,high_yield,Високоврожайний,Высокоурожайный
-180,color,Color,black,black,Чорний,Чёрный
-180,color,Color,brown,brown,Коричневий,Коричневый
-180,color,Color,orange,orange,Оранжевий,Оранжевый
-180,color,Color,pink,pink,Рожевий,Розовый
-180,color,Color,raspberry,raspberry,Малиновий,Малиновый
-180,color,Color,red,red,Червоний,Красный
-180,color,Color,yellow,yellow,Жовтий,Жёлтый
-180,cultivation,Cultivation,greenhouse,greenhouse,Теплиця/укриття,Теплица/укрытия
-180,cultivation,Cultivation,open_field,open_field,Відкритий ґрунт,Открытый грунт
-180,maturity,Maturity,early,early,Ранній,Ранний
-180,maturity,Maturity,early_maturing,early_maturing,Ранньостиглий,Раннеспелый
-180,maturity,Maturity,mid_late,mid_late,Середньопізній,Среднепоздний
-180,maturity,Maturity,mid_maturing,mid_maturing,Середньостиглий,Среднеспелый
-180,resistance,Resistance,disease_resistant,disease_resistant,Стійкий до хвороб,Устойчив к болезням
-180,resistance,Resistance,drought_tolerant,drought_tolerant,Посухостійкий,Засухоустойчивый
-180,resistance,Resistance,fusarium,fusarium,Фузаріоз,Фузариоз
-180,resistance,Resistance,powdery_mildew,powdery_mildew,Мучниста роса,Мучнистая роса
-180,shape,Shape,cylindrical,cylindrical,Циліндричний,Цилиндрический
-180,shape,Shape,elongated,elongated,Подовжений,Удлинённый
-180,shape,Shape,oval,oval,Овальний,Овальный
-180,shape,Shape,round,round,Округлий,Округлый
-180,texture,Texture,crunchy,crunchy,Хрусткий,Хрустящий
-180,texture,Texture,juicy,juicy,Соковитий,Сочный
-180,texture,Texture,keeping,keeping,Лежкий,Лёжкий
-180,texture,Texture,meaty,meaty,М'ясистий,Мясистый
-180,texture,Texture,sweet,sweet,Солодкий,Сладкий
-180,texture,Texture,transportable,transportable,Транспортабельний,Транспортабельный
-180,traits,Traits,marketable,marketable,Товарний вигляд,Товарный вид
-180,usage,Usage,fresh,fresh,Свіже споживання,Свежее потребление
-180,usage,Usage,juice,juice,Сік,Сок
-180,usage,Usage,salad,salad,Салатний,Салатный
-180,yield,Yield,high_yield,high_yield,Високоврожайний,Высокоурожайный
-190,color,Color,brown,brown,Коричневий,Коричневый
-190,color,Color,orange,orange,Оранжевий,Оранжевый
-190,color,Color,red,red,Червоний,Красный
-190,color,Color,yellow,yellow,Жовтий,Жёлтый
-190,cultivation,Cultivation,open_field,open_field,Відкритий ґрунт,Открытый грунт
-190,growth,Growth,compact,compact,Компактний,Компактный
-190,maturity,Maturity,early,early,Ранній,Ранний
-190,maturity,Maturity,early_maturing,early_maturing,Ранньостиглий,Раннеспелый
-190,maturity,Maturity,mid_early,mid_early,Середньоранній,Среднеранний
-190,maturity,Maturity,mid_maturing,mid_maturing,Середньостиглий,Среднеспелый
-190,resistance,Resistance,cold_tolerant,cold_tolerant,Холодостійкий,Холодостойкий
-190,resistance,Resistance,drought_tolerant,drought_tolerant,Посухостійкий,Засухоустойчивый
-190,resistance,Resistance,powdery_mildew,powdery_mildew,Мучниста роса,Мучнистая роса
-190,shape,Shape,oval,oval,Овальний,Овальный
-190,shape,Shape,round,round,Округлий,Округлый
-190,texture,Texture,crunchy,crunchy,Хрусткий,Хрустящий
-190,texture,Texture,firm,firm,Щільний,Плотный
-190,texture,Texture,juicy,juicy,Соковитий,Сочный
-190,texture,Texture,keeping,keeping,Лежкий,Лёжкий
-190,texture,Texture,meaty,meaty,М'ясистий,Мясистый
-190,texture,Texture,sweet,sweet,Солодкий,Сладкий
-190,texture,Texture,transportable,transportable,Транспортабельний,Транспортабельный
-190,traits,Traits,marketable,marketable,Товарний вигляд,Товарный вид
-190,usage,Usage,fresh,fresh,Свіже споживання,Свежее потребление
-190,usage,Usage,juice,juice,Сік,Сок
-190,yield,Yield,high_yield,high_yield,Високоврожайний,Высокоурожайный
-200,color,Color,black,black,Чорний,Чёрный
-200,color,Color,orange,orange,Оранжевий,Оранжевый
-200,color,Color,pink,pink,Рожевий,Розовый
-200,color,Color,yellow,yellow,Жовтий,Жёлтый
-200,cultivation,Cultivation,open_field,open_field,Відкритий ґрунт,Открытый грунт
-200,growth,Growth,compact,compact,Компактний,Компактный
-200,maturity,Maturity,early_maturing,early_maturing,Ранньостиглий,Раннеспелый
-200,resistance,Resistance,cold_tolerant,cold_tolerant,Холодостійкий,Холодостойкий
-200,resistance,Resistance,disease_resistant,disease_resistant,Стійкий до хвороб,Устойчив к болезням
-200,shape,Shape,cylindrical,cylindrical,Циліндричний,Цилиндрический
-200,shape,Shape,elongated,elongated,Подовжений,Удлинённый
-200,shape,Shape,oval,oval,Овальний,Овальный
-200,texture,Texture,crunchy,crunchy,Хрусткий,Хрустящий
-200,texture,Texture,firm,firm,Щільний,Плотный
-200,texture,Texture,juicy,juicy,Соковитий,Сочный
-200,texture,Texture,keeping,keeping,Лежкий,Лёжкий
-200,texture,Texture,sweet,sweet,Солодкий,Сладкий
-200,texture,Texture,transportable,transportable,Транспортабельний,Транспортабельный
-200,usage,Usage,juice,juice,Сік,Сок
-200,yield,Yield,high_yield,high_yield,Високоврожайний,Высокоурожайный
-200,yield,Yield,uniform_ripening,uniform_ripening,Дружнє дозрівання,Дружное созревание
-210,color,Color,orange,orange,Оранжевий,Оранжевый
-210,color,Color,pink,pink,Рожевий,Розовый
-210,color,Color,yellow,yellow,Жовтий,Жёлтый
-210,cultivation,Cultivation,open_field,open_field,Відкритий ґрунт,Открытый грунт
-210,maturity,Maturity,early,early,Ранній,Ранний
-210,maturity,Maturity,early_maturing,early_maturing,Ранньостиглий,Раннеспелый
-210,maturity,Maturity,mid_maturing,mid_maturing,Середньостиглий,Среднеспелый
-210,shape,Shape,cylindrical,cylindrical,Циліндричний,Цилиндрический
-210,shape,Shape,round,round,Округлий,Округлый
-210,texture,Texture,crunchy,crunchy,Хрусткий,Хрустящий
-210,texture,Texture,firm,firm,Щільний,Плотный
-210,texture,Texture,juicy,juicy,Соковитий,Сочный
-210,texture,Texture,meaty,meaty,М'ясистий,Мясистый
-210,usage,Usage,canning,canning,Консервування,Консервирование
-210,usage,Usage,juice,juice,Сік,Сок
-210,yield,Yield,high_yield,high_yield,Високоврожайний,Высокоурожайный
-220,cultivation,Cultivation,greenhouse,greenhouse,Теплиця/укриття,Теплица/укрытия
-220,cultivation,Cultivation,open_field,open_field,Відкритий ґрунт,Открытый грунт
-220,growth,Growth,compact,compact,Компактний,Компактный
-220,maturity,Maturity,early,early,Ранній,Ранний
-220,maturity,Maturity,early_maturing,early_maturing,Ранньостиглий,Раннеспелый
-220,maturity,Maturity,mid_maturing,mid_maturing,Середньостиглий,Среднеспелый
-220,resistance,Resistance,cold_tolerant,cold_tolerant,Холодостійкий,Холодостойкий
-220,shape,Shape,elongated,elongated,Подовжений,Удлинённый
-220,shape,Shape,oval,oval,Овальний,Овальный
-220,texture,Texture,crunchy,crunchy,Хрусткий,Хрустящий
-220,texture,Texture,juicy,juicy,Соковитий,Сочный
-220,texture,Texture,sweet,sweet,Солодкий,Сладкий
-220,usage,Usage,fresh,fresh,Свіже споживання,Свежее потребление
-220,usage,Usage,juice,juice,Сік,Сок
-220,usage,Usage,salad,salad,Салатний,Салатный
-220,yield,Yield,high_yield,high_yield,Високоврожайний,Высокоурожайный
-230,growth,Growth,sprawling,sprawling,Розлогий,Раскидистый
-230,usage,Usage,fresh,fresh,Свіже споживання,Свежее потребление
-240,color,Color,yellow,yellow,Жовтий,Жёлтый
-240,cultivation,Cultivation,open_field,open_field,Відкритий ґрунт,Открытый грунт
-240,maturity,Maturity,early,early,Ранній,Ранний
-240,maturity,Maturity,early_maturing,early_maturing,Ранньостиглий,Раннеспелый
-240,resistance,Resistance,cold_tolerant,cold_tolerant,Холодостійкий,Холодостойкий
-240,texture,Texture,juicy,juicy,Соковитий,Сочный
-240,texture,Texture,sweet,sweet,Солодкий,Сладкий
-240,usage,Usage,canning,canning,Консервування,Консервирование
-240,usage,Usage,juice,juice,Сік,Сок
-240,usage,Usage,paste,paste,Паста,Паста
-240,usage,Usage,salad,salad,Салатний,Салатный
-240,yield,Yield,high_yield,high_yield,Високоврожайний,Высокоурожайный
-330,maturity,Maturity,mid_early,mid_early,Середньоранній,Среднеранний
-330,shape,Shape,elongated,elongated,Подовжений,Удлинённый
-330,shape,Shape,oval,oval,Овальний,Овальный
+category,group,key,ua,ru
+100,Color,black,Чорний,Чёрный
+100,Color,brown,Коричневий,Коричневый
+100,Color,orange,Оранжевий,Оранжевый
+100,Color,pink,Рожевий,Розовый
+100,Color,raspberry,Малиновий,Малиновый
+100,Color,red,Червоний,Красный
+100,Color,yellow,Жовтий,Жёлтый
+100,Cultivation,bee_pollinated,Бджолозапилюваний,Пчелоопыляемый
+100,Cultivation,greenhouse,Теплиця/укриття,Теплица/укрытия
+100,Cultivation,needs_trellis,Потребує підв'язки,Требует подвязки
+100,Cultivation,no_pinch,Без пасинкування,Без пасынкования
+100,Cultivation,open_field,Відкритий ґрунт,Открытый грунт
+100,Cultivation,parthenocarpic,Партенокарпічний,Партенокарпический
+100,Growth,compact,Компактний,Компактный
+100,Growth,determinate,Детермінантний,Детерминантный
+100,Growth,indeterminate,Індетермінантний,Индетерминантный
+100,Growth,short,Низькорослий,Низкорослый
+100,Growth,sprawling,Розлогий,Раскидистый
+100,Growth,tall,Високорослий,Высокорослый
+100,Maturity,early,Ранній,Ранний
+100,Maturity,early_maturing,Ранньостиглий,Раннеспелый
+100,Maturity,late,Пізній,Поздний
+100,Maturity,mid_early,Середньоранній,Среднеранний
+100,Maturity,mid_late,Середньопізній,Среднепоздний
+100,Maturity,mid_maturing,Середньостиглий,Среднеспелый
+100,Resistance,alternaria,Альтернаріоз,Альтернариоз
+100,Resistance,cold_tolerant,Холодостійкий,Холодостойкий
+100,Resistance,disease_resistant,Стійкий до хвороб,Устойчив к болезням
+100,Resistance,drought_tolerant,Посухостійкий,Засухоустойчивый
+100,Resistance,fusarium,Фузаріоз,Фузариоз
+100,Resistance,late_blight,Фітофтороз,Фитофтороз
+100,Resistance,powdery_mildew,Мучниста роса,Мучнистая роса
+100,Resistance,septoria,Септоріоз,Септориоз
+100,Resistance,shade_tolerant,Тіньовитривалий,Теневыносливый
+100,Shape,cylindrical,Циліндричний,Цилиндрический
+100,Shape,elongated,Подовжений,Удлинённый
+100,Shape,flat_round,Плоскоокруглий,Плоскоокруглый
+100,Shape,oval,Овальний,Овальный
+100,Shape,pear,Грушоподібний,Грушевидный
+100,Shape,plum,Сливка,Сливка
+100,Shape,round,Округлий,Округлый
+100,Texture,crunchy,Хрусткий,Хрустящий
+100,Texture,firm,Щільний,Плотный
+100,Texture,juicy,Соковитий,Сочный
+100,Texture,keeping,Лежкий,Лёжкий
+100,Texture,meaty,М'ясистий,Мясистый
+100,Texture,sweet,Солодкий,Сладкий
+100,Texture,transportable,Транспортабельний,Транспортабельный
+100,Traits,few_seeds,Малонасінневий,Малосемянный
+100,Traits,long_storage,Довге зберігання,Долгое хранение
+100,Traits,no_green_shoulder,Без зеленої плями біля плодоніжки,Без зелёного пятна у плодоножки
+100,Traits,thin_skin,Тонка шкірка,Тонкая кожура
+100,Usage,baby_food,Дитяче харчування,Детское питание
+100,Usage,canning,Консервування,Консервирование
+100,Usage,fresh,Свіже споживання,Свежее потребление
+100,Usage,juice,Сік,Сок
+100,Usage,paste,Паста,Паста
+100,Usage,pickling,Засолювання,Засолка
+100,Usage,salad,Салатний,Салатный
+100,Usage,sauce,Соус,Соус
+100,Usage,universal,Універсальний,Универсальный
+100,Yield,high_yield,Високоврожайний,Высокоурожайный
+100,Yield,long_fruiting,Тривале плодоношення,Длительное плодоношение
+100,Yield,uniform_ripening,Дружнє дозрівання,Дружное созревание
+110,Color,black,Чорний,Чёрный
+110,Color,orange,Оранжевий,Оранжевый
+110,Color,red,Червоний,Красный
+110,Color,yellow,Жовтий,Жёлтый
+110,Cultivation,bee_pollinated,Бджолозапилюваний,Пчелоопыляемый
+110,Cultivation,greenhouse,Теплиця/укриття,Теплица/укрытия
+110,Cultivation,open_field,Відкритий ґрунт,Открытый грунт
+110,Cultivation,parthenocarpic,Партенокарпічний,Партенокарпический
+110,Growth,compact,Компактний,Компактный
+110,Growth,determinate,Детермінантний,Детерминантный
+110,Growth,tall,Високорослий,Высокорослый
+110,Maturity,early,Ранній,Ранний
+110,Maturity,early_maturing,Ранньостиглий,Раннеспелый
+110,Maturity,late,Пізній,Поздний
+110,Maturity,mid_early,Середньоранній,Среднеранний
+110,Maturity,mid_late,Середньопізній,Среднепоздний
+110,Maturity,mid_maturing,Середньостиглий,Среднеспелый
+110,Resistance,disease_resistant,Стійкий до хвороб,Устойчив к болезням
+110,Resistance,drought_tolerant,Посухостійкий,Засухоустойчивый
+110,Resistance,powdery_mildew,Мучниста роса,Мучнистая роса
+110,Resistance,shade_tolerant,Тіньовитривалий,Теневыносливый
+110,Shape,cylindrical,Циліндричний,Цилиндрический
+110,Shape,elongated,Подовжений,Удлинённый
+110,Shape,oval,Овальний,Овальный
+110,Shape,round,Округлий,Округлый
+110,Texture,crunchy,Хрусткий,Хрустящий
+110,Texture,firm,Щільний,Плотный
+110,Texture,juicy,Соковитий,Сочный
+110,Texture,keeping,Лежкий,Лёжкий
+110,Texture,transportable,Транспортабельний,Транспортабельный
+110,Traits,long_storage,Довге зберігання,Долгое хранение
+110,Traits,marketable,Товарний вигляд,Товарный вид
+110,Traits,thin_skin,Тонка шкірка,Тонкая кожура
+110,Usage,canning,Консервування,Консервирование
+110,Usage,fresh,Свіже споживання,Свежее потребление
+110,Usage,juice,Сік,Сок
+110,Usage,pickling,Засолювання,Засолка
+110,Usage,salad,Салатний,Салатный
+110,Usage,universal,Універсальний,Универсальный
+110,Yield,high_yield,Високоврожайний,Высокоурожайный
+110,Yield,uniform_ripening,Дружнє дозрівання,Дружное созревание
+120,Color,black,Чорний,Чёрный
+120,Color,raspberry,Малиновий,Малиновый
+120,Color,red,Червоний,Красный
+120,Cultivation,greenhouse,Теплиця/укриття,Теплица/укрытия
+120,Cultivation,open_field,Відкритий ґрунт,Открытый грунт
+120,Maturity,early,Ранній,Ранний
+120,Maturity,early_maturing,Ранньостиглий,Раннеспелый
+120,Maturity,late,Пізній,Поздний
+120,Maturity,mid_early,Середньоранній,Среднеранний
+120,Maturity,mid_late,Середньопізній,Среднепоздний
+120,Maturity,mid_maturing,Середньостиглий,Среднеспелый
+120,Resistance,cold_tolerant,Холодостійкий,Холодостойкий
+120,Resistance,disease_resistant,Стійкий до хвороб,Устойчив к болезням
+120,Shape,cylindrical,Циліндричний,Цилиндрический
+120,Shape,elongated,Подовжений,Удлинённый
+120,Shape,flat_round,Плоскоокруглий,Плоскоокруглый
+120,Shape,oval,Овальний,Овальный
+120,Shape,round,Округлий,Округлый
+120,Texture,firm,Щільний,Плотный
+120,Texture,juicy,Соковитий,Сочный
+120,Texture,keeping,Лежкий,Лёжкий
+120,Texture,meaty,М'ясистий,Мясистый
+120,Texture,sweet,Солодкий,Сладкий
+120,Traits,marketable,Товарний вигляд,Товарный вид
+120,Usage,canning,Консервування,Консервирование
+120,Usage,fresh,Свіже споживання,Свежее потребление
+120,Usage,juice,Сік,Сок
+120,Usage,universal,Універсальний,Универсальный
+120,Yield,high_yield,Високоврожайний,Высокоурожайный
+130,Color,pink,Рожевий,Розовый
+130,Color,raspberry,Малиновий,Малиновый
+130,Color,red,Червоний,Красный
+130,Color,yellow,Жовтий,Жёлтый
+130,Cultivation,greenhouse,Теплиця/укриття,Теплица/укрытия
+130,Cultivation,needs_trellis,Потребує підв'язки,Требует подвязки
+130,Cultivation,open_field,Відкритий ґрунт,Открытый грунт
+130,Growth,compact,Компактний,Компактный
+130,Growth,short,Низькорослий,Низкорослый
+130,Growth,sprawling,Розлогий,Раскидистый
+130,Growth,tall,Високорослий,Высокорослый
+130,Maturity,early,Ранній,Ранний
+130,Maturity,early_maturing,Ранньостиглий,Раннеспелый
+130,Maturity,mid_early,Середньоранній,Среднеранний
+130,Maturity,mid_maturing,Середньостиглий,Среднеспелый
+130,Resistance,cold_tolerant,Холодостійкий,Холодостойкий
+130,Resistance,disease_resistant,Стійкий до хвороб,Устойчив к болезням
+130,Resistance,drought_tolerant,Посухостійкий,Засухоустойчивый
+130,Shape,cylindrical,Циліндричний,Цилиндрический
+130,Shape,elongated,Подовжений,Удлинённый
+130,Shape,flat_round,Плоскоокруглий,Плоскоокруглый
+130,Shape,oval,Овальний,Овальный
+130,Shape,round,Округлий,Округлый
+130,Texture,firm,Щільний,Плотный
+130,Texture,juicy,Соковитий,Сочный
+130,Texture,meaty,М'ясистий,Мясистый
+130,Texture,sweet,Солодкий,Сладкий
+130,Usage,juice,Сік,Сок
+130,Usage,universal,Універсальний,Универсальный
+130,Yield,high_yield,Високоврожайний,Высокоурожайный
+140,Color,black,Чорний,Чёрный
+140,Color,brown,Коричневий,Коричневый
+140,Color,pink,Рожевий,Розовый
+140,Color,red,Червоний,Красный
+140,Color,yellow,Жовтий,Жёлтый
+140,Cultivation,greenhouse,Теплиця/укриття,Теплица/укрытия
+140,Cultivation,open_field,Відкритий ґрунт,Открытый грунт
+140,Growth,compact,Компактний,Компактный
+140,Growth,tall,Високорослий,Высокорослый
+140,Maturity,early,Ранній,Ранний
+140,Maturity,early_maturing,Ранньостиглий,Раннеспелый
+140,Maturity,mid_early,Середньоранній,Среднеранний
+140,Maturity,mid_maturing,Середньостиглий,Среднеспелый
+140,Resistance,disease_resistant,Стійкий до хвороб,Устойчив к болезням
+140,Resistance,powdery_mildew,Мучниста роса,Мучнистая роса
+140,Shape,cylindrical,Циліндричний,Цилиндрический
+140,Shape,elongated,Подовжений,Удлинённый
+140,Shape,flat_round,Плоскоокруглий,Плоскоокруглый
+140,Shape,oval,Овальний,Овальный
+140,Shape,pear,Грушоподібний,Грушевидный
+140,Shape,round,Округлий,Округлый
+140,Texture,firm,Щільний,Плотный
+140,Texture,juicy,Соковитий,Сочный
+140,Texture,keeping,Лежкий,Лёжкий
+140,Texture,transportable,Транспортабельний,Транспортабельный
+140,Usage,fresh,Свіже споживання,Свежее потребление
+140,Usage,juice,Сік,Сок
+140,Usage,salad,Салатний,Салатный
+140,Usage,universal,Універсальний,Универсальный
+140,Yield,high_yield,Високоврожайний,Высокоурожайный
+150,Color,black,Чорний,Чёрный
+150,Color,yellow,Жовтий,Жёлтый
+150,Maturity,early_maturing,Ранньостиглий,Раннеспелый
+150,Shape,round,Округлий,Округлый
+150,Texture,firm,Щільний,Плотный
+150,Texture,juicy,Соковитий,Сочный
+150,Texture,keeping,Лежкий,Лёжкий
+150,Texture,sweet,Солодкий,Сладкий
+150,Traits,marketable,Товарний вигляд,Товарный вид
+150,Usage,juice,Сік,Сок
+150,Yield,high_yield,Високоврожайний,Высокоурожайный
+160,Color,orange,Оранжевий,Оранжевый
+160,Color,red,Червоний,Красный
+160,Maturity,early,Ранній,Ранний
+160,Maturity,early_maturing,Ранньостиглий,Раннеспелый
+160,Maturity,mid_early,Середньоранній,Среднеранний
+160,Maturity,mid_late,Середньопізній,Среднепоздний
+160,Maturity,mid_maturing,Середньостиглий,Среднеспелый
+160,Shape,cylindrical,Циліндричний,Цилиндрический
+160,Shape,elongated,Подовжений,Удлинённый
+160,Shape,round,Округлий,Округлый
+160,Texture,juicy,Соковитий,Сочный
+160,Texture,keeping,Лежкий,Лёжкий
+160,Texture,sweet,Солодкий,Сладкий
+160,Usage,canning,Консервування,Консервирование
+160,Usage,fresh,Свіже споживання,Свежее потребление
+160,Usage,juice,Сік,Сок
+160,Yield,high_yield,Високоврожайний,Высокоурожайный
+170,Color,red,Червоний,Красный
+170,Maturity,early_maturing,Ранньостиглий,Раннеспелый
+170,Maturity,mid_early,Середньоранній,Среднеранний
+170,Maturity,mid_late,Середньопізній,Среднепоздний
+170,Maturity,mid_maturing,Середньостиглий,Среднеспелый
+170,Resistance,disease_resistant,Стійкий до хвороб,Устойчив к болезням
+170,Resistance,drought_tolerant,Посухостійкий,Засухоустойчивый
+170,Shape,cylindrical,Циліндричний,Цилиндрический
+170,Shape,round,Округлий,Округлый
+170,Texture,juicy,Соковитий,Сочный
+170,Texture,keeping,Лежкий,Лёжкий
+170,Texture,sweet,Солодкий,Сладкий
+170,Texture,transportable,Транспортабельний,Транспортабельный
+170,Usage,canning,Консервування,Консервирование
+170,Usage,fresh,Свіже споживання,Свежее потребление
+170,Usage,juice,Сік,Сок
+170,Yield,high_yield,Високоврожайний,Высокоурожайный
+180,Color,black,Чорний,Чёрный
+180,Color,brown,Коричневий,Коричневый
+180,Color,orange,Оранжевий,Оранжевый
+180,Color,pink,Рожевий,Розовый
+180,Color,raspberry,Малиновий,Малиновый
+180,Color,red,Червоний,Красный
+180,Color,yellow,Жовтий,Жёлтый
+180,Cultivation,greenhouse,Теплиця/укриття,Теплица/укрытия
+180,Cultivation,open_field,Відкритий ґрунт,Открытый грунт
+180,Maturity,early,Ранній,Ранний
+180,Maturity,early_maturing,Ранньостиглий,Раннеспелый
+180,Maturity,mid_late,Середньопізній,Среднепоздний
+180,Maturity,mid_maturing,Середньостиглий,Среднеспелый
+180,Resistance,disease_resistant,Стійкий до хвороб,Устойчив к болезням
+180,Resistance,drought_tolerant,Посухостійкий,Засухоустойчивый
+180,Resistance,fusarium,Фузаріоз,Фузариоз
+180,Resistance,powdery_mildew,Мучниста роса,Мучнистая роса
+180,Shape,cylindrical,Циліндричний,Цилиндрический
+180,Shape,elongated,Подовжений,Удлинённый
+180,Shape,oval,Овальний,Овальный
+180,Shape,round,Округлий,Округлый
+180,Texture,crunchy,Хрусткий,Хрустящий
+180,Texture,juicy,Соковитий,Сочный
+180,Texture,keeping,Лежкий,Лёжкий
+180,Texture,meaty,М'ясистий,Мясистый
+180,Texture,sweet,Солодкий,Сладкий
+180,Texture,transportable,Транспортабельний,Транспортабельный
+180,Traits,marketable,Товарний вигляд,Товарный вид
+180,Usage,fresh,Свіже споживання,Свежее потребление
+180,Usage,juice,Сік,Сок
+180,Usage,salad,Салатний,Салатный
+180,Yield,high_yield,Високоврожайний,Высокоурожайный
+190,Color,brown,Коричневий,Коричневый
+190,Color,orange,Оранжевий,Оранжевый
+190,Color,red,Червоний,Красный
+190,Color,yellow,Жовтий,Жёлтый
+190,Cultivation,open_field,Відкритий ґрунт,Открытый грунт
+190,Growth,compact,Компактний,Компактный
+190,Maturity,early,Ранній,Ранний
+190,Maturity,early_maturing,Ранньостиглий,Раннеспелый
+190,Maturity,mid_early,Середньоранній,Среднеранний
+190,Maturity,mid_maturing,Середньостиглий,Среднеспелый
+190,Resistance,cold_tolerant,Холодостійкий,Холодостойкий
+190,Resistance,drought_tolerant,Посухостійкий,Засухоустойчивый
+190,Resistance,powdery_mildew,Мучниста роса,Мучнистая роса
+190,Shape,oval,Овальний,Овальный
+190,Shape,round,Округлий,Округлый
+190,Texture,crunchy,Хрусткий,Хрустящий
+190,Texture,firm,Щільний,Плотный
+190,Texture,juicy,Соковитий,Сочный
+190,Texture,keeping,Лежкий,Лёжкий
+190,Texture,meaty,М'ясистий,Мясистый
+190,Texture,sweet,Солодкий,Сладкий
+190,Texture,transportable,Транспортабельний,Транспортабельный
+190,Traits,marketable,Товарний вигляд,Товарный вид
+190,Usage,fresh,Свіже споживання,Свежее потребление
+190,Usage,juice,Сік,Сок
+190,Yield,high_yield,Високоврожайний,Высокоурожайный
+200,Color,black,Чорний,Чёрный
+200,Color,orange,Оранжевий,Оранжевый
+200,Color,pink,Рожевий,Розовый
+200,Color,yellow,Жовтий,Жёлтый
+200,Cultivation,open_field,Відкритий ґрунт,Открытый грунт
+200,Growth,compact,Компактний,Компактный
+200,Maturity,early_maturing,Ранньостиглий,Раннеспелый
+200,Resistance,cold_tolerant,Холодостійкий,Холодостойкий
+200,Resistance,disease_resistant,Стійкий до хвороб,Устойчив к болезням
+200,Shape,cylindrical,Циліндричний,Цилиндрический
+200,Shape,elongated,Подовжений,Удлинённый
+200,Shape,oval,Овальний,Овальный
+200,Texture,crunchy,Хрусткий,Хрустящий
+200,Texture,firm,Щільний,Плотный
+200,Texture,juicy,Соковитий,Сочный
+200,Texture,keeping,Лежкий,Лёжкий
+200,Texture,sweet,Солодкий,Сладкий
+200,Texture,transportable,Транспортабельний,Транспортабельный
+200,Usage,juice,Сік,Сок
+200,Yield,high_yield,Високоврожайний,Высокоурожайный
+200,Yield,uniform_ripening,Дружнє дозрівання,Дружное созревание
+210,Color,orange,Оранжевий,Оранжевый
+210,Color,pink,Рожевий,Розовый
+210,Color,yellow,Жовтий,Жёлтый
+210,Cultivation,open_field,Відкритий ґрунт,Открытый грунт
+210,Maturity,early,Ранній,Ранний
+210,Maturity,early_maturing,Ранньостиглий,Раннеспелый
+210,Maturity,mid_maturing,Середньостиглий,Среднеспелый
+210,Shape,cylindrical,Циліндричний,Цилиндрический
+210,Shape,round,Округлий,Округлый
+210,Texture,crunchy,Хрусткий,Хрустящий
+210,Texture,firm,Щільний,Плотный
+210,Texture,juicy,Соковитий,Сочный
+210,Texture,meaty,М'ясистий,Мясистый
+210,Usage,canning,Консервування,Консервирование
+210,Usage,juice,Сік,Сок
+210,Yield,high_yield,Високоврожайний,Высокоурожайный
+220,Cultivation,greenhouse,Теплиця/укриття,Теплица/укрытия
+220,Cultivation,open_field,Відкритий ґрунт,Открытый грунт
+220,Growth,compact,Компактний,Компактный
+220,Maturity,early,Ранній,Ранний
+220,Maturity,early_maturing,Ранньостиглий,Раннеспелый
+220,Maturity,mid_maturing,Середньостиглий,Среднеспелый
+220,Resistance,cold_tolerant,Холодостійкий,Холодостойкий
+220,Shape,elongated,Подовжений,Удлинённый
+220,Shape,oval,Овальний,Овальный
+220,Texture,crunchy,Хрусткий,Хрустящий
+220,Texture,juicy,Соковитий,Сочный
+220,Texture,sweet,Солодкий,Сладкий
+220,Usage,fresh,Свіже споживання,Свежее потребление
+220,Usage,juice,Сік,Сок
+220,Usage,salad,Салатний,Салатный
+220,Yield,high_yield,Високоврожайний,Высокоурожайный
+230,Growth,sprawling,Розлогий,Раскидистый
+230,Usage,fresh,Свіже споживання,Свежее потребление
+240,Color,yellow,Жовтий,Жёлтый
+240,Cultivation,open_field,Відкритий ґрунт,Открытый грунт
+240,Maturity,early,Ранній,Ранний
+240,Maturity,early_maturing,Ранньостиглий,Раннеспелый
+240,Resistance,cold_tolerant,Холодостійкий,Холодостойкий
+240,Texture,juicy,Соковитий,Сочный
+240,Texture,sweet,Солодкий,Сладкий
+240,Usage,canning,Консервування,Консервирование
+240,Usage,juice,Сік,Сок
+240,Usage,paste,Паста,Паста
+240,Usage,salad,Салатний,Салатный
+240,Yield,high_yield,Високоврожайний,Высокоурожайный
+330,Maturity,mid_early,Середньоранній,Среднеранний
+330,Shape,elongated,Подовжений,Удлинённый
+330,Shape,oval,Овальний,Овальный
