@@ -234,7 +234,7 @@
                 for (const tt of tags) {
                   const wrap = document.createElement('span');
                   wrap.setAttribute('data-tag', tt);
-                  wrap.setAttribute('style', 'display:inline-flex; align-items:center; gap:6px; padding:4px 8px; border:1px solid #ddd; border-radius:14px; margin:2px;');
+                  wrap.setAttribute('style', 'display:inline-flex; align-items:center; gap:4px; padding:4px 6px; border:1px solid #ddd; border-radius:10px; margin:2px; height:44px; font-size:14px; line-height:1;');
                   const label = document.createElement('span');
                   label.textContent = tt;
                   const remove = document.createElement('button');
@@ -242,6 +242,7 @@
                   remove.className = 'tag-remove';
                   remove.setAttribute('data-tag', tt);
                   remove.textContent = '×';
+                  remove.setAttribute('style', 'font-size:12px; width:20px; height:20px; line-height:18px; padding:0; border:none; background:transparent; cursor:pointer; border-radius:50%; display:flex; align-items:center; justify-content:center;');
                   remove.addEventListener('click', () => {
                     const cur = parseTags();
                     const next = cur.filter(x => x.toLowerCase() !== tt.toLowerCase());
