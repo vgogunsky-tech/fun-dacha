@@ -96,8 +96,9 @@
                     {% for t in tags %}
                       {% set tt = t.strip() %}
                       {% if tt %}
+                      {% set label_ua = (tag_ua_map.get(tt) if tag_ua_map else '') %}
                       <span data-tag="{{ tt }}" style="display:inline-flex; align-items:center; gap:4px; padding:4px 6px; border:1px solid #ddd; border-radius:10px; height:44px; font-size:14px; line-height:1;">
-                          <span>{{ tt }}</span>
+                          <span>{{ label_ua or tt }}</span>
                           <button type="button" class="tag-remove"
                             style="font-size:12px; width:20px; height:20px; line-height:18px; padding:0; border:none; background:transparent; cursor:pointer; border-radius:50%; display:flex; align-items:center; justify-content:center;"
                             data-tag="{{ tt }}" aria-label="Remove">×</button>
@@ -186,6 +187,7 @@
             </footer>
           </form>
           <script>
+            window.__TAG_UA_MAP__ = {{ (tag_ua_map or {}) | tojson }};
             (function(){
               const btn = document.getElementById('btn-translate-ru-ua');
               const ru = document.getElementById('textarea-ru');
@@ -228,6 +230,15 @@
                 return (hidden.value || '').split(',').map(s => (s || '').trim()).filter(Boolean);
               }
 
+              function translateTag(key) {
+                try {
+                  const map = (window.__TAG_UA_MAP__ || {});
+                  const v = map[key];
+                  if (typeof v === 'string' && v.trim()) return v;
+                } catch (e) {}
+                return key;
+              }
+
               function render() {
                 const tags = parseTags();
                 list.innerHTML = '';
@@ -236,7 +247,7 @@
                   wrap.setAttribute('data-tag', tt);
                   wrap.setAttribute('style', 'display:inline-flex; align-items:center; gap:4px; padding:4px 6px; border:1px solid #ddd; border-radius:10px; margin:2px; height:44px; font-size:14px; line-height:1;');
                   const label = document.createElement('span');
-                  label.textContent = tt;
+                  label.textContent = translateTag(tt);
                   const remove = document.createElement('button');
                   remove.type = 'button';
                   remove.className = 'tag-remove';
