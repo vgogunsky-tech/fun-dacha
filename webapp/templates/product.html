@@ -76,12 +76,17 @@
               </div>
 
               <div>
-                <label>Опис (укр)</label>
-                <textarea name="Описание (укр)">{{ product['Описание (укр)'] }}</textarea>
+                <label style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
+                  <span>Опис (укр)</span>
+                  <button type="button" id="btn-translate-ru-ua" style="margin-left:auto;">
+                    Перекласти з RU → UA
+                  </button>
+                </label>
+                <textarea name="Описание (укр)" id="textarea-ua">{{ product['Описание (укр)'] }}</textarea>
               </div>
               <div>
                 <label>Описание (рус)</label>
-                <textarea name="Описание (рус)">{{ product['Описание (рус)'] }}</textarea>
+                <textarea name="Описание (рус)" id="textarea-ru">{{ product['Описание (рус)'] }}</textarea>
               </div>
 
               <div>
@@ -154,9 +159,39 @@
             <footer class="actions">
               <button type="submit" name="action" value="save">Зберегти</button>
               <button type="submit" name="action" value="save_validate">Зберегти і позначити як перевірений</button>
-              <button type="submit" name="action" value="translate_ru_to_ua">Перекласти опис RU → UA</button>
             </footer>
           </form>
+          <script>
+            (function(){
+              const btn = document.getElementById('btn-translate-ru-ua');
+              const ru = document.getElementById('textarea-ru');
+              const ua = document.getElementById('textarea-ua');
+              if (!btn || !ru || !ua) return;
+              btn.addEventListener('click', async function(){
+                const source = (ru.value || '').trim();
+                if (!source) { alert('Немає російського опису для перекладу.'); return; }
+                btn.disabled = true; const old = btn.textContent; btn.textContent = 'Перекладаю…';
+                try {
+                  const resp = await fetch(`${window.location.origin}/api/translate/ru-ua`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text: source })
+                  });
+                  if (!resp.ok) throw new Error('HTTP ' + resp.status);
+                  const data = await resp.json();
+                  if (data && typeof data.translated === 'string') {
+                    ua.value = data.translated;
+                  } else {
+                    alert('Не вдалося перекласти опис.');
+                  }
+                } catch (e) {
+                  alert('Помилка перекладу. Спробуйте пізніше.');
+                } finally {
+                  btn.disabled = false; btn.textContent = old;
+                }
+              });
+            })();
+          </script>
         </article>
       </div>
       {% endif %}

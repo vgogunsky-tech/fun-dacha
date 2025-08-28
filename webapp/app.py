@@ -13,6 +13,7 @@ from urllib import parse as urlparse
 from urllib.error import HTTPError, URLError
 
 from flask import Flask, render_template, request, redirect, url_for, send_from_directory, abort, flash
+from flask import jsonify
 
 if getattr(sys, "_MEIPASS", None):
     BASE_DIR = sys._MEIPASS
@@ -127,6 +128,21 @@ def translate_text_ru_to_uk(text: str) -> Optional[str]:
     if isinstance(res, str) and res.strip():
         return res
     return None
+
+
+@app.post("/api/translate/ru-ua")
+def api_translate_ru_ua():
+    try:
+        data = request.get_json(silent=True) or {}
+        text = (data.get("text") or "").strip()
+        if not text:
+            return jsonify({"translated": "", "error": "empty"}), 200
+        translated = translate_text_ru_to_uk(text)
+        if isinstance(translated, str) and translated.strip():
+            return jsonify({"translated": translated}), 200
+        return jsonify({"translated": "", "error": "failed"}), 200
+    except Exception as e:
+        return jsonify({"translated": "", "error": "exception"}), 200
 
 
 def _log_git(message: str) -> None:
@@ -965,35 +981,6 @@ def product_save():
 
     action = (form.get("action") or "").strip()
     advanced = False
-    if action == "translate_ru_to_ua":
-        # Perform translation from RU description to UA and save
-        src = (target.get("Описание (рус)") or "").strip()
-        if not src:
-            flash("Немає російського опису для перекладу.")
-        else:
-            translated = translate_text_ru_to_uk(src)
-            if isinstance(translated, str) and translated.strip():
-                target["Описание (укр)"] = translated.strip()
-                flash("Опис перекладено з RU на UA та збережено.")
-            else:
-                flash("Не вдалося перекласти опис. Спробуйте пізніше.")
-        # Persist changes regardless of success to keep any other edits
-        written_paths = write_products_csv(rows, fields)
-        changed_paths.extend(written_paths)
-        commit_and_push(changed_paths, f"Translate RU→UA description for product {product_id}")
-        # Redirect back to the same product view without advancing index
-        return_to = (form.get("return_to") or "").strip()
-        if return_to.startswith("/"):
-            return redirect(return_to)
-        category_id = target.get("category_id", "")
-        try:
-            cat_int = int(float(category_id)) if category_id else None
-        except Exception:
-            cat_int = None
-        if cat_int is None:
-            return redirect(url_for("index"))
-        next_index = (request.args.get("index", type=int) or 0)
-        return redirect(url_for("product", category_id=cat_int, index=next_index))
     if action == "save_validate":
         target["validated"] = "1"
         advanced = True
