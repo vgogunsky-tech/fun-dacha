@@ -177,8 +177,9 @@
                   });
                   if (!resp.ok) throw new Error('HTTP ' + resp.status);
                   const data = await resp.json();
-                  if (data && typeof data.translated === 'string') {
-                    ua.value = data.translated;
+                  const t = (data && typeof data.translated === 'string') ? data.translated : '';
+                  if (t && t.trim().length > 0) {
+                    ua.value = t;
                   } else {
                     alert('Не вдалося перекласти опис.');
                   }
