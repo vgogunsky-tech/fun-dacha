@@ -179,7 +179,62 @@
                   {% endfor %}
                 </div>
               </div>
+
+              <section style="grid-column: 1 / -1;">
+                <header>
+                  <h3>Інвентар товару</h3>
+                  <p class="muted">Керуйте варіантами, цінами та наявністю. Зміни зберігаються разом із товаром.</p>
+                </header>
+
+                <div class="thumb-row" style="gap:12px; align-items: flex-end; flex-wrap: wrap;">
+                  <div>
+                    <label>Загальна наявність</label>
+                    <select id="inv-top-availability">
+                      <option value="0">0 — Не доступно</option>
+                      <option value="1">1 — Очікується</option>
+                      <option value="2">2 — Під замовлення</option>
+                      <option value="3">3 — В наявності</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label>Шаблон варіантів</label>
+                    <select id="inv-template-select">
+                      <option value="">— Обрати шаблон —</option>
+                    </select>
+                  </div>
+                  <div class="thumb-row" style="gap:8px;">
+                    <button type="button" id="inv-add-empty">Додати варіант</button>
+                    <button type="button" id="inv-add-from-template">Додати з шаблону</button>
+                    <button type="button" id="inv-add-all-from-template">Додати всі значення</button>
+                  </div>
+                </div>
+
+                <div style="overflow:auto; margin-top:10px;">
+                  <table id="inv-table">
+                    <thead>
+                      <tr>
+                        <th>ID</th>
+                        <th>Назва (UA)</th>
+                        <th>Название (RU)</th>
+                        <th>Одиниця</th>
+                        <th>Тип</th>
+                        <th>Валюта</th>
+                        <th>Values</th>
+                        <th>Value</th>
+                        <th>Ціна</th>
+                        <th>Знижка</th>
+                        <th>Склад</th>
+                        <th>Наявність</th>
+                        <th>Дія</th>
+                      </tr>
+                    </thead>
+                    <tbody></tbody>
+                  </table>
+                </div>
+              </section>
             </div>
+
+            <input type="hidden" name="inventory_json" id="inventory_json" value="" />
 
             <footer class="actions">
               <button type="submit" name="action" value="save">Зберегти</button>
@@ -284,6 +339,207 @@
               });
 
               render();
+            })();
+
+            (function(){
+              const form = document.querySelector('form[action*="product_save"]') || document.querySelector('form');
+              const invTableBody = document.querySelector('#inv-table tbody');
+              const invTopAvailability = document.getElementById('inv-top-availability');
+              const invTemplateSelect = document.getElementById('inv-template-select');
+              const btnAddEmpty = document.getElementById('inv-add-empty');
+              const btnAddFromTemplate = document.getElementById('inv-add-from-template');
+              const btnAddAllFromTemplate = document.getElementById('inv-add-all-from-template');
+              const hiddenInv = document.getElementById('inventory_json');
+              if (!invTableBody || !invTopAvailability || !invTemplateSelect || !hiddenInv) return;
+
+              const productId = ({{ product['id']|tojson }});
+              const productSku = ({{ (product.get('product_id') or '')|tojson }});
+
+              const defaultTemplates = (
+                {{ [
+                  {
+                    'title': { 'ua': 'Маленький пакет', 'ru': 'Маленький пакет' },
+                    'type': 'quantity', 'unit': 'pcs', 'values': [10, 15, 20, 25, 30]
+                  },
+                  {
+                    'title': { 'ua': 'Великий пакет', 'ru': 'Большой пакет' },
+                    'type': 'weight', 'unit': 'g', 'values': [50, 100, 250, 500]
+                  }
+                ] | tojson }}
+              );
+
+              // Initial inventory from backend
+              const initialInventory = ({{ (inventory or {})|tojson }});
+              const state = {
+                availability: (initialInventory && typeof initialInventory.availability === 'number') ? initialInventory.availability : 0,
+                items: Array.isArray(initialInventory.items) ? initialInventory.items.slice() : []
+              };
+
+              function optionAvailability(value) {
+                const o = document.createElement('option');
+                o.value = String(value);
+                const map = {
+                  0: '0 — Не доступно',
+                  1: '1 — Очікується',
+                  2: '2 — Під замовлення',
+                  3: '3 — В наявності'
+                };
+                o.textContent = map[value] || String(value);
+                return o;
+              }
+
+              function renderTemplates() {
+                invTemplateSelect.innerHTML = '<option value="">— Обрати шаблон —</option>';
+                defaultTemplates.forEach((t, idx) => {
+                  const opt = document.createElement('option');
+                  opt.value = String(idx);
+                  opt.textContent = `${t.title.ua} (${t.unit})`;
+                  invTemplateSelect.appendChild(opt);
+                });
+              }
+
+              function createRow(item) {
+                const tr = document.createElement('tr');
+                tr.dataset.id = item.id || '';
+                function td(inner) { const c = document.createElement('td'); if (inner) c.appendChild(inner); return c; }
+                function inp(type, value, placeholder) { const i = document.createElement('input'); i.type = type; if (value !== undefined && value !== null) i.value = String(value); if (placeholder) i.placeholder = placeholder; return i; }
+                function sel(options, value) { const s = document.createElement('select'); options.forEach(o => { const opt = document.createElement('option'); opt.value = o.value; opt.textContent = o.label; s.appendChild(opt); }); if (value !== undefined && value !== null) s.value = String(value); return s; }
+
+                // id (readonly text)
+                const idInput = inp('text', item.id || '', ''); idInput.readOnly = true; idInput.className = 'ro';
+                tr.appendChild(td(idInput));
+                // title ua
+                tr.appendChild(td(inp('text', (item.title && item.title.ua) || '', 'Назва (UA)')));
+                // title ru
+                tr.appendChild(td(inp('text', (item.title && item.title.ru) || '', 'Название (RU)')));
+                // unit
+                tr.appendChild(td(inp('text', item.unit || '', 'pcs / g')));
+                // type
+                const typeSel = sel([
+                  {value:'', label:'—'},
+                  {value:'quantity', label:'quantity'},
+                  {value:'weight', label:'weight'}
+                ], item.type || '');
+                tr.appendChild(td(typeSel));
+                // currency
+                const curSel = sel([
+                  {value:'UAH', label:'UAH'},
+                  {value:'USD', label:'USD'},
+                  {value:'EUR', label:'EUR'}
+                ], item.currency || 'UAH');
+                tr.appendChild(td(curSel));
+                // values (csv)
+                const valuesInput = inp('text', Array.isArray(item.values) ? item.values.join(',') : '', 'наприклад: 1,10');
+                tr.appendChild(td(valuesInput));
+                // value
+                const valueInput = inp('number', item.value != null ? item.value : '', ''); valueInput.step = 'any';
+                tr.appendChild(td(valueInput));
+                // original price
+                const opInput = inp('number', item.original_price != null ? item.original_price : '', ''); opInput.step = 'any';
+                tr.appendChild(td(opInput));
+                // sale price
+                const spInput = inp('number', item.sale_price != null ? item.sale_price : '', ''); spInput.step = 'any';
+                tr.appendChild(td(spInput));
+                // stock qty
+                const sqInput = inp('number', item.stock_qty != null ? item.stock_qty : '', ''); sqInput.step = '1';
+                tr.appendChild(td(sqInput));
+                // availability
+                const avSel = document.createElement('select');
+                [0,1,2,3].forEach(v => avSel.appendChild(optionAvailability(v)));
+                avSel.value = String((typeof item.availability === 'number') ? item.availability : 0);
+                tr.appendChild(td(avSel));
+                // actions
+                const remBtn = document.createElement('button'); remBtn.type = 'button'; remBtn.textContent = '✕';
+                remBtn.addEventListener('click', () => { tr.remove(); syncStateFromDOM(); });
+                tr.appendChild(td(remBtn));
+
+                tr._controls = { idInput, typeSel, curSel, valuesInput, valueInput, opInput, spInput, sqInput, avSel };
+                invTableBody.appendChild(tr);
+              }
+
+              function render() {
+                invTopAvailability.value = String(state.availability || 0);
+                invTableBody.innerHTML = '';
+                (state.items || []).forEach(it => createRow(it));
+              }
+
+              function parseCsvValues(text) {
+                const arr = String(text || '').split(',').map(s => s.trim()).filter(Boolean).map(v => {
+                  const n = Number(v); return Number.isFinite(n) ? n : v;
+                });
+                return arr;
+              }
+
+              function syncStateFromDOM() {
+                state.availability = Number(invTopAvailability.value || 0) || 0;
+                const rows = Array.from(invTableBody.querySelectorAll('tr'));
+                state.items = rows.map(tr => {
+                  const c = tr._controls || {};
+                  const titleUa = tr.children[1].querySelector('input').value || '';
+                  const titleRu = tr.children[2].querySelector('input').value || '';
+                  const unit = tr.children[3].querySelector('input').value || '';
+                  const type = c.typeSel ? c.typeSel.value : '';
+                  const currency = c.curSel ? c.curSel.value : 'UAH';
+                  const valuesCsv = c.valuesInput ? c.valuesInput.value : '';
+                  const values = parseCsvValues(valuesCsv);
+                  const value = c.valueInput && c.valueInput.value !== '' ? Number(c.valueInput.value) : null;
+                  const original_price = c.opInput && c.opInput.value !== '' ? Number(c.opInput.value) : null;
+                  const sale_price = c.spInput && c.spInput.value !== '' ? Number(c.spInput.value) : null;
+                  const stock_qty = c.sqInput && c.sqInput.value !== '' ? Number(c.sqInput.value) : 0;
+                  const availability = c.avSel ? Number(c.avSel.value || 0) : 0;
+                  const id = c.idInput ? c.idInput.value : '';
+                  return { id, title: { ua: titleUa, ru: titleRu }, unit, type, currency, values, value, original_price, sale_price, stock_qty, availability };
+                });
+                hiddenInv.value = JSON.stringify({ id: productId, product_id: productSku, availability: state.availability, items: state.items });
+              }
+
+              function addEmpty() {
+                const it = { id: '', title: { ua: '', ru: '' }, original_price: null, sale_price: null, currency: 'UAH', stock_qty: 0, value: null, unit: '', type: '', values: [], availability: 0 };
+                state.items.push(it);
+                createRow(it);
+                syncStateFromDOM();
+              }
+
+              function addFromTemplate(allValues) {
+                const idx = invTemplateSelect.value ? Number(invTemplateSelect.value) : NaN;
+                if (!Number.isFinite(idx)) { addEmpty(); return; }
+                const t = defaultTemplates[idx]; if (!t) { addEmpty(); return; }
+                const vals = Array.isArray(t.values) ? t.values.slice() : [];
+                const addSet = allValues ? (vals.length ? vals : [null]) : [vals.length ? vals[0] : null];
+                addSet.forEach(v => {
+                  const it = {
+                    id: '',
+                    title: { ua: t.title.ua || '', ru: t.title.ru || '' },
+                    original_price: null,
+                    sale_price: null,
+                    currency: 'UAH',
+                    stock_qty: 0,
+                    value: v,
+                    unit: t.unit || '',
+                    type: t.type || '',
+                    values: vals,
+                    availability: 0
+                  };
+                  state.items.push(it);
+                  createRow(it);
+                });
+                syncStateFromDOM();
+              }
+
+              // Wire events
+              btnAddEmpty && btnAddEmpty.addEventListener('click', () => { addEmpty(); });
+              btnAddFromTemplate && btnAddFromTemplate.addEventListener('click', () => { addFromTemplate(false); });
+              btnAddAllFromTemplate && btnAddAllFromTemplate.addEventListener('click', () => { addFromTemplate(true); });
+              invTopAvailability.addEventListener('change', syncStateFromDOM);
+
+              if (form) {
+                form.addEventListener('submit', () => { syncStateFromDOM(); });
+              }
+
+              // Init
+              renderTemplates();
+              render();
+              syncStateFromDOM();
             })();
           </script>
         </article>
