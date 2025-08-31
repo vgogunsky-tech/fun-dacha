@@ -640,12 +640,18 @@ def load_inventory_templates() -> List[Dict]:
             "type": "quantity",
             "unit": "pcs",
             "values": [10, 15, 20, 25, 30],
+            "original_price": 10,
+            "sale_price": None,
+            "currency": "UAH",
         },
         {
             "title": {"ua": "Великий пакет", "ru": "Большой пакет"},
             "type": "weight",
             "unit": "g",
             "values": [50, 100, 250, 500],
+            "original_price": 10,
+            "sale_price": None,
+            "currency": "UAH",
         },
     ]
     path = INVENTORY_TEMPLATES_JSON

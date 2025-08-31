@@ -6,14 +6,20 @@
     <title>Склад товару</title>
     <link rel="stylesheet" href="https://unpkg.com/mvp.css">
     <style>
-      .container { max-width: 1100px; margin: 0 auto; }
-      .image { max-width: 220px; }
-      .image img { width: 100%; border-radius: 8px; border: 1px solid #ddd; }
-      table { width: 100%; border-collapse: collapse; }
+      .container { max-width: 1200px; margin: 0 auto; }
+      table { width: 100%; border-collapse: collapse; table-layout: fixed; }
       th, td { text-align: left; }
       .muted { color: #666; font-size: 0.9em; }
       .actions { display: flex; gap: 10px; }
       .ro { background: #f7f7f7; }
+      th:nth-child(1) { width: 60px; }
+      th:nth-child(2), th:nth-child(3) { width: 16%; }
+      th:nth-child(4), th:nth-child(5), th:nth-child(6) { width: 10%; }
+      th:nth-child(7), th:nth-child(9) { width: 9%; }
+      th:nth-child(8) { width: 8%; }
+      th:nth-child(10), th:nth-child(11) { width: 8%; }
+      th:nth-child(12) { width: 60px; }
+      td input, td select { width: 100%; box-sizing: border-box; }
     </style>
   </head>
   <body>
@@ -22,11 +28,6 @@
       <h1>Склад — {{ product['Название (укр)'] or 'Без назви' }} <span class="muted">(ID: {{ product['id'] }})</span></h1>
     </header>
     <main class="container">
-      <section class="image">
-        {% if image_url %}
-          <img src="{{ image_url }}" alt="image" />
-        {% endif %}
-      </section>
       <section>
         <div class="actions" style="margin: 10px 0;">
           <select id="inv-template-select">
@@ -181,7 +182,7 @@
           if (!Number.isFinite(idx)) { return; }
           const t = defaultTemplates[idx]; if (!t) { return; }
           const vals = Array.isArray(t.values) ? t.values.slice() : [];
-          const it = { id: '', title: { ua: t.title.ua || '', ru: t.title.ru || '' }, original_price: null, sale_price: null, currency: 'UAH', stock_qty: 0, value: vals.length ? vals[0] : null, unit: t.unit || '', type: t.type || '', values: vals, availability: 0 };
+          const it = { id: '', title: { ua: t.title.ua || '', ru: t.title.ru || '' }, original_price: (typeof t.original_price === 'number' ? t.original_price : 10), sale_price: (typeof t.sale_price === 'number' ? t.sale_price : null), currency: (t.currency || 'UAH'), stock_qty: 0, value: vals.length ? vals[0] : null, unit: t.unit || '', type: t.type || '', values: vals, availability: 0 };
           state.items.push(it);
           render();
           syncStateFromDOM();
