@@ -1,1 +1,2 @@
 id,pid,product_id,top_availability,variant_id,title_ua,title_ru,original_price,sale_price,currency,stock_qty,value,unit,type,values_json,availability
+1,1,p100001,,P100001-1P,Маленький пакет,Маленький  пакет,10.0,,UAH,0,1.0,pcs,quantity,"[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]",
