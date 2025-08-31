@@ -27,6 +27,7 @@ CATEGORIES_CSV = os.path.join(DATA_DIR, "categories_list.csv")
 CATEGORY_IMAGES_DIR = os.path.join(DATA_DIR, "images", "categories")
 PRODUCT_IMAGES_DIR = os.path.join(DATA_DIR, "images", "products")
 INVENTORY_CSV = os.path.join(DATA_DIR, "inventory.csv")
+INVENTORY_TEMPLATES_JSON = os.path.join(DATA_DIR, "inventory_templates.json")
 
 REQUIRED_PRODUCT_COLS = [
     "validated",
@@ -628,6 +629,35 @@ def _inventory_next_id(rows: List[Dict[str, str]]) -> int:
         except Exception:
             pass
     return max_id + 1
+
+
+# -------------------- Inventory templates helpers --------------------
+
+def load_inventory_templates() -> List[Dict]:
+    defaults: List[Dict] = [
+        {
+            "title": {"ua": "Маленький пакет", "ru": "Маленький пакет"},
+            "type": "quantity",
+            "unit": "pcs",
+            "values": [10, 15, 20, 25, 30],
+        },
+        {
+            "title": {"ua": "Великий пакет", "ru": "Большой пакет"},
+            "type": "weight",
+            "unit": "g",
+            "values": [50, 100, 250, 500],
+        },
+    ]
+    path = INVENTORY_TEMPLATES_JSON
+    try:
+        if os.path.isfile(path):
+            with open(path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            if isinstance(data, list):
+                return data
+    except Exception:
+        pass
+    return defaults
 
 
 def ensure_product_columns() -> None:

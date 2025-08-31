@@ -72,18 +72,7 @@
         const btnSave = document.getElementById('btn-save');
         const tmplSelect = document.getElementById('inv-template-select');
 
-        const defaultTemplates = (
-          {{ [
-            {
-              'title': { 'ua': 'Маленький пакет', 'ru': 'Маленький пакет' },
-              'type': 'quantity', 'unit': 'pcs', 'values': [10, 15, 20, 25, 30]
-            },
-            {
-              'title': { 'ua': 'Великий пакет', 'ru': 'Большой пакет' },
-              'type': 'weight', 'unit': 'g', 'values': [50, 100, 250, 500]
-            }
-          ] | tojson }}
-        );
+        const defaultTemplates = {{ (load_inventory_templates() | tojson) }};
 
         const state = {
           availability: 0,
