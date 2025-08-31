@@ -22,6 +22,7 @@
       td input { width: 100%; box-sizing: border-box; }
       td select.fit { width: auto; max-width: 100%; box-sizing: border-box; display: inline-block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
       .icon-btn { width: 20px; height: 20px; padding: 0; line-height: 18px; text-align: center; }
+      .sale-input { max-width: 90px; }
     </style>
   </head>
   <body>
@@ -36,15 +37,6 @@
     <main class="container">
       <section>
         <div class="actions" style="margin: 10px 0; align-items: flex-end; flex-wrap: wrap;">
-          <div>
-            <label>Наявність (товару)</label>
-            <select id="inv-top-availability">
-              <option value="0">0 — Не доступно</option>
-              <option value="1">1 — Очікується</option>
-              <option value="2">2 — Під замовлення</option>
-              <option value="3" selected>3 — В наявності</option>
-            </select>
-          </div>
           <select id="inv-template-select">
             <option value="">— Обрати шаблон —</option>
           </select>
@@ -80,14 +72,13 @@
         const pid = {{ (product['id'] or 0)|tojson }};
         const sku = {{ (product.get('product_id') or '')|tojson }};
         const invTableBody = document.querySelector('#inv-table tbody');
-        const invTopAvailability = document.getElementById('inv-top-availability');
         const btnAddFromTemplate = document.getElementById('inv-add-from-template');
         const btnSave = document.getElementById('btn-save');
         const tmplSelect = document.getElementById('inv-template-select');
 
         const defaultTemplates = {{ (inventory_templates | tojson) }};
 
-        const state = { availability: 0, items: [] };
+        const state = { items: [] };
         let localIdCounter = 0;
 
         function nextLocalId() {
@@ -106,10 +97,6 @@
 
         function option(label, value) {
           const o = document.createElement('option'); o.value = String(value); o.textContent = label; return o;
-        }
-        function optionAvailability(value) {
-          const map = {0:'0 — Не доступно',1:'1 — Очікується',2:'2 — Під замовлення',3:'3 — В наявності'};
-          return option(map[value] || String(value), value);
         }
 
         function createRow(item, rowIndex) {
@@ -157,7 +144,7 @@
             {label:'UAH', value:'UAH'},{label:'USD', value:'USD'},{label:'EUR', value:'EUR'}
           ], item.currency || 'UAH');
           tr.appendChild(td(curSelect));
-          const spInput = inp('number', item.sale_price != null ? item.sale_price : '', ''); spInput.step = 'any';
+          const spInput = inp('number', item.sale_price != null ? item.sale_price : '', ''); spInput.step = 'any'; spInput.className = 'sale-input';
           tr.appendChild(td(spInput));
           const sqInput = inp('number', item.stock_qty != null ? item.stock_qty : '', ''); sqInput.step = '1';
           tr.appendChild(td(sqInput));
@@ -190,9 +177,8 @@
             const stock_qty = c.sqInput && c.sqInput.value !== '' ? Number(c.sqInput.value) : 0;
             const id = ''; // server will generate ids; keep empty in payload
             const values = Array.isArray(c.valuesList) ? c.valuesList.slice() : [];
-            return { id, title: { ua: titleUa, ru: titleRu }, unit, type, currency, values, value, original_price, sale_price, stock_qty, availability: 0 };
+            return { id, title: { ua: titleUa, ru: titleRu }, unit, type, currency, values, value, original_price, sale_price, stock_qty };
           });
-          state.availability = Number(invTopAvailability && invTopAvailability.value || 4) || 4;
         }
 
         function addFromTemplate() {
@@ -200,7 +186,7 @@
           if (!Number.isFinite(idx)) { return; }
           const t = defaultTemplates[idx]; if (!t) { return; }
           const vals = Array.isArray(t.values) ? t.values.slice() : [];
-          const it = { id: '', title: { ua: t.title.ua || '', ru: t.title.ru || '' }, original_price: (typeof t.original_price === 'number' ? t.original_price : 10), sale_price: (typeof t.sale_price === 'number' ? t.sale_price : null), currency: (t.currency || 'UAH'), stock_qty: 0, value: vals.length ? vals[0] : null, unit: t.unit || '', type: t.type || '', values: vals, availability: 0 };
+          const it = { id: '', title: { ua: t.title.ua || '', ru: t.title.ru || '' }, original_price: (typeof t.original_price === 'number' ? t.original_price : 10), sale_price: (typeof t.sale_price === 'number' ? t.sale_price : null), currency: (t.currency || 'UAH'), stock_qty: 0, value: vals.length ? vals[0] : null, unit: t.unit || '', type: t.type || '', values: vals };
           state.items.push(it);
           render();
           syncStateFromDOM();
@@ -214,11 +200,6 @@
             if (data && Array.isArray(data.items)) {
               state.items = data.items;
             }
-            if (invTopAvailability) {
-              const top = (data && typeof data.availability === 'number') ? data.availability : 3;
-              invTopAvailability.value = String(top);
-              state.availability = top;
-            }
           } catch (e) {}
           render();
         }
@@ -226,7 +207,7 @@
         async function save() {
           syncStateFromDOM();
           try {
-            const payload = { id: pid, product_id: sku, availability: state.availability || 3, items: state.items };
+            const payload = { id: pid, product_id: sku, items: state.items };
             const resp = await fetch(`${window.location.origin}/api/inventory/${pid}`, {
               method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
             });

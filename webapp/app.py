@@ -566,7 +566,6 @@ INVENTORY_FIELDS = [
     "id",  # row id in inventory
     "pid",  # numeric product id from products CSV
     "product_id",  # sku like p100001
-    "top_availability",  # overall availability for product inventory
     "variant_id",  # computed variant id
     "title_ua",
     "title_ru",
@@ -578,7 +577,6 @@ INVENTORY_FIELDS = [
     "unit",
     "type",
     "values_json",
-    "availability",  # per-variant availability 0..3
 ]
 
 
@@ -814,17 +812,6 @@ def load_inventory_json_for_product(pid_numeric: int) -> Dict:
     product = _find_product_by_id_numeric(pid_numeric)
     sku = (product.get("product_id") if product else "") if product else ""
     items_rows = _inventory_rows_for_pid(pid_numeric)
-    # Compute overall availability: max of variant availability or product availability
-    try:
-        top_av = max([int(float((r.get("availability") or "0").strip() or 0)) for r in items_rows] or [0])
-    except Exception:
-        top_av = 0
-    if not items_rows and product:
-        # fall back to product availability if rows absent
-        try:
-            top_av = int(float((product.get("availability") or "0").strip() or 0))
-        except Exception:
-            top_av = 0
     items: List[Dict] = []
     for r in items_rows:
         # Parse values_json
@@ -840,11 +827,6 @@ def load_inventory_json_for_product(pid_numeric: int) -> Dict:
                 return float(v)
             except Exception:
                 return None
-        def _to_int(v):
-            try:
-                return int(float(v))
-            except Exception:
-                return 0
         items.append({
             "id": r.get("variant_id") or "",
             "title": {
@@ -854,17 +836,15 @@ def load_inventory_json_for_product(pid_numeric: int) -> Dict:
             "original_price": _to_num(r.get("original_price")),
             "sale_price": _to_num(r.get("sale_price")),
             "currency": (r.get("currency") or "UAH") or "UAH",
-            "stock_qty": _to_int(r.get("stock_qty")),
+            "stock_qty": int(float(r.get("stock_qty") or 0)) if (r.get("stock_qty") or "").strip() != "" else 0,
             "value": _to_num(r.get("value")),
             "unit": r.get("unit") or "",
             "type": r.get("type") or "",
             "values": values_parsed,
-            "availability": _to_int(r.get("availability")),
         })
     inv = {
         "id": pid_numeric,
         "product_id": sku,
-        "availability": top_av,
         "items": items,
     }
     return inv
@@ -882,10 +862,6 @@ def save_inventory_json_for_product(pid_numeric: int, payload: Dict) -> None:
             kept.append(r)
     product = _find_product_by_id_numeric(pid_numeric)
     sku = (product.get("product_id") if product else "") if product else ""
-    try:
-        top_availability = int(float((payload.get("availability") or 0)))
-    except Exception:
-        top_availability = 0
     items = payload.get("items") or []
     if not isinstance(items, list):
         items = []
@@ -926,7 +902,6 @@ def save_inventory_json_for_product(pid_numeric: int, payload: Dict) -> None:
             "id": str(next_id),
             "pid": str(pid_numeric),
             "product_id": sku or "",
-            "top_availability": str(top_availability),
             "variant_id": variant_id,
             "title_ua": (title.get("ua") or ""),
             "title_ru": (title.get("ru") or ""),
@@ -938,7 +913,6 @@ def save_inventory_json_for_product(pid_numeric: int, payload: Dict) -> None:
             "unit": (it.get("unit") or ""),
             "type": (it.get("type") or ""),
             "values_json": json.dumps(values, ensure_ascii=False),
-            "availability": str(_int(it.get("availability"))),
         }
         new_rows.append(row)
         next_id += 1
