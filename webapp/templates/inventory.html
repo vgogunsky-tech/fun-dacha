@@ -38,8 +38,7 @@
               <option value="0">0 — Не доступно</option>
               <option value="1">1 — Очікується</option>
               <option value="2">2 — Під замовлення</option>
-              <option value="3">3 — В наявності</option>
-              <option value="4" selected>4 — В наявності (товар)</option>
+              <option value="3" selected>3 — В наявності</option>
             </select>
           </div>
           <select id="inv-template-select">
@@ -207,7 +206,7 @@
               state.items = data.items;
             }
             if (invTopAvailability) {
-              const top = (data && typeof data.availability === 'number') ? data.availability : 4;
+              const top = (data && typeof data.availability === 'number') ? data.availability : 3;
               invTopAvailability.value = String(top);
               state.availability = top;
             }
@@ -218,7 +217,7 @@
         async function save() {
           syncStateFromDOM();
           try {
-            const payload = { id: pid, product_id: sku, availability: state.availability || 4, items: state.items };
+            const payload = { id: pid, product_id: sku, availability: state.availability || 3, items: state.items };
             const resp = await fetch(`${window.location.origin}/api/inventory/${pid}`, {
               method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
             });
