@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="uk">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Склад товару</title>
+    <link rel="stylesheet" href="https://unpkg.com/mvp.css">
+    <style>
+      .container { max-width: 1200px; margin: 0 auto; }
+      table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+      th, td { text-align: left; }
+      td { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .muted { color: #666; font-size: 0.9em; }
+      .actions { display: flex; gap: 10px; }
+      .ro { background: #f7f7f7; }
+      th:nth-child(1) { width: 60px; }
+      th:nth-child(2) { width: 24%; }
+      th:nth-child(3), th:nth-child(4), th:nth-child(5) { width: 12%; }
+      th:nth-child(6), th:nth-child(8), th:nth-child(9) { width: 9%; }
+      th:nth-child(7) { width: 8%; }
+      th:nth-child(10) { width: 20px; }
+      td input { width: 100%; box-sizing: border-box; }
+      td select.fit { width: auto; max-width: 100%; box-sizing: border-box; display: inline-block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .icon-btn { width: 20px; height: 20px; padding: 0; line-height: 18px; text-align: center; }
+      .sale-input { max-width: 90px; }
+    </style>
+  </head>
+  <body>
+    <header class="container">
+      {% if return_to %}
+        <p><a href="{{ return_to }}">← Назад</a></p>
+      {% else %}
+        <p><a href="{{ url_for('products_list') }}">← До списку товарів</a></p>
+      {% endif %}
+      <h1>Склад — {{ product['Название (укр)'] or 'Без назви' }} <span class="muted">(ID: {{ product['id'] }})</span></h1>
+    </header>
+    <main class="container">
+      <section>
+        <div class="actions" style="margin: 10px 0; align-items: flex-end; flex-wrap: wrap;">
+          <select id="inv-template-select">
+            <option value="">— Обрати шаблон —</option>
+          </select>
+          <button type="button" id="inv-add-from-template">Додати з шаблону</button>
+        </div>
+        <div style="overflow:auto;">
+          <table id="inv-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Назва</th>
+                <th>Тип</th>
+                <th>Value</th>
+                <th>Одиниця</th>
+                <th>Ціна</th>
+                <th>Валюта</th>
+                <th>Ціна по знижці</th>
+                <th>Склад</th>
+                <th>Дія</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <div class="actions" style="margin-top: 12px;">
+          <button id="btn-save" type="button">Зберегти</button>
+          <a class="muted" href="{{ url_for('products_list') }}">Скасувати</a>
+        </div>
+      </section>
+    </main>
+    <script>
+      (function(){
+        const pid = {{ (product['id'] or 0)|tojson }};
+        const sku = {{ (product.get('product_id') or '')|tojson }};
+        const invTableBody = document.querySelector('#inv-table tbody');
+        const btnAddFromTemplate = document.getElementById('inv-add-from-template');
+        const btnSave = document.getElementById('btn-save');
+        const tmplSelect = document.getElementById('inv-template-select');
+
+        const defaultTemplates = {{ (inventory_templates | tojson) }};
+
+        const state = { items: [] };
+        let localIdCounter = 0;
+
+        function nextLocalId() {
+          localIdCounter += 1; return localIdCounter;
+        }
+
+        function renderTemplates() {
+          tmplSelect.innerHTML = '<option value="">— Обрати шаблон —</option>';
+          defaultTemplates.forEach((t, idx) => {
+            const opt = document.createElement('option');
+            opt.value = String(idx);
+            opt.textContent = `${t.title.ua} (${t.unit})`;
+            tmplSelect.appendChild(opt);
+          });
+        }
+
+        function option(label, value) {
+          const o = document.createElement('option'); o.value = String(value); o.textContent = label; return o;
+        }
+
+        function createRow(item, rowIndex) {
+          const tr = document.createElement('tr');
+          tr.dataset.id = item.id || '';
+          function td(inner) { const c = document.createElement('td'); if (inner) c.appendChild(inner); return c; }
+          function inp(type, value, placeholder) { const i = document.createElement('input'); i.type = type; if (value !== undefined && value !== null) i.value = String(value); if (placeholder) i.placeholder = placeholder; return i; }
+          function sel() { const s = document.createElement('select'); s.className = 'fit'; return s; }
+          function selOps(s, options, value) { s.innerHTML = ''; options.forEach(o => { const opt = document.createElement('option'); opt.value = String(o.value); opt.textContent = o.label; s.appendChild(opt); }); if (value !== undefined && value !== null) s.value = String(value); }
+
+          // id (display-only, incremental)
+          const idSpan = document.createElement('span'); idSpan.textContent = String((rowIndex != null ? rowIndex + 1 : nextLocalId()));
+          tr.appendChild(td(idSpan));
+          // stacked title: UA (bold) + RU (muted)
+          const titleCell = document.createElement('td');
+          const tUa = inp('text', (item.title && item.title.ua) || '', 'Назва (UA)');
+          const tRu = inp('text', (item.title && item.title.ru) || '', 'Название (RU)');
+          const tUaWrap = document.createElement('div'); tUaWrap.appendChild(tUa); tUaWrap.style.marginBottom = '4px';
+          const tRuWrap = document.createElement('div'); tRuWrap.appendChild(tRu); tRuWrap.className = 'muted';
+          titleCell.appendChild(tUaWrap);
+          titleCell.appendChild(tRuWrap);
+          tr.appendChild(titleCell);
+          // type (dropdown)
+          const typeSelect = sel(); selOps(typeSelect, [
+            {label:'—', value:''}, {label:'quantity', value:'quantity'}, {label:'weight', value:'weight'}
+          ], item.type || '');
+          tr.appendChild(td(typeSelect));
+          // value dropdown from values
+          const valueSelect = sel();
+          const values = Array.isArray(item.values) ? item.values : [];
+          const valueOptions = values.map(v => ({ label: String(v), value: v }));
+          if (!valueOptions.length) valueOptions.push({label: '—', value: ''});
+          selOps(valueSelect, valueOptions, item.value != null ? item.value : (valueOptions[0] ? valueOptions[0].value : ''));
+          tr.appendChild(td(valueSelect));
+          // unit (dropdown)
+          const unitSelect = sel();
+          const unitCandidates = ['pcs','g','kg','ml','l'];
+          if (item.unit && !unitCandidates.includes(item.unit)) unitCandidates.unshift(item.unit);
+          selOps(unitSelect, unitCandidates.map(u => ({label:u, value:u})), item.unit || unitCandidates[0]);
+          tr.appendChild(td(unitSelect));
+          // prices and currency
+          const opInput = inp('number', item.original_price != null ? item.original_price : '', ''); opInput.step = 'any';
+          tr.appendChild(td(opInput));
+          const curSelect = sel(); selOps(curSelect, [
+            {label:'UAH', value:'UAH'},{label:'USD', value:'USD'},{label:'EUR', value:'EUR'}
+          ], item.currency || 'UAH');
+          tr.appendChild(td(curSelect));
+          const spInput = inp('number', item.sale_price != null ? item.sale_price : '', ''); spInput.step = 'any'; spInput.className = 'sale-input';
+          tr.appendChild(td(spInput));
+          const sqInput = inp('number', item.stock_qty != null ? item.stock_qty : '', ''); sqInput.step = '1';
+          tr.appendChild(td(sqInput));
+
+          const remBtn = document.createElement('button'); remBtn.type = 'button'; remBtn.textContent = '✕'; remBtn.className = 'icon-btn';
+          remBtn.addEventListener('click', () => { tr.remove(); syncStateFromDOM(); });
+          tr.appendChild(td(remBtn));
+
+          tr._controls = { typeSelect, valueSelect, unitSelect, opInput, curSelect, spInput, sqInput, valuesList: values.slice() };
+          invTableBody.appendChild(tr);
+        }
+
+        function render() {
+          invTableBody.innerHTML = '';
+          (state.items || []).forEach((it, idx) => createRow(it, idx));
+        }
+
+        function syncStateFromDOM() {
+          const rows = Array.from(invTableBody.querySelectorAll('tr'));
+          state.items = rows.map(tr => {
+            const c = tr._controls || {};
+            const titleUa = tr.children[1].querySelectorAll('input')[0].value || '';
+            const titleRu = tr.children[1].querySelectorAll('input')[1].value || '';
+            const type = c.typeSelect ? c.typeSelect.value : '';
+            const value = c.valueSelect ? (c.valueSelect.value === '' ? null : Number(c.valueSelect.value)) : null;
+            const unit = c.unitSelect ? c.unitSelect.value : '';
+            const original_price = c.opInput && c.opInput.value !== '' ? Number(c.opInput.value) : null;
+            const currency = c.curSelect ? c.curSelect.value : 'UAH';
+            const sale_price = c.spInput && c.spInput.value !== '' ? Number(c.spInput.value) : null;
+            const stock_qty = c.sqInput && c.sqInput.value !== '' ? Number(c.sqInput.value) : 0;
+            const id = ''; // server will generate ids; keep empty in payload
+            const values = Array.isArray(c.valuesList) ? c.valuesList.slice() : [];
+            return { id, title: { ua: titleUa, ru: titleRu }, unit, type, currency, values, value, original_price, sale_price, stock_qty };
+          });
+        }
+
+        function addFromTemplate() {
+          const idx = tmplSelect.value ? Number(tmplSelect.value) : NaN;
+          if (!Number.isFinite(idx)) { return; }
+          const t = defaultTemplates[idx]; if (!t) { return; }
+          const vals = Array.isArray(t.values) ? t.values.slice() : [];
+          const it = { id: '', title: { ua: t.title.ua || '', ru: t.title.ru || '' }, original_price: (typeof t.original_price === 'number' ? t.original_price : 10), sale_price: (typeof t.sale_price === 'number' ? t.sale_price : null), currency: (t.currency || 'UAH'), stock_qty: 0, value: vals.length ? vals[0] : null, unit: t.unit || '', type: t.type || '', values: vals };
+          state.items.push(it);
+          render();
+          syncStateFromDOM();
+        }
+
+        async function loadInitial() {
+          try {
+            const resp = await fetch(`${window.location.origin}/api/inventory/${pid}`);
+            if (!resp.ok) throw new Error('HTTP ' + resp.status);
+            const data = await resp.json();
+            if (data && Array.isArray(data.items)) {
+              state.items = data.items;
+            }
+          } catch (e) {}
+          render();
+        }
+
+        async function save() {
+          syncStateFromDOM();
+          try {
+            const payload = { id: pid, product_id: sku, items: state.items };
+            const resp = await fetch(`${window.location.origin}/api/inventory/${pid}`, {
+              method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
+            });
+            if (!resp.ok) throw new Error('HTTP ' + resp.status);
+            alert('Збережено.');
+          } catch (e) {
+            alert('Помилка збереження.');
+          }
+        }
+
+        btnAddFromTemplate && btnAddFromTemplate.addEventListener('click', addFromTemplate);
+        btnSave && btnSave.addEventListener('click', save);
+        renderTemplates();
+        loadInitial();
+      })();
+    </script>
+  </body>
+</html>

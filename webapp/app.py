@@ -26,6 +26,8 @@ PRODUCTS_CSV_ALT = os.path.join(DATA_DIR, "lists.csv")
 CATEGORIES_CSV = os.path.join(DATA_DIR, "categories_list.csv")
 CATEGORY_IMAGES_DIR = os.path.join(DATA_DIR, "images", "categories")
 PRODUCT_IMAGES_DIR = os.path.join(DATA_DIR, "images", "products")
+INVENTORY_CSV = os.path.join(DATA_DIR, "inventory.csv")
+INVENTORY_TEMPLATES_JSON = os.path.join(DATA_DIR, "inventory_templates.json")
 
 REQUIRED_PRODUCT_COLS = [
     "validated",
@@ -285,6 +287,38 @@ def _github_api_repo() -> Optional[str]:
     return None
 
 
+# -------------------- Inventory API --------------------
+
+@app.get("/api/inventory/<int:pid>")
+def api_inventory_get(pid: int):
+    try:
+        ensure_product_columns()
+        inv = load_inventory_json_for_product(pid)
+        return jsonify(inv), 200
+    except Exception as e:
+        return jsonify({"error": "failed"}), 500
+
+
+@app.post("/api/inventory/<int:pid>")
+def api_inventory_post(pid: int):
+    try:
+        payload = request.get_json(silent=True) or {}
+        # Accept either direct structure or under key 'inventory'
+        if "inventory" in payload and isinstance(payload.get("inventory"), dict):
+            inv = payload.get("inventory")
+        else:
+            inv = payload
+        save_inventory_json_for_product(pid, inv)
+        # Commit
+        try:
+            commit_and_push([INVENTORY_CSV], f"Update inventory for product {pid} via webapp")
+        except Exception:
+            pass
+        return jsonify({"ok": True}), 200
+    except Exception as e:
+        return jsonify({"ok": False, "error": "failed"}), 500
+
+
 def _github_api_ensure_branch(repo: str, token: str, branch: str) -> None:
     headers = _github_api_headers(token)
     # Check branch exists
@@ -526,6 +560,110 @@ def write_products_csv(rows: List[Dict[str, str]], fields: List[str]) -> List[st
     return paths
 
 
+# -------------------- Inventory CSV helpers --------------------
+
+INVENTORY_FIELDS = [
+    "id",  # row id in inventory
+    "pid",  # numeric product id from products CSV
+    "product_id",  # sku like p100001
+    "variant_id",  # computed variant id
+    "title_ua",
+    "title_ru",
+    "original_price",
+    "sale_price",
+    "currency",
+    "stock_qty",
+    "value",
+    "unit",
+    "type",
+    "values_json",
+]
+
+
+def _ensure_inventory_file() -> None:
+    try:
+        os.makedirs(os.path.dirname(INVENTORY_CSV), exist_ok=True)
+        if not os.path.isfile(INVENTORY_CSV):
+            write_csv(INVENTORY_CSV, [], INVENTORY_FIELDS)
+        else:
+            # Ensure headers include all fields; add missing columns with blanks
+            rows, fields = read_csv(INVENTORY_CSV)
+            changed = False
+            for col in INVENTORY_FIELDS:
+                if col not in fields:
+                    fields.append(col)
+                    for r in rows:
+                        r[col] = ""
+                    changed = True
+            if changed:
+                write_csv(INVENTORY_CSV, rows, fields)
+    except Exception:
+        pass
+
+
+def read_inventory_csv() -> Tuple[List[Dict[str, str]], List[str]]:
+    _ensure_inventory_file()
+    rows, fields = read_csv(INVENTORY_CSV)
+    return rows, fields
+
+
+def write_inventory_csv(rows: List[Dict[str, str]], fields: Optional[List[str]] = None) -> None:
+    _ensure_inventory_file()
+    if fields is None:
+        fields = INVENTORY_FIELDS
+        # ensure new fields are present in rows
+        for r in rows:
+            for col in fields:
+                if col not in r:
+                    r[col] = ""
+    write_csv(INVENTORY_CSV, rows, fields)
+
+
+def _inventory_next_id(rows: List[Dict[str, str]]) -> int:
+    max_id = 0
+    for r in rows:
+        try:
+            max_id = max(max_id, int(float((r.get("id") or "0").strip() or 0)))
+        except Exception:
+            pass
+    return max_id + 1
+
+
+# -------------------- Inventory templates helpers --------------------
+
+def load_inventory_templates() -> List[Dict]:
+    defaults: List[Dict] = [
+        {
+            "title": {"ua": "Маленький пакет", "ru": "Маленький пакет"},
+            "type": "quantity",
+            "unit": "pcs",
+            "values": [10, 15, 20, 25, 30],
+            "original_price": 10,
+            "sale_price": None,
+            "currency": "UAH",
+        },
+        {
+            "title": {"ua": "Великий пакет", "ru": "Большой пакет"},
+            "type": "weight",
+            "unit": "g",
+            "values": [50, 100, 250, 500],
+            "original_price": 10,
+            "sale_price": None,
+            "currency": "UAH",
+        },
+    ]
+    path = INVENTORY_TEMPLATES_JSON
+    try:
+        if os.path.isfile(path):
+            with open(path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            if isinstance(data, list):
+                return data
+    except Exception:
+        pass
+    return defaults
+
+
 def ensure_product_columns() -> None:
     rows, fields, _ = read_products_csv()
     changed = False
@@ -643,6 +781,143 @@ def build_sku(category_id: str, product_id: str) -> str:
     except Exception:
         pid_int = 0
     return f"p{cat_int:03d}{pid_int % 1000:03d}"
+
+
+# -------------------- Inventory domain helpers --------------------
+
+def _find_product_by_id_numeric(pid_numeric: int) -> Optional[Dict[str, str]]:
+    rows, _, _ = read_products_csv()
+    for r in rows:
+        try:
+            if int(float((r.get("id") or "0").strip() or 0)) == pid_numeric:
+                return r
+        except Exception:
+            continue
+    return None
+
+
+def _inventory_rows_for_pid(pid_numeric: int) -> List[Dict[str, str]]:
+    rows, _ = read_inventory_csv()
+    result: List[Dict[str, str]] = []
+    for r in rows:
+        try:
+            if int(float((r.get("pid") or "0").strip() or 0)) == pid_numeric:
+                result.append(r)
+        except Exception:
+            continue
+    return result
+
+
+def load_inventory_json_for_product(pid_numeric: int) -> Dict:
+    product = _find_product_by_id_numeric(pid_numeric)
+    sku = (product.get("product_id") if product else "") if product else ""
+    items_rows = _inventory_rows_for_pid(pid_numeric)
+    items: List[Dict] = []
+    for r in items_rows:
+        # Parse values_json
+        try:
+            values_parsed = json.loads(r.get("values_json") or "[]")
+            if not isinstance(values_parsed, list):
+                values_parsed = []
+        except Exception:
+            values_parsed = []
+        # Convert numeric fields
+        def _to_num(v):
+            try:
+                return float(v)
+            except Exception:
+                return None
+        items.append({
+            "id": r.get("variant_id") or "",
+            "title": {
+                "ua": r.get("title_ua") or "",
+                "ru": r.get("title_ru") or "",
+            },
+            "original_price": _to_num(r.get("original_price")),
+            "sale_price": _to_num(r.get("sale_price")),
+            "currency": (r.get("currency") or "UAH") or "UAH",
+            "stock_qty": int(float(r.get("stock_qty") or 0)) if (r.get("stock_qty") or "").strip() != "" else 0,
+            "value": _to_num(r.get("value")),
+            "unit": r.get("unit") or "",
+            "type": r.get("type") or "",
+            "values": values_parsed,
+        })
+    inv = {
+        "id": pid_numeric,
+        "product_id": sku,
+        "items": items,
+    }
+    return inv
+
+
+def save_inventory_json_for_product(pid_numeric: int, payload: Dict) -> None:
+    rows_all, fields = read_inventory_csv()
+    # Remove existing rows for pid
+    kept: List[Dict[str, str]] = []
+    for r in rows_all:
+        try:
+            if int(float((r.get("pid") or "0").strip() or 0)) != pid_numeric:
+                kept.append(r)
+        except Exception:
+            kept.append(r)
+    product = _find_product_by_id_numeric(pid_numeric)
+    sku = (product.get("product_id") if product else "") if product else ""
+    items = payload.get("items") or []
+    if not isinstance(items, list):
+        items = []
+    # next id counter
+    next_id = _inventory_next_id(rows_all)
+    new_rows: List[Dict[str, str]] = []
+    for it in items:
+        title = it.get("title") or {}
+        values = it.get("values") if isinstance(it.get("values"), list) else []
+        def _num(v):
+            try:
+                return float(v)
+            except Exception:
+                return None
+        def _int(v):
+            try:
+                return int(float(v))
+            except Exception:
+                return 0
+        # compute variant id if missing
+        variant_id = (it.get("id") or "").strip()
+        if not variant_id:
+            unit = (it.get("unit") or "").strip()
+            value = it.get("value")
+            suffix = ""
+            try:
+                if value is not None:
+                    # Avoid decimal point if value is int-like
+                    val_int = int(float(value))
+                    if float(val_int) == float(value):
+                        suffix = f"{val_int}{(unit or '').upper()[:1]}"
+                    else:
+                        suffix = f"{value}{(unit or '').upper()[:1]}"
+            except Exception:
+                suffix = f"{value}{(unit or '').upper()[:1]}"
+            variant_id = f"{(sku or '').upper()}-{suffix}" if suffix else (sku or '')
+        row = {
+            "id": str(next_id),
+            "pid": str(pid_numeric),
+            "product_id": sku or "",
+            "variant_id": variant_id,
+            "title_ua": (title.get("ua") or ""),
+            "title_ru": (title.get("ru") or ""),
+            "original_price": "" if it.get("original_price") in (None, "") else str(_num(it.get("original_price")) or ""),
+            "sale_price": "" if it.get("sale_price") in (None, "") else str(_num(it.get("sale_price")) or ""),
+            "currency": (it.get("currency") or "UAH") or "UAH",
+            "stock_qty": str(_int(it.get("stock_qty"))),
+            "value": "" if it.get("value") in (None, "") else str(_num(it.get("value")) or ""),
+            "unit": (it.get("unit") or ""),
+            "type": (it.get("type") or ""),
+            "values_json": json.dumps(values, ensure_ascii=False),
+        }
+        new_rows.append(row)
+        next_id += 1
+    final_rows = kept + new_rows
+    write_inventory_csv(final_rows, fields)
 
 
 def get_unvalidated_products_by_category(category_id: str) -> List[Dict[str, str]]:
@@ -803,6 +1078,38 @@ def products_list():
     )
 
 
+@app.get("/inventory/<int:pid>")
+def inventory_edit(pid: int):
+    ensure_product_columns()
+    product = _find_product_by_id_numeric(pid)
+    if product is None:
+        abort(404)
+    # Product image
+    img_url = None
+    img_name = (product.get("primary_image") or "").strip()
+    if img_name and os.path.isfile(os.path.join(PRODUCT_IMAGES_DIR, img_name)):
+        img_url = url_for("serve_product_image", filename=img_name)
+
+    cats = load_categories()
+    try:
+        category_id = int(float(product.get("category_id", "") or 0))
+    except Exception:
+        category_id = 0
+
+    inv_json = load_inventory_json_for_product(pid)
+    return_to = (request.args.get("return_to") or "").strip()
+    return render_template(
+        "inventory.html",
+        product=product,
+        image_url=img_url,
+        inventory=inv_json,
+        categories=cats,
+        category_id=category_id,
+        inventory_templates=load_inventory_templates(),
+        return_to=return_to,
+    )
+
+
 @app.get("/product/<int:pid>")
 def product_by_id(pid: int):
     """Open product edit page for a specific product id."""
@@ -857,6 +1164,7 @@ def product_by_id(pid: int):
     except Exception:
         tag_ua_map = {}
 
+    inv_json = load_inventory_json_for_product(pid)
     return render_template(
         "product.html",
         category_id=category_id or 0,
@@ -868,6 +1176,7 @@ def product_by_id(pid: int):
         categories=cats,
         parent_to_children=parent_to_children,
         tag_ua_map=tag_ua_map,
+        inventory=inv_json,
     )
 
 
@@ -924,6 +1233,11 @@ def product():
     except Exception:
         tag_ua_map = {}
 
+    inv_json = None
+    try:
+        inv_json = load_inventory_json_for_product(int(float(p.get("id") or 0)))
+    except Exception:
+        inv_json = None
     return render_template(
         "product.html",
         category_id=category_id,
@@ -935,6 +1249,7 @@ def product():
         categories=cats,
         parent_to_children=parent_to_children,
         tag_ua_map=tag_ua_map,
+        inventory=inv_json,
     )
 
 
@@ -1032,6 +1347,21 @@ def product_save():
     if action == "save_validate":
         target["validated"] = "1"
         advanced = True
+
+    # Inventory save (optional if provided as hidden input)
+    inv_raw = (form.get("inventory_json") or "").strip()
+    if inv_raw:
+        try:
+            inv_obj = json.loads(inv_raw)
+            try:
+                pid_int = int(float(product_id))
+            except Exception:
+                pid_int = None
+            if pid_int is not None and isinstance(inv_obj, dict):
+                save_inventory_json_for_product(pid_int, inv_obj)
+                changed_paths.append(INVENTORY_CSV)
+        except Exception:
+            pass
 
     written_paths = write_products_csv(rows, fields)
     changed_paths.extend(written_paths)

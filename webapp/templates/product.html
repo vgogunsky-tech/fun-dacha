@@ -47,10 +47,12 @@
       {% if not product %}
         <p>Немає товарів для перевірки.</p>
       {% else %}
-      <div class="page-grid">
+      <div class="page-grid" style="grid-template-columns: 2fr 1fr;">
         <article>
           <header>
             <h2>{{ product['Название (укр)'] or 'Без назви' }} <span class="muted">(ID: {{ product['id'] }})</span></h2>
+            {% set inv_return = request.full_path %}
+            <p><a class="button" href="{{ url_for('inventory_edit', pid=product['id']) }}?return_to={{ inv_return | urlencode }}">Склад</a></p>
           </header>
 
           <form action="{{ url_for('product_save', index=index) }}" method="post" enctype="multipart/form-data">
@@ -179,6 +181,7 @@
                   {% endfor %}
                 </div>
               </div>
+
             </div>
 
             <footer class="actions">
@@ -285,8 +288,43 @@
 
               render();
             })();
+
+            // Inventory panel moved to dedicated screen
           </script>
         </article>
+        <aside>
+          <header>
+            <h3>Склад</h3>
+          </header>
+          {% set inv = inventory or {} %}
+          {% set items = inv.get('items') or [] %}
+          {% if not items %}
+            <p class="muted">Немає варіантів складу для цього товару.</p>
+          {% else %}
+            <div style="display:flex; flex-direction: column; gap: 8px;">
+              {% for it in items %}
+                <div style="border: 1px solid #ddd; border-radius: 8px; padding: 8px;">
+                  <div style="font-weight: 600;">{{ (it.title.ua or it.title.ru or '') if it.title else '' }}</div>
+                  <div class="muted">
+                    {{ it.type or '' }}
+                    {% if it.value is not none %} • {{ it.value }}{% endif %}
+                    {% if it.unit %} {{ it.unit }}{% endif %}
+                  </div>
+                  <div class="muted">
+                    {{ (it.original_price if it.original_price is not none else '—') }} {{ it.currency or 'UAH' }}
+                    {% if it.sale_price is not none %}
+                      • знижка: {{ it.sale_price }} {{ it.currency or 'UAH' }}
+                    {% endif %}
+                  </div>
+                  <div class="muted">Склад: {{ it.stock_qty if it.stock_qty is not none else 0 }}</div>
+                </div>
+              {% endfor %}
+            </div>
+          {% endif %}
+          <div style="margin-top: 12px;">
+            <a class="button" href="{{ url_for('inventory_edit', pid=product['id']) }}">Відкрити "Склад"</a>
+          </div>
+        </aside>
       </div>
       {% endif %}
     </main>
