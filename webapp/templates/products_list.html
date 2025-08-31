@@ -81,7 +81,7 @@
               <th class="status">Статус</th>
               <th class="col-id">ID</th>
               <th class="nowrap">Зображення</th>
-              <th class="nowrap">Інвентар</th>
+              <th class="nowrap">Склад</th>
               {% for f in fields %}
                 {% if f != 'id' %}
                   <th>{{ f }}</th>
@@ -107,7 +107,7 @@
                   </a>
                 </td>
                 <td>
-                  <a href="{{ url_for('inventory_edit', pid=r['_pid']) }}" class="button">Інвентар</a>
+                  <a href="{{ url_for('inventory_edit', pid=r['_pid']) }}" class="button">Склад</a>
                 </td>
                 {% for f in fields %}
                   {% if f != 'id' %}

@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Інвентар товару</title>
+    <title>Склад товару</title>
     <link rel="stylesheet" href="https://unpkg.com/mvp.css">
     <style>
       .container { max-width: 1100px; margin: 0 auto; }
@@ -19,7 +19,7 @@
   <body>
     <header class="container">
       <p><a href="{{ url_for('products_list') }}">← До списку товарів</a></p>
-      <h1>Інвентар — {{ product['Название (укр)'] or 'Без назви' }} <span class="muted">(ID: {{ product['id'] }})</span></h1>
+      <h1>Склад — {{ product['Название (укр)'] or 'Без назви' }} <span class="muted">(ID: {{ product['id'] }})</span></h1>
     </header>
     <main class="container">
       <section class="image">
