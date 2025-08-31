@@ -9,17 +9,19 @@
       .container { max-width: 1200px; margin: 0 auto; }
       table { width: 100%; border-collapse: collapse; table-layout: fixed; }
       th, td { text-align: left; }
+      td { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
       .muted { color: #666; font-size: 0.9em; }
       .actions { display: flex; gap: 10px; }
       .ro { background: #f7f7f7; }
       th:nth-child(1) { width: 60px; }
       th:nth-child(2), th:nth-child(3) { width: 16%; }
-      th:nth-child(4), th:nth-child(5), th:nth-child(6) { width: 10%; }
-      th:nth-child(7), th:nth-child(9) { width: 9%; }
-      th:nth-child(8) { width: 8%; }
-      th:nth-child(10), th:nth-child(11) { width: 8%; }
-      th:nth-child(12) { width: 60px; }
-      td input, td select { width: 100%; box-sizing: border-box; }
+      th:nth-child(4), th:nth-child(5), th:nth-child(6) { width: 12%; }
+      th:nth-child(7), th:nth-child(9) { width: 10%; }
+      th:nth-child(8), th:nth-child(10) { width: 8%; }
+      th:nth-child(11) { width: 20px; }
+      td input { width: 100%; box-sizing: border-box; }
+      td select.fit { width: auto; max-width: 100%; box-sizing: border-box; display: inline-block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .icon-btn { width: 20px; height: 20px; padding: 0; line-height: 18px; text-align: center; }
     </style>
   </head>
   <body>
@@ -29,7 +31,17 @@
     </header>
     <main class="container">
       <section>
-        <div class="actions" style="margin: 10px 0;">
+        <div class="actions" style="margin: 10px 0; align-items: flex-end; flex-wrap: wrap;">
+          <div>
+            <label>Наявність (товару)</label>
+            <select id="inv-top-availability">
+              <option value="0">0 — Не доступно</option>
+              <option value="1">1 — Очікується</option>
+              <option value="2">2 — Під замовлення</option>
+              <option value="3">3 — В наявності</option>
+              <option value="4" selected>4 — В наявності (товар)</option>
+            </select>
+          </div>
           <select id="inv-template-select">
             <option value="">— Обрати шаблон —</option>
           </select>
@@ -49,7 +61,6 @@
                 <th>Валюта</th>
                 <th>Ціна по знижці</th>
                 <th>Склад</th>
-                <th>Наявність</th>
                 <th>Дія</th>
               </tr>
             </thead>
@@ -67,6 +78,7 @@
         const pid = {{ (product['id'] or 0)|tojson }};
         const sku = {{ (product.get('product_id') or '')|tojson }};
         const invTableBody = document.querySelector('#inv-table tbody');
+        const invTopAvailability = document.getElementById('inv-top-availability');
         const btnAddFromTemplate = document.getElementById('inv-add-from-template');
         const btnSave = document.getElementById('btn-save');
         const tmplSelect = document.getElementById('inv-template-select');
@@ -103,7 +115,7 @@
           tr.dataset.id = item.id || '';
           function td(inner) { const c = document.createElement('td'); if (inner) c.appendChild(inner); return c; }
           function inp(type, value, placeholder) { const i = document.createElement('input'); i.type = type; if (value !== undefined && value !== null) i.value = String(value); if (placeholder) i.placeholder = placeholder; return i; }
-          function sel() { const s = document.createElement('select'); return s; }
+          function sel() { const s = document.createElement('select'); s.className = 'fit'; return s; }
           function selOps(s, options, value) { s.innerHTML = ''; options.forEach(o => { const opt = document.createElement('option'); opt.value = String(o.value); opt.textContent = o.label; s.appendChild(opt); }); if (value !== undefined && value !== null) s.value = String(value); }
 
           // id (display-only, incremental)
@@ -141,14 +153,12 @@
           tr.appendChild(td(spInput));
           const sqInput = inp('number', item.stock_qty != null ? item.stock_qty : '', ''); sqInput.step = '1';
           tr.appendChild(td(sqInput));
-          const avSelect = sel(); [0,1,2,3].forEach(v => avSelect.appendChild(optionAvailability(v))); avSelect.value = String((typeof item.availability === 'number') ? item.availability : 0);
-          tr.appendChild(td(avSelect));
 
-          const remBtn = document.createElement('button'); remBtn.type = 'button'; remBtn.textContent = '✕';
+          const remBtn = document.createElement('button'); remBtn.type = 'button'; remBtn.textContent = '✕'; remBtn.className = 'icon-btn';
           remBtn.addEventListener('click', () => { tr.remove(); syncStateFromDOM(); });
           tr.appendChild(td(remBtn));
 
-          tr._controls = { typeSelect, valueSelect, unitSelect, opInput, curSelect, spInput, sqInput, avSelect, valuesList: values.slice() };
+          tr._controls = { typeSelect, valueSelect, unitSelect, opInput, curSelect, spInput, sqInput, valuesList: values.slice() };
           invTableBody.appendChild(tr);
         }
 
@@ -170,11 +180,11 @@
             const currency = c.curSelect ? c.curSelect.value : 'UAH';
             const sale_price = c.spInput && c.spInput.value !== '' ? Number(c.spInput.value) : null;
             const stock_qty = c.sqInput && c.sqInput.value !== '' ? Number(c.sqInput.value) : 0;
-            const availability = c.avSelect ? Number(c.avSelect.value || 0) : 0;
             const id = ''; // server will generate ids; keep empty in payload
             const values = Array.isArray(c.valuesList) ? c.valuesList.slice() : [];
-            return { id, title: { ua: titleUa, ru: titleRu }, unit, type, currency, values, value, original_price, sale_price, stock_qty, availability };
+            return { id, title: { ua: titleUa, ru: titleRu }, unit, type, currency, values, value, original_price, sale_price, stock_qty, availability: 0 };
           });
+          state.availability = Number(invTopAvailability && invTopAvailability.value || 4) || 4;
         }
 
         function addFromTemplate() {
@@ -196,6 +206,11 @@
             if (data && Array.isArray(data.items)) {
               state.items = data.items;
             }
+            if (invTopAvailability) {
+              const top = (data && typeof data.availability === 'number') ? data.availability : 4;
+              invTopAvailability.value = String(top);
+              state.availability = top;
+            }
           } catch (e) {}
           render();
         }
@@ -203,7 +218,7 @@
         async function save() {
           syncStateFromDOM();
           try {
-            const payload = { id: pid, product_id: sku, availability: 0, items: state.items };
+            const payload = { id: pid, product_id: sku, availability: state.availability || 4, items: state.items };
             const resp = await fetch(`${window.location.origin}/api/inventory/${pid}`, {
               method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
             });
