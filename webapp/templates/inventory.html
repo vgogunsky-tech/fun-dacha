@@ -16,9 +16,8 @@
       th:nth-child(1) { width: 60px; }
       th:nth-child(2) { width: 24%; }
       th:nth-child(3), th:nth-child(4), th:nth-child(5) { width: 12%; }
-      th:nth-child(6), th:nth-child(8), th:nth-child(9) { width: 9%; }
-      th:nth-child(7) { width: 8%; }
-      th:nth-child(10) { width: 20px; }
+      th:nth-child(6), th:nth-child(7), th:nth-child(8) { width: 9%; }
+      th:nth-child(9) { width: 20px; }
       td input { width: 100%; box-sizing: border-box; }
       td select.fit { width: auto; max-width: 100%; box-sizing: border-box; display: inline-block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
       .icon-btn { width: 20px; height: 20px; padding: 0; line-height: 18px; text-align: center; }
@@ -48,7 +47,6 @@
               <tr>
                 <th>ID</th>
                 <th>Назва</th>
-                <th>Тип</th>
                 <th>Value</th>
                 <th>Одиниця</th>
                 <th>Ціна</th>
@@ -119,11 +117,6 @@
           titleCell.appendChild(tUaWrap);
           titleCell.appendChild(tRuWrap);
           tr.appendChild(titleCell);
-          // type (dropdown)
-          const typeSelect = sel(); selOps(typeSelect, [
-            {label:'—', value:''}, {label:'quantity', value:'quantity'}, {label:'weight', value:'weight'}
-          ], item.type || '');
-          tr.appendChild(td(typeSelect));
           // value dropdown from values
           const valueSelect = sel();
           const values = Array.isArray(item.values) ? item.values : [];
@@ -153,7 +146,7 @@
           remBtn.addEventListener('click', () => { tr.remove(); syncStateFromDOM(); });
           tr.appendChild(td(remBtn));
 
-          tr._controls = { typeSelect, valueSelect, unitSelect, opInput, curSelect, spInput, sqInput, valuesList: values.slice() };
+          tr._controls = { valueSelect, unitSelect, opInput, curSelect, spInput, sqInput, valuesList: values.slice() };
           invTableBody.appendChild(tr);
         }
 
@@ -168,7 +161,6 @@
             const c = tr._controls || {};
             const titleUa = tr.children[1].querySelectorAll('input')[0].value || '';
             const titleRu = tr.children[1].querySelectorAll('input')[1].value || '';
-            const type = c.typeSelect ? c.typeSelect.value : '';
             const value = c.valueSelect ? (c.valueSelect.value === '' ? null : Number(c.valueSelect.value)) : null;
             const unit = c.unitSelect ? c.unitSelect.value : '';
             const original_price = c.opInput && c.opInput.value !== '' ? Number(c.opInput.value) : null;
@@ -177,7 +169,7 @@
             const stock_qty = c.sqInput && c.sqInput.value !== '' ? Number(c.sqInput.value) : 0;
             const id = ''; // server will generate ids; keep empty in payload
             const values = Array.isArray(c.valuesList) ? c.valuesList.slice() : [];
-            return { id, title: { ua: titleUa, ru: titleRu }, unit, type, currency, values, value, original_price, sale_price, stock_qty };
+            return { id, title: { ua: titleUa, ru: titleRu }, unit, currency, values, value, original_price, sale_price, stock_qty };
           });
         }
 
@@ -186,7 +178,7 @@
           if (!Number.isFinite(idx)) { return; }
           const t = defaultTemplates[idx]; if (!t) { return; }
           const vals = Array.isArray(t.values) ? t.values.slice() : [];
-          const it = { id: '', title: { ua: t.title.ua || '', ru: t.title.ru || '' }, original_price: (typeof t.original_price === 'number' ? t.original_price : 10), sale_price: (typeof t.sale_price === 'number' ? t.sale_price : null), currency: (t.currency || 'UAH'), stock_qty: 0, value: vals.length ? vals[0] : null, unit: t.unit || '', type: t.type || '', values: vals };
+          const it = { id: '', title: { ua: t.title.ua || '', ru: t.title.ru || '' }, original_price: (typeof t.original_price === 'number' ? t.original_price : 10), sale_price: (typeof t.sale_price === 'number' ? t.sale_price : null), currency: (t.currency || 'UAH'), stock_qty: 0, value: vals.length ? vals[0] : null, unit: t.unit || '', values: vals };
           state.items.push(it);
           render();
           syncStateFromDOM();
