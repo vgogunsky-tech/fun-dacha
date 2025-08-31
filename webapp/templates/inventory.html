@@ -26,7 +26,11 @@
   </head>
   <body>
     <header class="container">
-      <p><a href="{{ url_for('products_list') }}">← До списку товарів</a></p>
+      {% if return_to %}
+        <p><a href="{{ return_to }}">← Назад</a></p>
+      {% else %}
+        <p><a href="{{ url_for('products_list') }}">← До списку товарів</a></p>
+      {% endif %}
       <h1>Склад — {{ product['Название (укр)'] or 'Без назви' }} <span class="muted">(ID: {{ product['id'] }})</span></h1>
     </header>
     <main class="container">

@@ -51,7 +51,8 @@
         <article>
           <header>
             <h2>{{ product['Название (укр)'] or 'Без назви' }} <span class="muted">(ID: {{ product['id'] }})</span></h2>
-            <p><a class="button" href="{{ url_for('inventory_edit', pid=product['id']) }}">Склад</a></p>
+            {% set inv_return = request.full_path %}
+            <p><a class="button" href="{{ url_for('inventory_edit', pid=product['id']) }}?return_to={{ inv_return | urlencode }}">Склад</a></p>
           </header>
 
           <form action="{{ url_for('product_save', index=index) }}" method="post" enctype="multipart/form-data">

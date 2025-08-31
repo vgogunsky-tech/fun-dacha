@@ -107,7 +107,7 @@
                   </a>
                 </td>
                 <td>
-                  <a href="{{ url_for('inventory_edit', pid=r['_pid']) }}" class="button">Склад</a>
+                  <a href="{{ url_for('inventory_edit', pid=r['_pid']) }}?return_to={{ request.full_path | urlencode }}" class="button">Склад</a>
                 </td>
                 {% for f in fields %}
                   {% if f != 'id' %}

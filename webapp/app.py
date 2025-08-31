@@ -1123,6 +1123,7 @@ def inventory_edit(pid: int):
         category_id = 0
 
     inv_json = load_inventory_json_for_product(pid)
+    return_to = (request.args.get("return_to") or "").strip()
     return render_template(
         "inventory.html",
         product=product,
@@ -1131,6 +1132,7 @@ def inventory_edit(pid: int):
         categories=cats,
         category_id=category_id,
         inventory_templates=load_inventory_templates(),
+        return_to=return_to,
     )
 
 
