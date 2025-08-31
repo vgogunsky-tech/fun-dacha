@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="uk">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Інвентар товару</title>
+    <link rel="stylesheet" href="https://unpkg.com/mvp.css">
+    <style>
+      .container { max-width: 1100px; margin: 0 auto; }
+      .image { max-width: 220px; }
+      .image img { width: 100%; border-radius: 8px; border: 1px solid #ddd; }
+      table { width: 100%; border-collapse: collapse; }
+      th, td { text-align: left; }
+      .muted { color: #666; font-size: 0.9em; }
+      .actions { display: flex; gap: 10px; }
+      .ro { background: #f7f7f7; }
+    </style>
+  </head>
+  <body>
+    <header class="container">
+      <p><a href="{{ url_for('products_list') }}">← До списку товарів</a></p>
+      <h1>Інвентар — {{ product['Название (укр)'] or 'Без назви' }} <span class="muted">(ID: {{ product['id'] }})</span></h1>
+    </header>
+    <main class="container">
+      <section class="image">
+        {% if image_url %}
+          <img src="{{ image_url }}" alt="image" />
+        {% endif %}
+      </section>
+      <section>
+        <div class="actions" style="margin: 10px 0;">
+          <button type="button" id="inv-add-empty">Додати варіант</button>
+          <select id="inv-template-select">
+            <option value="">— Обрати шаблон —</option>
+          </select>
+          <button type="button" id="inv-add-from-template">Додати з шаблону</button>
+        </div>
+        <div style="overflow:auto;">
+          <table id="inv-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Назва (UA)</th>
+                <th>Название (RU)</th>
+                <th>Одиниця</th>
+                <th>Тип</th>
+                <th>Value</th>
+                <th>Ціна</th>
+                <th>Валюта</th>
+                <th>Ціна по знижці</th>
+                <th>Склад</th>
+                <th>Наявність</th>
+                <th>Дія</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <div class="actions" style="margin-top: 12px;">
+          <button id="btn-save" type="button">Зберегти</button>
+          <a class="muted" href="{{ url_for('products_list') }}">Скасувати</a>
+        </div>
+      </section>
+    </main>
+    <script>
+      (function(){
+        const pid = {{ (product['id'] or 0)|tojson }};
+        const sku = {{ (product.get('product_id') or '')|tojson }};
+        const invTableBody = document.querySelector('#inv-table tbody');
+        const btnAddEmpty = document.getElementById('inv-add-empty');
+        const btnAddFromTemplate = document.getElementById('inv-add-from-template');
+        const btnSave = document.getElementById('btn-save');
+        const tmplSelect = document.getElementById('inv-template-select');
+
+        const defaultTemplates = (
+          {{ [
+            {
+              'title': { 'ua': 'Маленький пакет', 'ru': 'Маленький пакет' },
+              'type': 'quantity', 'unit': 'pcs', 'values': [10, 15, 20, 25, 30]
+            },
+            {
+              'title': { 'ua': 'Великий пакет', 'ru': 'Большой пакет' },
+              'type': 'weight', 'unit': 'g', 'values': [50, 100, 250, 500]
+            }
+          ] | tojson }}
+        );
+
+        const state = {
+          availability: 0,
+          items: []
+        };
+
+        function renderTemplates() {
+          tmplSelect.innerHTML = '<option value="">— Обрати шаблон —</option>';
+          defaultTemplates.forEach((t, idx) => {
+            const opt = document.createElement('option');
+            opt.value = String(idx);
+            opt.textContent = `${t.title.ua} (${t.unit})`;
+            tmplSelect.appendChild(opt);
+          });
+        }
+
+        function option(label, value) {
+          const o = document.createElement('option'); o.value = String(value); o.textContent = label; return o;
+        }
+        function optionAvailability(value) {
+          const map = {0:'0 — Не доступно',1:'1 — Очікується',2:'2 — Під замовлення',3:'3 — В наявності'};
+          return option(map[value] || String(value), value);
+        }
+
+        function createRow(item) {
+          const tr = document.createElement('tr');
+          tr.dataset.id = item.id || '';
+          function td(inner) { const c = document.createElement('td'); if (inner) c.appendChild(inner); return c; }
+          function inp(type, value, placeholder) { const i = document.createElement('input'); i.type = type; if (value !== undefined && value !== null) i.value = String(value); if (placeholder) i.placeholder = placeholder; return i; }
+          function sel() { const s = document.createElement('select'); return s; }
+          function selOps(s, options, value) { s.innerHTML = ''; options.forEach(o => { const opt = document.createElement('option'); opt.value = String(o.value); opt.textContent = o.label; s.appendChild(opt); }); if (value !== undefined && value !== null) s.value = String(value); }
+
+          // id
+          const idInput = inp('text', item.id || '', ''); idInput.readOnly = true; idInput.className = 'ro';
+          tr.appendChild(td(idInput));
+          // title ua/ru
+          tr.appendChild(td(inp('text', (item.title && item.title.ua) || '', 'Назва (UA)')));
+          tr.appendChild(td(inp('text', (item.title && item.title.ru) || '', 'Название (RU)')));
+          // unit
+          tr.appendChild(td(inp('text', item.unit || '', 'pcs / g')));
+          // type
+          const typeSelect = sel(); selOps(typeSelect, [
+            {label:'—', value:''}, {label:'quantity', value:'quantity'}, {label:'weight', value:'weight'}
+          ], item.type || '');
+          tr.appendChild(td(typeSelect));
+          // value dropdown from values
+          const valueSelect = sel();
+          const values = Array.isArray(item.values) ? item.values : [];
+          const valueOptions = values.map(v => ({ label: String(v), value: v }));
+          if (!valueOptions.length) valueOptions.push({label: '—', value: ''});
+          selOps(valueSelect, valueOptions, item.value != null ? item.value : (valueOptions[0] ? valueOptions[0].value : ''));
+          tr.appendChild(td(valueSelect));
+          // prices and currency
+          const opInput = inp('number', item.original_price != null ? item.original_price : '', ''); opInput.step = 'any';
+          tr.appendChild(td(opInput));
+          const curSelect = sel(); selOps(curSelect, [
+            {label:'UAH', value:'UAH'},{label:'USD', value:'USD'},{label:'EUR', value:'EUR'}
+          ], item.currency || 'UAH');
+          tr.appendChild(td(curSelect));
+          const spInput = inp('number', item.sale_price != null ? item.sale_price : '', ''); spInput.step = 'any';
+          tr.appendChild(td(spInput));
+          const sqInput = inp('number', item.stock_qty != null ? item.stock_qty : '', ''); sqInput.step = '1';
+          tr.appendChild(td(sqInput));
+          const avSelect = sel(); [0,1,2,3].forEach(v => avSelect.appendChild(optionAvailability(v))); avSelect.value = String((typeof item.availability === 'number') ? item.availability : 0);
+          tr.appendChild(td(avSelect));
+
+          const remBtn = document.createElement('button'); remBtn.type = 'button'; remBtn.textContent = '✕';
+          remBtn.addEventListener('click', () => { tr.remove(); syncStateFromDOM(); });
+          tr.appendChild(td(remBtn));
+
+          tr._controls = { idInput, typeSelect, valueSelect, opInput, curSelect, spInput, sqInput, avSelect };
+          invTableBody.appendChild(tr);
+        }
+
+        function render() {
+          invTableBody.innerHTML = '';
+          (state.items || []).forEach(it => createRow(it));
+        }
+
+        function syncStateFromDOM() {
+          const rows = Array.from(invTableBody.querySelectorAll('tr'));
+          state.items = rows.map(tr => {
+            const c = tr._controls || {};
+            const titleUa = tr.children[1].querySelector('input').value || '';
+            const titleRu = tr.children[2].querySelector('input').value || '';
+            const unit = tr.children[3].querySelector('input').value || '';
+            const type = c.typeSelect ? c.typeSelect.value : '';
+            const value = c.valueSelect ? (c.valueSelect.value === '' ? null : Number(c.valueSelect.value)) : null;
+            const original_price = c.opInput && c.opInput.value !== '' ? Number(c.opInput.value) : null;
+            const currency = c.curSelect ? c.curSelect.value : 'UAH';
+            const sale_price = c.spInput && c.spInput.value !== '' ? Number(c.spInput.value) : null;
+            const stock_qty = c.sqInput && c.sqInput.value !== '' ? Number(c.sqInput.value) : 0;
+            const availability = c.avSelect ? Number(c.avSelect.value || 0) : 0;
+            const id = c.idInput ? c.idInput.value : '';
+            const values = []; // hidden column removed; keep previous values empty here
+            return { id, title: { ua: titleUa, ru: titleRu }, unit, type, currency, values, value, original_price, sale_price, stock_qty, availability };
+          });
+        }
+
+        function addEmpty() {
+          const it = { id: '', title: { ua: '', ru: '' }, original_price: null, sale_price: null, currency: 'UAH', stock_qty: 0, value: null, unit: '', type: '', values: [], availability: 0 };
+          state.items.push(it);
+          createRow(it);
+          syncStateFromDOM();
+        }
+
+        function addFromTemplate() {
+          const idx = tmplSelect.value ? Number(tmplSelect.value) : NaN;
+          if (!Number.isFinite(idx)) { addEmpty(); return; }
+          const t = defaultTemplates[idx]; if (!t) { addEmpty(); return; }
+          const vals = Array.isArray(t.values) ? t.values.slice() : [];
+          const it = { id: '', title: { ua: t.title.ua || '', ru: t.title.ru || '' }, original_price: null, sale_price: null, currency: 'UAH', stock_qty: 0, value: vals.length ? vals[0] : null, unit: t.unit || '', type: t.type || '', values: vals, availability: 0 };
+          state.items.push(it);
+          createRow(it);
+          syncStateFromDOM();
+        }
+
+        async function loadInitial() {
+          try {
+            const resp = await fetch(`${window.location.origin}/api/inventory/${pid}`);
+            if (!resp.ok) throw new Error('HTTP ' + resp.status);
+            const data = await resp.json();
+            if (data && Array.isArray(data.items)) {
+              state.items = data.items;
+            }
+          } catch (e) {}
+          render();
+        }
+
+        async function save() {
+          syncStateFromDOM();
+          try {
+            const payload = { id: pid, product_id: sku, availability: 0, items: state.items };
+            const resp = await fetch(`${window.location.origin}/api/inventory/${pid}`, {
+              method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
+            });
+            if (!resp.ok) throw new Error('HTTP ' + resp.status);
+            alert('Збережено.');
+          } catch (e) {
+            alert('Помилка збереження.');
+          }
+        }
+
+        btnAddEmpty && btnAddEmpty.addEventListener('click', addEmpty);
+        btnAddFromTemplate && btnAddFromTemplate.addEventListener('click', addFromTemplate);
+        btnSave && btnSave.addEventListener('click', save);
+        renderTemplates();
+        loadInitial();
+      })();
+    </script>
+  </body>
+</html>

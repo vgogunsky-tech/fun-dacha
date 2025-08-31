@@ -1068,6 +1068,35 @@ def products_list():
     )
 
 
+@app.get("/inventory/<int:pid>")
+def inventory_edit(pid: int):
+    ensure_product_columns()
+    product = _find_product_by_id_numeric(pid)
+    if product is None:
+        abort(404)
+    # Product image
+    img_url = None
+    img_name = (product.get("primary_image") or "").strip()
+    if img_name and os.path.isfile(os.path.join(PRODUCT_IMAGES_DIR, img_name)):
+        img_url = url_for("serve_product_image", filename=img_name)
+
+    cats = load_categories()
+    try:
+        category_id = int(float(product.get("category_id", "") or 0))
+    except Exception:
+        category_id = 0
+
+    inv_json = load_inventory_json_for_product(pid)
+    return render_template(
+        "inventory.html",
+        product=product,
+        image_url=img_url,
+        inventory=inv_json,
+        categories=cats,
+        category_id=category_id,
+    )
+
+
 @app.get("/product/<int:pid>")
 def product_by_id(pid: int):
     """Open product edit page for a specific product id."""
