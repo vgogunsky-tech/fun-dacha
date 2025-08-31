@@ -29,7 +29,6 @@
       </section>
       <section>
         <div class="actions" style="margin: 10px 0;">
-          <button type="button" id="inv-add-empty">Додати варіант</button>
           <select id="inv-template-select">
             <option value="">— Обрати шаблон —</option>
           </select>
@@ -42,9 +41,9 @@
                 <th>ID</th>
                 <th>Назва (UA)</th>
                 <th>Название (RU)</th>
-                <th>Одиниця</th>
                 <th>Тип</th>
                 <th>Value</th>
+                <th>Одиниця</th>
                 <th>Ціна</th>
                 <th>Валюта</th>
                 <th>Ціна по знижці</th>
@@ -67,17 +66,18 @@
         const pid = {{ (product['id'] or 0)|tojson }};
         const sku = {{ (product.get('product_id') or '')|tojson }};
         const invTableBody = document.querySelector('#inv-table tbody');
-        const btnAddEmpty = document.getElementById('inv-add-empty');
         const btnAddFromTemplate = document.getElementById('inv-add-from-template');
         const btnSave = document.getElementById('btn-save');
         const tmplSelect = document.getElementById('inv-template-select');
 
         const defaultTemplates = {{ (inventory_templates | tojson) }};
 
-        const state = {
-          availability: 0,
-          items: []
-        };
+        const state = { availability: 0, items: [] };
+        let localIdCounter = 0;
+
+        function nextLocalId() {
+          localIdCounter += 1; return localIdCounter;
+        }
 
         function renderTemplates() {
           tmplSelect.innerHTML = '<option value="">— Обрати шаблон —</option>';
@@ -97,7 +97,7 @@
           return option(map[value] || String(value), value);
         }
 
-        function createRow(item) {
+        function createRow(item, rowIndex) {
           const tr = document.createElement('tr');
           tr.dataset.id = item.id || '';
           function td(inner) { const c = document.createElement('td'); if (inner) c.appendChild(inner); return c; }
@@ -105,15 +105,13 @@
           function sel() { const s = document.createElement('select'); return s; }
           function selOps(s, options, value) { s.innerHTML = ''; options.forEach(o => { const opt = document.createElement('option'); opt.value = String(o.value); opt.textContent = o.label; s.appendChild(opt); }); if (value !== undefined && value !== null) s.value = String(value); }
 
-          // id
-          const idInput = inp('text', item.id || '', ''); idInput.readOnly = true; idInput.className = 'ro';
-          tr.appendChild(td(idInput));
+          // id (display-only, incremental)
+          const idSpan = document.createElement('span'); idSpan.textContent = String((rowIndex != null ? rowIndex + 1 : nextLocalId()));
+          tr.appendChild(td(idSpan));
           // title ua/ru
           tr.appendChild(td(inp('text', (item.title && item.title.ua) || '', 'Назва (UA)')));
           tr.appendChild(td(inp('text', (item.title && item.title.ru) || '', 'Название (RU)')));
-          // unit
-          tr.appendChild(td(inp('text', item.unit || '', 'pcs / g')));
-          // type
+          // type (dropdown)
           const typeSelect = sel(); selOps(typeSelect, [
             {label:'—', value:''}, {label:'quantity', value:'quantity'}, {label:'weight', value:'weight'}
           ], item.type || '');
@@ -125,6 +123,12 @@
           if (!valueOptions.length) valueOptions.push({label: '—', value: ''});
           selOps(valueSelect, valueOptions, item.value != null ? item.value : (valueOptions[0] ? valueOptions[0].value : ''));
           tr.appendChild(td(valueSelect));
+          // unit (dropdown)
+          const unitSelect = sel();
+          const unitCandidates = ['pcs','g','kg','ml','l'];
+          if (item.unit && !unitCandidates.includes(item.unit)) unitCandidates.unshift(item.unit);
+          selOps(unitSelect, unitCandidates.map(u => ({label:u, value:u})), item.unit || unitCandidates[0]);
+          tr.appendChild(td(unitSelect));
           // prices and currency
           const opInput = inp('number', item.original_price != null ? item.original_price : '', ''); opInput.step = 'any';
           tr.appendChild(td(opInput));
@@ -143,13 +147,13 @@
           remBtn.addEventListener('click', () => { tr.remove(); syncStateFromDOM(); });
           tr.appendChild(td(remBtn));
 
-          tr._controls = { idInput, typeSelect, valueSelect, opInput, curSelect, spInput, sqInput, avSelect };
+          tr._controls = { typeSelect, valueSelect, unitSelect, opInput, curSelect, spInput, sqInput, avSelect, valuesList: values.slice() };
           invTableBody.appendChild(tr);
         }
 
         function render() {
           invTableBody.innerHTML = '';
-          (state.items || []).forEach(it => createRow(it));
+          (state.items || []).forEach((it, idx) => createRow(it, idx));
         }
 
         function syncStateFromDOM() {
@@ -158,35 +162,28 @@
             const c = tr._controls || {};
             const titleUa = tr.children[1].querySelector('input').value || '';
             const titleRu = tr.children[2].querySelector('input').value || '';
-            const unit = tr.children[3].querySelector('input').value || '';
             const type = c.typeSelect ? c.typeSelect.value : '';
             const value = c.valueSelect ? (c.valueSelect.value === '' ? null : Number(c.valueSelect.value)) : null;
+            const unit = c.unitSelect ? c.unitSelect.value : '';
             const original_price = c.opInput && c.opInput.value !== '' ? Number(c.opInput.value) : null;
             const currency = c.curSelect ? c.curSelect.value : 'UAH';
             const sale_price = c.spInput && c.spInput.value !== '' ? Number(c.spInput.value) : null;
             const stock_qty = c.sqInput && c.sqInput.value !== '' ? Number(c.sqInput.value) : 0;
             const availability = c.avSelect ? Number(c.avSelect.value || 0) : 0;
-            const id = c.idInput ? c.idInput.value : '';
-            const values = []; // hidden column removed; keep previous values empty here
+            const id = ''; // server will generate ids; keep empty in payload
+            const values = Array.isArray(c.valuesList) ? c.valuesList.slice() : [];
             return { id, title: { ua: titleUa, ru: titleRu }, unit, type, currency, values, value, original_price, sale_price, stock_qty, availability };
           });
         }
 
-        function addEmpty() {
-          const it = { id: '', title: { ua: '', ru: '' }, original_price: null, sale_price: null, currency: 'UAH', stock_qty: 0, value: null, unit: '', type: '', values: [], availability: 0 };
-          state.items.push(it);
-          createRow(it);
-          syncStateFromDOM();
-        }
-
         function addFromTemplate() {
           const idx = tmplSelect.value ? Number(tmplSelect.value) : NaN;
-          if (!Number.isFinite(idx)) { addEmpty(); return; }
-          const t = defaultTemplates[idx]; if (!t) { addEmpty(); return; }
+          if (!Number.isFinite(idx)) { return; }
+          const t = defaultTemplates[idx]; if (!t) { return; }
           const vals = Array.isArray(t.values) ? t.values.slice() : [];
           const it = { id: '', title: { ua: t.title.ua || '', ru: t.title.ru || '' }, original_price: null, sale_price: null, currency: 'UAH', stock_qty: 0, value: vals.length ? vals[0] : null, unit: t.unit || '', type: t.type || '', values: vals, availability: 0 };
           state.items.push(it);
-          createRow(it);
+          render();
           syncStateFromDOM();
         }
 
@@ -216,7 +213,6 @@
           }
         }
 
-        btnAddEmpty && btnAddEmpty.addEventListener('click', addEmpty);
         btnAddFromTemplate && btnAddFromTemplate.addEventListener('click', addFromTemplate);
         btnSave && btnSave.addEventListener('click', save);
         renderTemplates();
