@@ -72,7 +72,7 @@
         const btnSave = document.getElementById('btn-save');
         const tmplSelect = document.getElementById('inv-template-select');
 
-        const defaultTemplates = {{ (load_inventory_templates() | tojson) }};
+        const defaultTemplates = {{ (inventory_templates | tojson) }};
 
         const state = {
           availability: 0,

@@ -1124,6 +1124,7 @@ def inventory_edit(pid: int):
         inventory=inv_json,
         categories=cats,
         category_id=category_id,
+        inventory_templates=load_inventory_templates(),
     )
 
 
