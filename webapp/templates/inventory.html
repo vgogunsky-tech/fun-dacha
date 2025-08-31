@@ -14,11 +14,13 @@
       .actions { display: flex; gap: 10px; }
       .ro { background: #f7f7f7; }
       th:nth-child(1) { width: 60px; }
-      th:nth-child(2), th:nth-child(3) { width: 16%; }
-      th:nth-child(4), th:nth-child(5), th:nth-child(6) { width: 12%; }
-      th:nth-child(7), th:nth-child(9) { width: 10%; }
-      th:nth-child(8), th:nth-child(10) { width: 8%; }
-      th:nth-child(11) { width: 20px; }
+      th:nth-child(2) { width: 24%; }
+      th:nth-child(3), th:nth-child(4), th:nth-child(5) { width: 12%; }
+      th:nth-child(6) { width: 10%; }
+      th:nth-child(7) { width: 8%; }
+      th:nth-child(8) { width: 10%; }
+      th:nth-child(9) { width: 8%; }
+      th:nth-child(10) { width: 20px; }
       td input { width: 100%; box-sizing: border-box; }
       td select.fit { width: auto; max-width: 100%; box-sizing: border-box; display: inline-block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
       .icon-btn { width: 20px; height: 20px; padding: 0; line-height: 18px; text-align: center; }
@@ -55,8 +57,7 @@
             <thead>
               <tr>
                 <th>ID</th>
-                <th>Назва (UA)</th>
-                <th>Название (RU)</th>
+                <th>Назва</th>
                 <th>Тип</th>
                 <th>Value</th>
                 <th>Одиниця</th>
@@ -124,9 +125,15 @@
           // id (display-only, incremental)
           const idSpan = document.createElement('span'); idSpan.textContent = String((rowIndex != null ? rowIndex + 1 : nextLocalId()));
           tr.appendChild(td(idSpan));
-          // title ua/ru
-          tr.appendChild(td(inp('text', (item.title && item.title.ua) || '', 'Назва (UA)')));
-          tr.appendChild(td(inp('text', (item.title && item.title.ru) || '', 'Название (RU)')));
+          // stacked title: UA (bold) + RU (muted)
+          const titleCell = document.createElement('td');
+          const tUa = inp('text', (item.title && item.title.ua) || '', 'Назва (UA)');
+          const tRu = inp('text', (item.title && item.title.ru) || '', 'Название (RU)');
+          const tUaWrap = document.createElement('div'); tUaWrap.appendChild(tUa); tUaWrap.style.marginBottom = '4px';
+          const tRuWrap = document.createElement('div'); tRuWrap.appendChild(tRu); tRuWrap.className = 'muted';
+          titleCell.appendChild(tUaWrap);
+          titleCell.appendChild(tRuWrap);
+          tr.appendChild(titleCell);
           // type (dropdown)
           const typeSelect = sel(); selOps(typeSelect, [
             {label:'—', value:''}, {label:'quantity', value:'quantity'}, {label:'weight', value:'weight'}
@@ -174,8 +181,8 @@
           const rows = Array.from(invTableBody.querySelectorAll('tr'));
           state.items = rows.map(tr => {
             const c = tr._controls || {};
-            const titleUa = tr.children[1].querySelector('input').value || '';
-            const titleRu = tr.children[2].querySelector('input').value || '';
+            const titleUa = tr.children[1].querySelectorAll('input')[0].value || '';
+            const titleRu = tr.children[1].querySelectorAll('input')[1].value || '';
             const type = c.typeSelect ? c.typeSelect.value : '';
             const value = c.valueSelect ? (c.valueSelect.value === '' ? null : Number(c.valueSelect.value)) : null;
             const unit = c.unitSelect ? c.unitSelect.value : '';
