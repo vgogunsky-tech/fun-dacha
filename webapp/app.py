@@ -1621,6 +1621,66 @@ def category_update(cid: int):
     return redirect(url_for('index'))
 
 
+# -------------------- Bulk operations --------------------
+
+@app.post("/products/bulk-update-category")
+def bulk_update_category():
+    """Update category for multiple products at once."""
+    form = request.form
+    
+    product_ids_str = (form.get("product_ids") or "").strip()
+    category_id = (form.get("category_id") or "").strip()
+    subcategory_id = (form.get("subcategory_id") or "").strip()
+    
+    if not product_ids_str or not category_id:
+        flash("Product IDs and category are required.")
+        return redirect(url_for('products_list'))
+    
+    try:
+        # Parse product IDs
+        product_ids = [int(pid.strip()) for pid in product_ids_str.split(",") if pid.strip()]
+        if not product_ids:
+            flash("No valid product IDs provided.")
+            return redirect(url_for('products_list'))
+        
+        # Validate category ID
+        category_id_int = int(float(category_id))
+        
+        # Load products
+        rows, fields, _ = read_products_csv()
+        
+        # Update products
+        updated_count = 0
+        for row in rows:
+            try:
+                row_pid = int(float((row.get("id") or "0").strip() or 0))
+                if row_pid in product_ids:
+                    row["category_id"] = str(category_id_int)
+                    if subcategory_id:
+                        row["subcategory_id"] = subcategory_id
+                    else:
+                        row["subcategory_id"] = ""
+                    updated_count += 1
+            except Exception:
+                continue
+        
+        if updated_count > 0:
+            # Save changes
+            write_products_csv(rows, fields)
+            
+            # Commit and push to git
+            commit_and_push([DATA_DIR], f"Bulk update category for {updated_count} products to {category_id}")
+            
+            flash(f"Successfully updated category for {updated_count} products.")
+        else:
+            flash("No products were updated.")
+            
+    except Exception as e:
+        flash(f"Error updating products: {str(e)}")
+    
+    return redirect(url_for('products_list'))
+
+
 if __name__ == "__main__":
     os.makedirs(PRODUCT_IMAGES_DIR, exist_ok=True)
     os.makedirs(CATEGORY_IMAGES_DIR, exist_ok=True)

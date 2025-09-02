@@ -27,6 +27,59 @@
       th { position: sticky; top: 0; background: #fff; }
       .muted { color: #666; }
       .status { width: 28px; text-align: left; }
+      .bulk-actions { 
+        background: #f8f9fa; 
+        padding: 16px; 
+        border-radius: 8px; 
+        margin: 16px 0; 
+        display: none; 
+      }
+      .bulk-actions.show { display: block; }
+      .bulk-actions button { margin-right: 12px; }
+      .modal { 
+        display: none; 
+        position: fixed; 
+        z-index: 1000; 
+        left: 0; 
+        top: 0; 
+        width: 100%; 
+        height: 100%; 
+        background-color: rgba(0,0,0,0.5); 
+      }
+      .modal.show { display: block; }
+      .modal-content { 
+        background-color: #fefefe; 
+        margin: 15% auto; 
+        padding: 20px; 
+        border: 1px solid #888; 
+        width: 80%; 
+        max-width: 500px; 
+        border-radius: 8px; 
+      }
+      .modal-header { 
+        display: flex; 
+        justify-content: space-between; 
+        align-items: center; 
+        margin-bottom: 20px; 
+      }
+      .close { 
+        color: #aaa; 
+        font-size: 28px; 
+        font-weight: bold; 
+        cursor: pointer; 
+      }
+      .close:hover { color: #000; }
+      .form-group { margin-bottom: 16px; }
+      .form-group label { display: block; margin-bottom: 4px; font-weight: bold; }
+      .form-group select { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; }
+      .modal-actions { 
+        display: flex; 
+        justify-content: flex-end; 
+        gap: 12px; 
+        margin-top: 20px; 
+      }
+      .checkbox-cell { text-align: center; }
+      .col-checkbox { width: 40px; }
     </style>
   </head>
   <body>
@@ -74,10 +127,21 @@
         </form>
       </section>
 
+      <!-- Bulk Actions Section -->
+      <section class="bulk-actions" id="bulkActions">
+        <h3>Масові дії</h3>
+        <p>Вибрано товарів: <span id="selectedCount">0</span></p>
+        <button type="button" class="button" onclick="openCategoryModal()">Змінити категорію</button>
+        <button type="button" class="button muted" onclick="clearSelection()">Скасувати вибір</button>
+      </section>
+
       <section>
         <table>
           <thead>
             <tr>
+              <th class="col-checkbox">
+                <input type="checkbox" id="selectAll" onchange="toggleSelectAll()">
+              </th>
               <th class="status">Статус</th>
               <th class="col-id">ID</th>
               <th class="nowrap">Зображення</th>
@@ -93,6 +157,9 @@
             {% for r in rows %}
               {% set return_to = request.full_path %}
               <tr>
+                <td class="checkbox-cell">
+                  <input type="checkbox" class="product-checkbox" value="{{ r['_pid'] }}" onchange="updateBulkActions()">
+                </td>
                 <td class="status">
                   {% if r._not_validated %}❗{% else %}✅{% endif %}
                 </td>
@@ -131,6 +198,129 @@
         </table>
       </section>
     </main>
+
+    <!-- Category Assignment Modal -->
+    <div id="categoryModal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>Змінити категорію для вибраних товарів</h3>
+          <span class="close" onclick="closeCategoryModal()">&times;</span>
+        </div>
+        <form id="bulkCategoryForm" method="post" action="{{ url_for('bulk_update_category') }}">
+          <div class="form-group">
+            <label for="category_id">Категорія:</label>
+            <select id="category_id" name="category_id" required onchange="updateSubcategories()">
+              <option value="">Виберіть категорію</option>
+              {% for c in categories %}
+                {% if not c.parentId %}
+                  <option value="{{ c.id }}">{{ c.id }} — {{ c.name }}</option>
+                {% endif %}
+              {% endfor %}
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="subcategory_id">Підкатегорія:</label>
+            <select id="subcategory_id" name="subcategory_id">
+              <option value="">Без підкатегорії</option>
+            </select>
+          </div>
+          <input type="hidden" id="selected_products" name="product_ids" value="">
+          <div class="modal-actions">
+            <button type="button" class="button muted" onclick="closeCategoryModal()">Скасувати</button>
+            <button type="submit" class="button">Зберегти</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <script>
+      function toggleSelectAll() {
+        const selectAll = document.getElementById('selectAll');
+        const checkboxes = document.querySelectorAll('.product-checkbox');
+        checkboxes.forEach(checkbox => {
+          checkbox.checked = selectAll.checked;
+        });
+        updateBulkActions();
+      }
+
+      function updateBulkActions() {
+        const checkboxes = document.querySelectorAll('.product-checkbox:checked');
+        const bulkActions = document.getElementById('bulkActions');
+        const selectedCount = document.getElementById('selectedCount');
+        
+        if (checkboxes.length > 0) {
+          bulkActions.classList.add('show');
+          selectedCount.textContent = checkboxes.length;
+        } else {
+          bulkActions.classList.remove('show');
+          selectedCount.textContent = '0';
+        }
+      }
+
+      function clearSelection() {
+        const selectAll = document.getElementById('selectAll');
+        const checkboxes = document.querySelectorAll('.product-checkbox');
+        
+        selectAll.checked = false;
+        checkboxes.forEach(checkbox => {
+          checkbox.checked = false;
+        });
+        updateBulkActions();
+      }
+
+      function openCategoryModal() {
+        const checkboxes = document.querySelectorAll('.product-checkbox:checked');
+        if (checkboxes.length === 0) {
+          alert('Виберіть товари для зміни категорії');
+          return;
+        }
+        
+        const productIds = Array.from(checkboxes).map(cb => cb.value).join(',');
+        document.getElementById('selected_products').value = productIds;
+        
+        const modal = document.getElementById('categoryModal');
+        modal.classList.add('show');
+      }
+
+      function closeCategoryModal() {
+        const modal = document.getElementById('categoryModal');
+        modal.classList.remove('show');
+      }
+
+      function updateSubcategories() {
+        const categoryId = document.getElementById('category_id').value;
+        const subcategorySelect = document.getElementById('subcategory_id');
+        
+        // Clear existing options
+        subcategorySelect.innerHTML = '<option value="">Без підкатегорії</option>';
+        
+        if (categoryId) {
+          // Find subcategories for the selected category
+          const categories = {{ categories | tojson }};
+          categories.forEach(cat => {
+            if (cat.parentId === categoryId) {
+              const option = document.createElement('option');
+              option.value = cat.id;
+              option.textContent = `${cat.id} — ${cat.name}`;
+              subcategorySelect.appendChild(option);
+            }
+          });
+        }
+      }
+
+      // Close modal when clicking outside
+      window.onclick = function(event) {
+        const modal = document.getElementById('categoryModal');
+        if (event.target === modal) {
+          closeCategoryModal();
+        }
+      }
+
+      // Initialize bulk actions
+      document.addEventListener('DOMContentLoaded', function() {
+        updateBulkActions();
+      });
+    </script>
   </body>
   </html>
 
