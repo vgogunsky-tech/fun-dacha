@@ -296,15 +296,73 @@
         
         if (categoryId) {
           // Find subcategories for the selected category
-          const categories = {{ categories | tojson }};
-          categories.forEach(cat => {
-            if (cat.parentId === categoryId) {
-              const option = document.createElement('option');
-              option.value = cat.id;
-              option.textContent = `${cat.id} — ${cat.name}`;
-              subcategorySelect.appendChild(option);
+          // Get categories from the DOM instead of Jinja2 tojson
+          const categoryOptions = document.querySelectorAll('#category_id option');
+          const categories = [];
+          categoryOptions.forEach(opt => {
+            if (opt.value && opt.value !== categoryId) {
+              // Check if this is a subcategory of the selected category
+              const optionText = opt.textContent;
+              if (optionText.includes(' — ')) {
+                const parts = optionText.split(' — ');
+                if (parts.length === 2) {
+                  categories.push({
+                    id: opt.value,
+                    name: parts[1],
+                    parentId: categoryId
+                  });
+                }
+              }
             }
           });
+          
+          // For now, we'll populate subcategories manually based on known structure
+          // This is a fallback approach that doesn't rely on Jinja2 tojson
+          if (categoryId === '100') { // Tomatoes
+            subcategorySelect.innerHTML = '<option value="">Без підкатегорії</option><option value="101">101 — Томати високорослі</option><option value="102">102 — Томати середньорослі</option><option value="103">103 — Томати низькорослі</option>';
+          } else if (categoryId === '120') { // Cabbage
+            subcategorySelect.innerHTML = '<option value="">Без підкатегорії</option><option value="121">121 — Капуста білокачанна</option><option value="122">122 — Капуста цвітна</option><option value="123">123 — Капуста червонокачанна</option><option value="124">124 — Різновиди капусти</option>';
+          } else if (categoryId === '140') { // Pepper
+            subcategorySelect.innerHTML = '<option value="">Без підкатегорії</option><option value="141">141 — Перець солодкий</option><option value="142">142 — Перець гіркий</option>';
+          } else if (categoryId === '160') { // Onion
+            subcategorySelect.innerHTML = '<option value="">Без підкатегорії</option>';
+          } else if (categoryId === '170') { // Carrot
+            subcategorySelect.innerHTML = '<option value="">Без підкатегорії</option>';
+          } else if (categoryId === '180') { // Beet
+            subcategorySelect.innerHTML = '<option value="">Без підкатегорії</option>';
+          } else if (categoryId === '190') { // Watermelon
+            subcategorySelect.innerHTML = '<option value="">Без підкатегорії</option>';
+          } else if (categoryId === '200') { // Melon
+            subcategorySelect.innerHTML = '<option value="">Без підкатегорії</option>';
+          } else if (categoryId === '210') { // Pumpkin
+            subcategorySelect.innerHTML = '<option value="">Без підкатегорії</option>';
+          } else if (categoryId === '220') { // Zucchini
+            subcategorySelect.innerHTML = '<option value="">Без підкатегорії</option>';
+          } else if (categoryId === '230') { // Squash
+            subcategorySelect.innerHTML = '<option value="">Без підкатегорії</option>';
+          } else if (categoryId === '240') { // Green crops
+            subcategorySelect.innerHTML = '<option value="">Без підкатегорії</option>';
+          } else if (categoryId === '250') { // Spicy crops
+            subcategorySelect.innerHTML = '<option value="">Без підкатегорії</option>';
+          } else if (categoryId === '260') { // Lawn grass
+            subcategorySelect.innerHTML = '<option value="">Без підкатегорії</option>';
+          } else if (categoryId === '270') { // Bean crops
+            subcategorySelect.innerHTML = '<option value="">Без підкатегорії</option>';
+          } else if (categoryId === '280') { // Beans
+            subcategorySelect.innerHTML = '<option value="">Без підкатегорії</option><option value="281">281 — Квасоля спаржева</option><option value="282">282 — Квасоля зернова</option>';
+          } else if (categoryId === '290') { // Corn
+            subcategorySelect.innerHTML = '<option value="">Без підкатегорії</option>';
+          } else if (categoryId === '300') { // Strawberry
+            subcategorySelect.innerHTML = '<option value="">Без підкатегорії</option>';
+          } else if (categoryId === '310') { // Rare cultures
+            subcategorySelect.innerHTML = '<option value="">Без підкатегорії</option>';
+          } else if (categoryId === '320') { // Medicine
+            subcategorySelect.innerHTML = '<option value="">Без підкатегорії</option>';
+          } else if (categoryId === '330') { // Flowers
+            subcategorySelect.innerHTML = '<option value="">Без підкатегорії</option><option value="331">331 — Квіти однорічні</option><option value="332">332 — Квіти багаторічні</option>';
+          } else {
+            subcategorySelect.innerHTML = '<option value="">Без підкатегорії</option>';
+          }
         }
       }
 
