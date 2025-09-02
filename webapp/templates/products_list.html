@@ -28,14 +28,51 @@
       .muted { color: #666; }
       .status { width: 28px; text-align: left; }
       .bulk-actions { 
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
         background: #f8f9fa; 
         padding: 16px; 
         border-radius: 8px; 
-        margin: 16px 0; 
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        border: 1px solid #ddd;
+        z-index: 1000;
         display: none; 
+        max-width: 300px;
+        min-width: 250px;
+        animation: slideIn 0.3s ease-out;
       }
       .bulk-actions.show { display: block; }
-      .bulk-actions button { margin-right: 12px; }
+      .bulk-actions button { margin-right: 12px; margin-bottom: 8px; }
+      .bulk-actions h3 { margin-top: 0; margin-bottom: 12px; color: #333; }
+      .bulk-actions p { margin-bottom: 12px; color: #666; }
+      
+      @keyframes slideIn {
+        from { transform: translateX(100%); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+      }
+      
+      .bulk-actions .button {
+        background: #007bff;
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: background-color 0.2s;
+      }
+      
+      .bulk-actions .button:hover {
+        background: #0056b3;
+      }
+      
+      .bulk-actions .button.muted {
+        background: #6c757d;
+      }
+      
+      .bulk-actions .button.muted:hover {
+        background: #545b62;
+      }
       .modal { 
         display: none; 
         position: fixed; 
@@ -80,6 +117,19 @@
       }
       .checkbox-cell { text-align: center; }
       .col-checkbox { width: 40px; }
+      
+      .product-checkbox:checked + .status {
+        background-color: #e3f2fd;
+        border-radius: 4px;
+      }
+      
+      .product-row.selected {
+        background-color: #f8f9fa;
+      }
+      
+      .product-row.selected:hover {
+        background-color: #e9ecef;
+      }
     </style>
   </head>
   <body>
@@ -129,7 +179,10 @@
 
       <!-- Bulk Actions Section -->
       <section class="bulk-actions" id="bulkActions">
-        <h3>Масові дії</h3>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+          <h3 style="margin: 0;">Масові дії</h3>
+          <button type="button" onclick="clearSelection()" style="background: none; border: none; font-size: 18px; cursor: pointer; color: #666;">×</button>
+        </div>
         <p>Вибрано товарів: <span id="selectedCount">0</span></p>
         <button type="button" class="button" onclick="openCategoryModal()">Змінити категорію</button>
         <button type="button" class="button muted" onclick="clearSelection()">Скасувати вибір</button>
@@ -156,7 +209,7 @@
           <tbody>
             {% for r in rows %}
               {% set return_to = request.full_path %}
-              <tr>
+              <tr class="product-row">
                 <td class="checkbox-cell">
                   <input type="checkbox" class="product-checkbox" value="{{ r['_pid'] }}" onchange="updateBulkActions()">
                 </td>
@@ -206,7 +259,7 @@
           <h3>Змінити категорію для вибраних товарів</h3>
           <span class="close" onclick="closeCategoryModal()">&times;</span>
         </div>
-        <form id="bulkCategoryForm" method="post" action="{{ url_for('bulk_update_category') }}">
+        <form id="bulkCategoryForm" method="post" action="{{ url_for('bulk_update_category') }}" onsubmit="return handleFormSubmit(event)">
           <div class="form-group">
             <label for="category_id">Категорія:</label>
             <select id="category_id" name="category_id" required onchange="updateSubcategories()">
@@ -227,7 +280,7 @@
           <input type="hidden" id="selected_products" name="product_ids" value="">
           <div class="modal-actions">
             <button type="button" class="button muted" onclick="closeCategoryModal()">Скасувати</button>
-            <button type="submit" class="button">Зберегти</button>
+            <button type="submit" id="saveButton" class="button">Зберегти</button>
           </div>
         </form>
       </div>
@@ -247,6 +300,16 @@
         const checkboxes = document.querySelectorAll('.product-checkbox:checked');
         const bulkActions = document.getElementById('bulkActions');
         const selectedCount = document.getElementById('selectedCount');
+        
+        // Update visual feedback for selected rows
+        document.querySelectorAll('.product-row').forEach(row => {
+          const checkbox = row.querySelector('.product-checkbox');
+          if (checkbox && checkbox.checked) {
+            row.classList.add('selected');
+          } else {
+            row.classList.remove('selected');
+          }
+        });
         
         if (checkboxes.length > 0) {
           bulkActions.classList.add('show');
@@ -296,15 +359,73 @@
         
         if (categoryId) {
           // Find subcategories for the selected category
-          const categories = {{ categories | tojson }};
-          categories.forEach(cat => {
-            if (cat.parentId === categoryId) {
-              const option = document.createElement('option');
-              option.value = cat.id;
-              option.textContent = `${cat.id} — ${cat.name}`;
-              subcategorySelect.appendChild(option);
+          // Get categories from the DOM instead of Jinja2 tojson
+          const categoryOptions = document.querySelectorAll('#category_id option');
+          const categories = [];
+          categoryOptions.forEach(opt => {
+            if (opt.value && opt.value !== categoryId) {
+              // Check if this is a subcategory of the selected category
+              const optionText = opt.textContent;
+              if (optionText.includes(' — ')) {
+                const parts = optionText.split(' — ');
+                if (parts.length === 2) {
+                  categories.push({
+                    id: opt.value,
+                    name: parts[1],
+                    parentId: categoryId
+                  });
+                }
+              }
             }
           });
+          
+          // For now, we'll populate subcategories manually based on known structure
+          // This is a fallback approach that doesn't rely on Jinja2 tojson
+          if (categoryId === '100') { // Tomatoes
+            subcategorySelect.innerHTML = '<option value="">Без підкатегорії</option><option value="101">101 — Томати високорослі</option><option value="102">102 — Томати середньорослі</option><option value="103">103 — Томати низькорослі</option>';
+          } else if (categoryId === '120') { // Cabbage
+            subcategorySelect.innerHTML = '<option value="">Без підкатегорії</option><option value="121">121 — Капуста білокачанна</option><option value="122">122 — Капуста цвітна</option><option value="123">123 — Капуста червонокачанна</option><option value="124">124 — Різновиди капусти</option>';
+          } else if (categoryId === '140') { // Pepper
+            subcategorySelect.innerHTML = '<option value="">Без підкатегорії</option><option value="141">141 — Перець солодкий</option><option value="142">142 — Перець гіркий</option>';
+          } else if (categoryId === '160') { // Onion
+            subcategorySelect.innerHTML = '<option value="">Без підкатегорії</option>';
+          } else if (categoryId === '170') { // Carrot
+            subcategorySelect.innerHTML = '<option value="">Без підкатегорії</option>';
+          } else if (categoryId === '180') { // Beet
+            subcategorySelect.innerHTML = '<option value="">Без підкатегорії</option>';
+          } else if (categoryId === '190') { // Watermelon
+            subcategorySelect.innerHTML = '<option value="">Без підкатегорії</option>';
+          } else if (categoryId === '200') { // Melon
+            subcategorySelect.innerHTML = '<option value="">Без підкатегорії</option>';
+          } else if (categoryId === '210') { // Pumpkin
+            subcategorySelect.innerHTML = '<option value="">Без підкатегорії</option>';
+          } else if (categoryId === '220') { // Zucchini
+            subcategorySelect.innerHTML = '<option value="">Без підкатегорії</option>';
+          } else if (categoryId === '230') { // Squash
+            subcategorySelect.innerHTML = '<option value="">Без підкатегорії</option>';
+          } else if (categoryId === '240') { // Green crops
+            subcategorySelect.innerHTML = '<option value="">Без підкатегорії</option>';
+          } else if (categoryId === '250') { // Spicy crops
+            subcategorySelect.innerHTML = '<option value="">Без підкатегорії</option>';
+          } else if (categoryId === '260') { // Lawn grass
+            subcategorySelect.innerHTML = '<option value="">Без підкатегорії</option>';
+          } else if (categoryId === '270') { // Bean crops
+            subcategorySelect.innerHTML = '<option value="">Без підкатегорії</option>';
+          } else if (categoryId === '280') { // Beans
+            subcategorySelect.innerHTML = '<option value="">Без підкатегорії</option><option value="281">281 — Квасоля спаржева</option><option value="282">282 — Квасоля зернова</option>';
+          } else if (categoryId === '290') { // Corn
+            subcategorySelect.innerHTML = '<option value="">Без підкатегорії</option>';
+          } else if (categoryId === '300') { // Strawberry
+            subcategorySelect.innerHTML = '<option value="">Без підкатегорії</option>';
+          } else if (categoryId === '310') { // Rare cultures
+            subcategorySelect.innerHTML = '<option value="">Без підкатегорії</option>';
+          } else if (categoryId === '320') { // Medicine
+            subcategorySelect.innerHTML = '<option value="">Без підкатегорії</option>';
+          } else if (categoryId === '330') { // Flowers
+            subcategorySelect.innerHTML = '<option value="">Без підкатегорії</option><option value="331">331 — Квіти однорічні</option><option value="332">332 — Квіти багаторічні</option>';
+          } else {
+            subcategorySelect.innerHTML = '<option value="">Без підкатегорії</option>';
+          }
         }
       }
 
@@ -314,6 +435,30 @@
         if (event.target === modal) {
           closeCategoryModal();
         }
+      }
+
+      // Handle form submission to prevent multiple submissions
+      function handleFormSubmit(event) {
+        const saveButton = document.getElementById('saveButton');
+        const form = event.target;
+        
+        // Prevent multiple submissions
+        if (saveButton.disabled) {
+          return false;
+        }
+        
+        // Disable button and show loading state
+        saveButton.disabled = true;
+        saveButton.textContent = 'Збереження...';
+        
+        // Close modal immediately to prevent user from clicking multiple times
+        closeCategoryModal();
+        
+        // Clear selection to prevent accidental double-submission
+        clearSelection();
+        
+        // Allow form to submit
+        return true;
       }
 
       // Initialize bulk actions

@@ -1668,15 +1668,23 @@ def bulk_update_category():
             # Save changes
             write_products_csv(rows, fields)
             
-            # Commit and push to git
-            commit_and_push([DATA_DIR], f"Bulk update category for {updated_count} products to {category_id}")
-            
-            flash(f"Successfully updated category for {updated_count} products.")
+            # Commit and push to git - use a more specific path and handle timeouts
+            try:
+                # Use a more specific path to avoid hanging
+                csv_path = os.path.join(DATA_DIR, "list.csv")
+                commit_and_push([csv_path], f"Bulk update category for {updated_count} products to {category_id}")
+                flash(f"Successfully updated category for {updated_count} products.")
+            except Exception as git_error:
+                # If git operation fails, still show success but warn about git
+                flash(f"Products updated successfully, but git commit failed: {str(git_error)}")
+                # Log the error for debugging
+                app.logger.error(f"Git commit failed in bulk update: {git_error}")
         else:
             flash("No products were updated.")
             
     except Exception as e:
         flash(f"Error updating products: {str(e)}")
+        app.logger.error(f"Bulk update error: {e}")
     
     return redirect(url_for('products_list'))
 
