@@ -64,16 +64,9 @@ docker compose exec -T db mysql -u root -pexample opencart < ../complete_sync_mi
 if [ $? -eq 0 ]; then
     echo "✅ SQL import completed successfully!"
     
-    # Copy images to container
+    # Copy images to container using fixed script
     echo "🖼️ Copying images to container..."
-    docker compose cp ../opencart_data/image/catalog/product web:/var/www/html/image/catalog/product
-    docker compose cp ../opencart_data/image/catalog/category web:/var/www/html/image/catalog/category
-    
-    # Set proper permissions
-    docker compose exec web bash -c "
-        chown -R www-data:www-data /var/www/html/image/
-        chmod -R 755 /var/www/html/image/
-    "
+    bash ../copy_images_fixed.sh
     
     echo "✅ Images copied to container successfully!"
     echo ""

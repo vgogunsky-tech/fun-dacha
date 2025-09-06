@@ -119,15 +119,29 @@ def generate_complete_sync_sql():
 USE opencart;
 
 -- Complete sync: Remove all existing data first
-DELETE FROM oc_product_to_category WHERE product_id > 0;
-DELETE FROM oc_product_description WHERE product_id > 0;
-DELETE FROM oc_product WHERE product_id > 0;
-DELETE FROM oc_category_path WHERE category_id > 0;
-DELETE FROM oc_category_description WHERE category_id > 0;
-DELETE FROM oc_category WHERE category_id > 0;
-DELETE FROM oc_product_attribute WHERE product_id > 0;
-DELETE FROM oc_attribute_description WHERE attribute_id > 0;
-DELETE FROM oc_attribute WHERE attribute_id > 0;
+-- Remove all product relationships and descriptions
+DELETE FROM oc_product_to_category;
+DELETE FROM oc_product_description;
+DELETE FROM oc_product_to_store;
+DELETE FROM oc_product_to_layout;
+DELETE FROM oc_product_attribute;
+DELETE FROM oc_product;
+
+-- Remove all category relationships and descriptions
+DELETE FROM oc_category_path;
+DELETE FROM oc_category_description;
+DELETE FROM oc_category_to_store;
+DELETE FROM oc_category_to_layout;
+DELETE FROM oc_category;
+
+-- Remove all attributes
+DELETE FROM oc_attribute_description;
+DELETE FROM oc_attribute;
+
+-- Reset auto-increment counters
+ALTER TABLE oc_product AUTO_INCREMENT = 1;
+ALTER TABLE oc_category AUTO_INCREMENT = 1;
+ALTER TABLE oc_attribute AUTO_INCREMENT = 1;
 
 -- Insert categories with images
 """
