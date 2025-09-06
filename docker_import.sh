@@ -15,10 +15,10 @@ if ! command -v docker &> /dev/null; then
 fi
 
 # Check if SQL file exists
-SQL_FILE="real_data_migration.sql"
+SQL_FILE="enhanced_real_data_migration.sql"
 if [ ! -f "$SQL_FILE" ]; then
     echo "❌ SQL file not found: $SQL_FILE"
-    echo "Please run: python3 real_data_sql_migration.py"
+    echo "Please run: python3 enhanced_real_data_sql_migration.py"
     exit 1
 fi
 
@@ -50,18 +50,20 @@ fi
 echo "✅ Database connection successful"
 
 # Import the SQL file directly
-echo "📥 Importing SQL file to database..."
-docker compose exec -T db mysql -u root -pexample opencart < ../real_data_migration.sql
+echo "📥 Importing enhanced SQL file to database..."
+docker compose exec -T db mysql -u root -pexample opencart < ../enhanced_real_data_migration.sql
 
 if [ $? -eq 0 ]; then
     echo "✅ SQL import completed successfully!"
     echo ""
-    echo "📊 Import Summary:"
+    echo "📊 Enhanced Import Summary:"
     echo "   - Database: opencart"
-    echo "   - Categories: 37"
-    echo "   - Products: 435"
-    echo "   - Attributes: 367"
+    echo "   - Categories: 37 (with images)"
+    echo "   - Products: 435 (with images)"
+    echo "   - Attributes: 367 (localized)"
     echo "   - Real data from CSV files"
+    echo "   - Localized tags (Ukrainian/Russian)"
+    echo "   - Image paths: catalog/categories/ and catalog/products/"
     echo ""
     echo "🔍 You can verify the import by:"
     echo "   1. Checking phpMyAdmin at: http://localhost:8082"
@@ -69,11 +71,16 @@ if [ $? -eq 0 ]; then
     echo "   3. Logging into the admin panel"
     echo ""
     echo "📋 Database tables populated:"
-    echo "   - oc_category (37 categories)"
-    echo "   - oc_product (435 products)"
-    echo "   - oc_attribute (367 attributes)"
+    echo "   - oc_category (37 categories with images)"
+    echo "   - oc_product (435 products with images)"
+    echo "   - oc_attribute (367 localized attributes)"
     echo "   - Real Ukrainian/Russian product data"
+    echo "   - Localized tags (early_maturing → Ранньостиглий)"
     echo "   - Inventory and pricing data"
+    echo ""
+    echo "🖼️ Images available at:"
+    echo "   - Categories: http://localhost:8080/image/catalog/categories/"
+    echo "   - Products: http://localhost:8080/image/catalog/products/"
 else
     echo "❌ SQL import failed!"
     echo "Check the error messages above for details"
