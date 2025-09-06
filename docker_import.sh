@@ -15,7 +15,7 @@ if ! command -v docker &> /dev/null; then
 fi
 
 # Check if SQL file exists
-SQL_FILE="complete_opencart_migration.sql"
+SQL_FILE="essential_opencart_migration.sql"
 if [ ! -f "$SQL_FILE" ]; then
     echo "❌ SQL file not found: $SQL_FILE"
     exit 1
@@ -50,7 +50,7 @@ echo "✅ Database connection successful"
 
 # Import the SQL file directly
 echo "📥 Importing SQL file to database..."
-docker compose exec -T db mysql -u root -pexample opencart < ../complete_opencart_migration.sql
+docker compose exec -T db mysql -u root -pexample opencart < ../essential_opencart_migration.sql
 
 if [ $? -eq 0 ]; then
     echo "✅ SQL import completed successfully!"
@@ -59,8 +59,6 @@ if [ $? -eq 0 ]; then
     echo "   - Database: opencart"
     echo "   - Categories: 5"
     echo "   - Products: 5"
-    echo "   - Banners: 1 (with 8 images)"
-    echo "   - Featured products: 1"
     echo "   - Attributes: 4"
     echo ""
     echo "🔍 You can verify the import by:"
@@ -71,8 +69,6 @@ if [ $? -eq 0 ]; then
     echo "📋 Database tables populated:"
     echo "   - oc_category (5 categories)"
     echo "   - oc_product (5 products)"
-    echo "   - oc_banner (1 banner with 8 images)"
-    echo "   - oc_product_featured (1 featured product)"
     echo "   - oc_attribute (4 attributes)"
 else
     echo "❌ SQL import failed!"
