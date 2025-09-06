@@ -1,0 +1,3 @@
+2025-09-06 18:50:33,857 - INFO - Starting MySQL OpenCart migration...
+2025-09-06 18:50:33,862 - ERROR - Failed to connect to MySQL database: (2003, "Can't connect to MySQL server on 'localhost' ([Errno 111] Connection refused)")
+2025-09-06 18:50:33,862 - INFO - Database connection closed
