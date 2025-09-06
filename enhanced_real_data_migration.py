@@ -139,7 +139,7 @@ class EnhancedRealDataOpenCartMigrator:
                         
                         # Get image path
                         image_name = row.get('primary_image', '')
-                        image_path = f"catalog/categories/{image_name}" if image_name else ""
+                        image_path = f"catalog/category/{image_name}" if image_name else ""
                         
                         # Insert category
                         self.cursor.execute("""
@@ -228,7 +228,7 @@ class EnhancedRealDataOpenCartMigrator:
                         
                         # Get image path
                         image_name = row.get('primary_image', '')
-                        image_path = f"catalog/products/{image_name}" if image_name else ""
+                        image_path = f"catalog/product/{image_name}" if image_name else ""
                         
                         # Insert product
                         self.cursor.execute("""

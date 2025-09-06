@@ -69,8 +69,8 @@ docker compose cp ../data/tags.csv web:/var/www/html/tags.csv
 
 # Copy images to the container
 echo "📋 Copying images to container..."
-docker compose cp ../data/images/categories web:/var/www/html/image/catalog/categories
-docker compose cp ../data/images/products web:/var/www/html/image/catalog/products
+docker compose cp ../data/images/categories web:/var/www/html/image/catalog/category
+docker compose cp ../data/images/products web:/var/www/html/image/catalog/product
 
 # Update database configuration in the migration script for Docker environment
 echo "🔧 Updating database configuration for Docker..."
@@ -107,8 +107,8 @@ if [ $? -eq 0 ]; then
     echo "   - 37 categories, 435 products, 367 attributes"
     echo ""
     echo "🖼️ Images are now available at:"
-    echo "   - Categories: http://localhost:8080/image/catalog/categories/"
-    echo "   - Products: http://localhost:8080/image/catalog/products/"
+    echo "   - Categories: http://localhost:8080/image/catalog/category/"
+    echo "   - Products: http://localhost:8080/image/catalog/product/"
 else
     echo "❌ Migration failed!"
     echo "Check the migration.log file in the container for details:"

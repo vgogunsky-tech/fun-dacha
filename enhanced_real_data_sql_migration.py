@@ -132,7 +132,7 @@ DELETE FROM oc_attribute WHERE attribute_id > 0;
     
     # Add categories with images
     for cat_id, cat_data in categories.items():
-        image_path = f"catalog/categories/{cat_data['image']}" if cat_data['image'] else ""
+        image_path = f"catalog/category/{cat_data['image']}" if cat_data['image'] else ""
         sql_content += f"INSERT INTO oc_category (category_id, parent_id, sort_order, status, image) VALUES ({cat_id}, {cat_data['parent_id']}, {cat_id}, 1, '{image_path}');\n"
     
     sql_content += "\n-- Insert category descriptions (Ukrainian)\n"
@@ -179,7 +179,7 @@ DELETE FROM oc_attribute WHERE attribute_id > 0;
         
         # Get image path
         image_name = product.get('primary_image', '')
-        image_path = f"catalog/products/{image_name}" if image_name else ""
+        image_path = f"catalog/product/{image_name}" if image_name else ""
         
         model = product.get('product_id', f'PROD-{product_id}').replace("'", "\\'")
         sql_content += f"INSERT INTO oc_product (product_id, model, sku, quantity, stock_status_id, manufacturer_id, shipping, price, points, tax_class_id, date_available, weight, weight_class_id, length, width, height, length_class_id, subtract, minimum, sort_order, status, image) VALUES ({product_id}, '{model}', '{model}', {quantity}, 5, 0, 1, {price}, 0, 0, CURDATE(), 0.0, 1, 0.0, 0.0, 0.0, 1, 1, 1, {product_id}, 1, '{image_path}');\n"
@@ -275,7 +275,7 @@ UPDATE oc_product SET date_available = CURDATE() WHERE product_id > 0;
     print(f"   - {len(attributes)} attributes with localization")
     print(f"   - Localized tags (Ukrainian/Russian)")
     print(f"   - Inventory data integrated")
-    print(f"   - Image paths: catalog/categories/ and catalog/products/")
+    print(f"   - Image paths: catalog/category/ and catalog/product/")
     
     return True
 
