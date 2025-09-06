@@ -30,6 +30,7 @@ echo "✅ Database connection successful"
 
 # List of migration files to try in order
 MIGRATION_FILES=(
+    "absolute_minimum_migration.sql"
     "bare_minimum_migration.sql"
     "ultra_minimal_migration.sql"
     "minimal_opencart_migration.sql"
