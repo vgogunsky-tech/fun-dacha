@@ -119,11 +119,11 @@ def update_migration_for_languages():
 USE opencart;
 
 -- Setup languages first
-INSERT IGNORE INTO oc_language (language_id, name, code, locale, image, directory, sort_order, status) 
-VALUES (2, 'Українська', 'ua', 'ua_UA.UTF-8', 'ua.png', 'ukrainian', 2, 1);
+INSERT IGNORE INTO oc_language (language_id, name, code, locale, directory, sort_order, status) 
+VALUES (2, 'Українська', 'ua', 'ua_UA.UTF-8', 'ukrainian', 2, 1);
 
-INSERT IGNORE INTO oc_language (language_id, name, code, locale, image, directory, sort_order, status) 
-VALUES (3, 'Русский', 'ru', 'ru_RU.UTF-8', 'ru.png', 'russian', 3, 1);
+INSERT IGNORE INTO oc_language (language_id, name, code, locale, directory, sort_order, status) 
+VALUES (3, 'Русский', 'ru', 'ru_RU.UTF-8', 'russian', 3, 1);
 
 -- Complete sync: Remove all existing data first
 -- Remove all product relationships and descriptions

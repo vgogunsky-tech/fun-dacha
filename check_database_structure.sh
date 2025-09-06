@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# Check OpenCart Database Structure
-# This script checks what tables and columns exist in your OpenCart database
+# Check Database Structure Script
+# This script checks the actual structure of OpenCart database tables
 
 set -e
 
-echo "🔍 Checking OpenCart Database Structure..."
+echo "🔍 Checking OpenCart database structure..."
 
 # Navigate to opencart-docker directory
 cd opencart-docker
@@ -14,24 +14,36 @@ cd opencart-docker
 if ! docker compose ps | grep -q "Up"; then
     echo "🔧 Starting OpenCart containers..."
     docker compose up -d
-    sleep 30
+    sleep 10
 fi
 
-echo "📋 Checking oc_category table structure..."
-docker compose exec db mysql -u root -pexample -e "DESCRIBE opencart.oc_category;"
+echo "📋 1. Checking oc_language table structure:"
+docker compose exec db mysql -u root -pexample opencart -e "DESCRIBE oc_language;"
 
 echo ""
-echo "📋 Checking oc_product table structure..."
-docker compose exec db mysql -u root -pexample -e "DESCRIBE opencart.oc_product;"
+echo "📋 2. Checking oc_setting table structure:"
+docker compose exec db mysql -u root -pexample opencart -e "DESCRIBE oc_setting;"
 
 echo ""
-echo "📋 Checking existing tables..."
-docker compose exec db mysql -u root -pexample -e "SHOW TABLES FROM opencart LIKE 'oc_%';"
+echo "📋 3. Checking oc_product table structure:"
+docker compose exec db mysql -u root -pexample opencart -e "DESCRIBE oc_product;"
 
 echo ""
-echo "📋 Checking existing data in oc_category..."
-docker compose exec db mysql -u root -pexample -e "SELECT COUNT(*) as category_count FROM opencart.oc_category;"
+echo "📋 4. Checking oc_category table structure:"
+docker compose exec db mysql -u root -pexample opencart -e "DESCRIBE oc_category;"
 
 echo ""
-echo "📋 Checking existing data in oc_product..."
-docker compose exec db mysql -u root -pexample -e "SELECT COUNT(*) as product_count FROM opencart.oc_product;"
+echo "📋 5. Checking oc_product_description table structure:"
+docker compose exec db mysql -u root -pexample opencart -e "DESCRIBE oc_product_description;"
+
+echo ""
+echo "📋 6. Checking oc_category_description table structure:"
+docker compose exec db mysql -u root -pexample opencart -e "DESCRIBE oc_category_description;"
+
+echo ""
+echo "📋 7. Current languages in database:"
+docker compose exec db mysql -u root -pexample opencart -e "SELECT * FROM oc_language;"
+
+echo ""
+echo "📋 8. Current settings:"
+docker compose exec db mysql -u root -pexample opencart -e "SELECT `key`, value FROM oc_setting WHERE `key` LIKE '%language%' LIMIT 10;"

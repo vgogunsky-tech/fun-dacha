@@ -4,12 +4,12 @@
 USE opencart;
 
 -- Add Ukrainian language (language_id = 2)
-INSERT IGNORE INTO oc_language (language_id, name, code, locale, image, directory, sort_order, status) 
-VALUES (2, 'Українська', 'ua', 'ua_UA.UTF-8', 'ua.png', 'ukrainian', 2, 1);
+INSERT IGNORE INTO oc_language (language_id, name, code, locale, directory, sort_order, status) 
+VALUES (2, 'Українська', 'ua', 'ua_UA.UTF-8', 'ukrainian', 2, 1);
 
 -- Add Russian language (language_id = 3) 
-INSERT IGNORE INTO oc_language (language_id, name, code, locale, image, directory, sort_order, status) 
-VALUES (3, 'Русский', 'ru', 'ru_RU.UTF-8', 'ru.png', 'russian', 3, 1);
+INSERT IGNORE INTO oc_language (language_id, name, code, locale, directory, sort_order, status) 
+VALUES (3, 'Русский', 'ru', 'ru_RU.UTF-8', 'russian', 3, 1);
 
 -- Update English language to be language_id = 1 (if not already)
 UPDATE oc_language SET language_id = 1, sort_order = 1 WHERE code = 'en' AND language_id != 1;
