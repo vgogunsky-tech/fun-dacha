@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  web:
+    build: .
+    container_name: custom-opencart-web
+    ports:
+      - "8080:80"
+    depends_on:
+      - db
+    volumes:
+      - opencart_data:/var/www/html
+
+  db:
+    image: mariadb:10.5
+    container_name: custom-opencart-db
+    environment:
+      - MYSQL_ROOT_PASSWORD=example
+      - MYSQL_DATABASE=opencart
+    volumes:
+      - db_data:/var/lib/mysql
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: custom-phpmyadmin
+    ports:
+      - "8082:80"
+    environment:
+      - PMA_HOST=db
+      - PMA_USER=root
+      - PMA_PASSWORD=example
+    depends_on:
+      - db
+
+volumes:
+  opencart_data:
+  db_data:
+
