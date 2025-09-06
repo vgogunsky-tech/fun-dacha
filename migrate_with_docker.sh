@@ -44,12 +44,12 @@ echo "📦 Installing Python dependencies..."
 docker compose exec web bash -c "
     apt-get update && 
     apt-get install -y python3 python3-pip &&
-    pip3 install mysql-connector-python==8.2.0
+    pip3 install pymysql
 "
 
 # Copy migration script to the container
 echo "📋 Copying migration script to container..."
-docker compose cp /workspace/opencart_migration.py web:/var/www/html/migration.py
+docker compose cp /workspace/complete_migration.py web:/var/www/html/migration.py
 
 # Copy data files to the container
 echo "📋 Copying data files to container..."
