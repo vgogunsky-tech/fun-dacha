@@ -48,13 +48,9 @@ fi
 
 echo "✅ Database connection successful"
 
-# Copy SQL file to the database container
-echo "📋 Copying SQL file to database container..."
-docker compose cp ../complete_opencart_migration.sql db:/tmp/migration.sql
-
-# Import the SQL file
+# Import the SQL file directly
 echo "📥 Importing SQL file to database..."
-docker compose exec db mysql -u root -pexample opencart < /tmp/migration.sql
+docker compose exec -T db mysql -u root -pexample opencart < ../complete_opencart_migration.sql
 
 if [ $? -eq 0 ]; then
     echo "✅ SQL import completed successfully!"
