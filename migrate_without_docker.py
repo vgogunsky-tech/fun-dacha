@@ -36,6 +36,8 @@ def main():
     # File paths
     categories_file = '/workspace/data/categories_list.csv'
     products_file = '/workspace/data/list.csv'
+    inventory_file = '/workspace/data/inventory.csv'
+    tags_file = '/workspace/data/tags.csv'
     
     # Verify files exist
     if not os.path.exists(categories_file):
@@ -46,11 +48,19 @@ def main():
         print(f"❌ Products file not found: {products_file}")
         return False
     
+    if not os.path.exists(inventory_file):
+        print(f"⚠️  Inventory file not found: {inventory_file}")
+        inventory_file = None
+    
+    if not os.path.exists(tags_file):
+        print(f"⚠️  Tags file not found: {tags_file}")
+        tags_file = None
+    
     # Create migrator instance
     migrator = OpenCartMigrator(db_config)
     
     # Run migration
-    success = migrator.migrate(categories_file, products_file)
+    success = migrator.migrate(categories_file, products_file, inventory_file, tags_file)
     
     if success:
         print("✅ Migration completed successfully!")

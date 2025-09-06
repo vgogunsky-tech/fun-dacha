@@ -353,7 +353,284 @@ class OpenCartMigrator:
         self.connection.commit()
         logger.info("Products insertion completed")
     
-    def migrate(self, categories_file, products_file):
+    def load_inventory(self, inventory_file):
+        """Load inventory data from CSV file"""
+        inventory = []
+        try:
+            with open(inventory_file, 'r', encoding='utf-8') as file:
+                reader = csv.DictReader(file)
+                for row in reader:
+                    inventory.append(row)
+            logger.info(f"Loaded {len(inventory)} inventory records")
+            return inventory
+        except Exception as e:
+            logger.error(f"Error loading inventory: {e}")
+            return []
+    
+    def load_tags(self, tags_file):
+        """Load tags data from CSV file"""
+        tags = {}
+        try:
+            with open(tags_file, 'r', encoding='utf-8') as file:
+                reader = csv.DictReader(file)
+                for row in reader:
+                    category_id = int(row['category'])
+                    if category_id not in tags:
+                        tags[category_id] = []
+                    tags[category_id].append({
+                        'group': row['group'],
+                        'key': row['key'],
+                        'ua': row['ua'],
+                        'ru': row['ru']
+                    })
+            logger.info(f"Loaded tags for {len(tags)} categories")
+            return tags
+        except Exception as e:
+            logger.error(f"Error loading tags: {e}")
+            return {}
+    
+    def create_attribute_tables(self):
+        """Create attribute-related tables for tags/filters"""
+        attribute_tables_sql = {
+            'oc_attribute': """
+                CREATE TABLE IF NOT EXISTS `oc_attribute` (
+                    `attribute_id` int(11) NOT NULL AUTO_INCREMENT,
+                    `attribute_group_id` int(11) NOT NULL,
+                    `sort_order` int(3) NOT NULL,
+                    PRIMARY KEY (`attribute_id`)
+                ) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+            """,
+            'oc_attribute_description': """
+                CREATE TABLE IF NOT EXISTS `oc_attribute_description` (
+                    `attribute_id` int(11) NOT NULL,
+                    `language_id` int(11) NOT NULL,
+                    `name` varchar(64) NOT NULL,
+                    PRIMARY KEY (`attribute_id`,`language_id`)
+                ) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+            """,
+            'oc_attribute_group': """
+                CREATE TABLE IF NOT EXISTS `oc_attribute_group` (
+                    `attribute_group_id` int(11) NOT NULL AUTO_INCREMENT,
+                    `sort_order` int(3) NOT NULL,
+                    PRIMARY KEY (`attribute_group_id`)
+                ) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+            """,
+            'oc_attribute_group_description': """
+                CREATE TABLE IF NOT EXISTS `oc_attribute_group_description` (
+                    `attribute_group_id` int(11) NOT NULL,
+                    `language_id` int(11) NOT NULL,
+                    `name` varchar(64) NOT NULL,
+                    PRIMARY KEY (`attribute_group_id`,`language_id`)
+                ) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+            """,
+            'oc_product_attribute': """
+                CREATE TABLE IF NOT EXISTS `oc_product_attribute` (
+                    `product_id` int(11) NOT NULL,
+                    `attribute_id` int(11) NOT NULL,
+                    `language_id` int(11) NOT NULL,
+                    `text` text NOT NULL,
+                    PRIMARY KEY (`product_id`,`attribute_id`,`language_id`)
+                ) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+            """,
+            'oc_product_option': """
+                CREATE TABLE IF NOT EXISTS `oc_product_option` (
+                    `product_option_id` int(11) NOT NULL AUTO_INCREMENT,
+                    `product_id` int(11) NOT NULL,
+                    `option_id` int(11) NOT NULL,
+                    `value` text NOT NULL,
+                    `required` tinyint(1) NOT NULL,
+                    PRIMARY KEY (`product_option_id`)
+                ) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+            """,
+            'oc_product_option_value': """
+                CREATE TABLE IF NOT EXISTS `oc_product_option_value` (
+                    `product_option_value_id` int(11) NOT NULL AUTO_INCREMENT,
+                    `product_option_id` int(11) NOT NULL,
+                    `product_id` int(11) NOT NULL,
+                    `option_id` int(11) NOT NULL,
+                    `option_value_id` int(11) NOT NULL,
+                    `quantity` int(3) NOT NULL,
+                    `subtract` tinyint(1) NOT NULL,
+                    `price` decimal(15,4) NOT NULL,
+                    `price_prefix` varchar(1) NOT NULL,
+                    `points` int(8) NOT NULL,
+                    `points_prefix` varchar(1) NOT NULL,
+                    `weight` decimal(15,8) NOT NULL,
+                    `weight_prefix` varchar(1) NOT NULL,
+                    PRIMARY KEY (`product_option_value_id`)
+                ) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+            """,
+            'oc_option': """
+                CREATE TABLE IF NOT EXISTS `oc_option` (
+                    `option_id` int(11) NOT NULL AUTO_INCREMENT,
+                    `type` varchar(32) NOT NULL,
+                    `sort_order` int(3) NOT NULL,
+                    PRIMARY KEY (`option_id`)
+                ) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+            """,
+            'oc_option_description': """
+                CREATE TABLE IF NOT EXISTS `oc_option_description` (
+                    `option_id` int(11) NOT NULL,
+                    `language_id` int(11) NOT NULL,
+                    `name` varchar(128) NOT NULL,
+                    PRIMARY KEY (`option_id`,`language_id`)
+                ) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+            """,
+            'oc_option_value': """
+                CREATE TABLE IF NOT EXISTS `oc_option_value` (
+                    `option_value_id` int(11) NOT NULL AUTO_INCREMENT,
+                    `option_id` int(11) NOT NULL,
+                    `image` varchar(255) NOT NULL,
+                    `sort_order` int(3) NOT NULL,
+                    PRIMARY KEY (`option_value_id`)
+                ) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+            """,
+            'oc_option_value_description': """
+                CREATE TABLE IF NOT EXISTS `oc_option_value_description` (
+                    `option_value_id` int(11) NOT NULL,
+                    `language_id` int(11) NOT NULL,
+                    `option_id` int(11) NOT NULL,
+                    `name` varchar(128) NOT NULL,
+                    PRIMARY KEY (`option_value_id`,`language_id`)
+                ) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+            """
+        }
+        
+        for table_name, sql in attribute_tables_sql.items():
+            try:
+                self.cursor.execute(sql)
+                logger.info(f"Table {table_name} created/verified successfully")
+            except Error as e:
+                logger.error(f"Error creating table {table_name}: {e}")
+    
+    def insert_tags_as_attributes(self, tags):
+        """Insert tags as attributes for filtering"""
+        attribute_group_id = 1
+        
+        # Create attribute group for tags
+        try:
+            self.cursor.execute("""
+                INSERT IGNORE INTO oc_attribute_group 
+                (attribute_group_id, sort_order)
+                VALUES (%s, %s)
+            """, (attribute_group_id, 1))
+            
+            # Insert attribute group descriptions
+            for lang_id in [1, 2]:
+                self.cursor.execute("""
+                    INSERT IGNORE INTO oc_attribute_group_description 
+                    (attribute_group_id, language_id, name)
+                    VALUES (%s, %s, %s)
+                """, (attribute_group_id, lang_id, "Фільтри" if lang_id == 1 else "Фильтры"))
+            
+            # Process tags for each category
+            for category_id, tag_list in tags.items():
+                for tag in tag_list:
+                    attribute_id = hash(tag['key']) % 1000000  # Generate unique ID
+                    
+                    # Insert attribute
+                    self.cursor.execute("""
+                        INSERT IGNORE INTO oc_attribute 
+                        (attribute_id, attribute_group_id, sort_order)
+                        VALUES (%s, %s, %s)
+                    """, (attribute_id, attribute_group_id, 1))
+                    
+                    # Insert attribute descriptions
+                    for lang_id in [1, 2]:
+                        name = tag['ua'] if lang_id == 1 else tag['ru']
+                        self.cursor.execute("""
+                            INSERT IGNORE INTO oc_attribute_description 
+                            (attribute_id, language_id, name)
+                            VALUES (%s, %s, %s)
+                        """, (attribute_id, lang_id, name))
+            
+            self.connection.commit()
+            logger.info("Tags inserted as attributes successfully")
+            
+        except Error as e:
+            logger.error(f"Error inserting tags as attributes: {e}")
+    
+    def insert_inventory_as_options(self, inventory):
+        """Insert inventory data as product options (variants)"""
+        option_id = 1
+        
+        # Create option for quantity/packaging
+        try:
+            self.cursor.execute("""
+                INSERT IGNORE INTO oc_option 
+                (option_id, type, sort_order)
+                VALUES (%s, %s, %s)
+            """, (option_id, 'select', 1))
+            
+            # Insert option descriptions
+            for lang_id in [1, 2]:
+                name = "Розмір упаковки" if lang_id == 1 else "Размер упаковки"
+                self.cursor.execute("""
+                    INSERT IGNORE INTO oc_option_description 
+                    (option_id, language_id, name)
+                    VALUES (%s, %s, %s)
+                """, (option_id, lang_id, name))
+            
+            # Process inventory records
+            for inv_record in inventory:
+                if not inv_record.get('pid') or not inv_record.get('product_id'):
+                    continue
+                
+                product_id = int(inv_record['pid'])
+                variant_id = inv_record.get('variant_id', '')
+                title_ua = inv_record.get('title_ua', '')
+                title_ru = inv_record.get('title_ru', '')
+                original_price = float(inv_record.get('original_price', 0))
+                stock_qty = int(inv_record.get('stock_qty', 0))
+                value = float(inv_record.get('value', 1))
+                
+                # Create option value
+                option_value_id = hash(variant_id) % 1000000
+                
+                self.cursor.execute("""
+                    INSERT IGNORE INTO oc_option_value 
+                    (option_value_id, option_id, image, sort_order)
+                    VALUES (%s, %s, %s, %s)
+                """, (option_value_id, option_id, '', 1))
+                
+                # Insert option value descriptions
+                for lang_id in [1, 2]:
+                    name = title_ua if lang_id == 1 else title_ru
+                    self.cursor.execute("""
+                        INSERT IGNORE INTO oc_option_value_description 
+                        (option_value_id, language_id, option_id, name)
+                        VALUES (%s, %s, %s, %s)
+                    """, (option_value_id, lang_id, option_id, name))
+                
+                # Create product option
+                product_option_id = hash(f"{product_id}_{option_id}") % 1000000
+                
+                self.cursor.execute("""
+                    INSERT IGNORE INTO oc_product_option 
+                    (product_option_id, product_id, option_id, value, required)
+                    VALUES (%s, %s, %s, %s, %s)
+                """, (product_option_id, product_id, option_id, '', 1))
+                
+                # Create product option value with pricing
+                product_option_value_id = hash(f"{product_id}_{option_value_id}") % 1000000
+                
+                self.cursor.execute("""
+                    INSERT IGNORE INTO oc_product_option_value 
+                    (product_option_value_id, product_option_id, product_id, option_id, option_value_id,
+                     quantity, subtract, price, price_prefix, points, points_prefix, weight, weight_prefix)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                """, (
+                    product_option_value_id, product_option_id, product_id, option_id, option_value_id,
+                    stock_qty, 1, original_price, '+', 0, '+', value, '+'
+                ))
+            
+            self.connection.commit()
+            logger.info("Inventory inserted as product options successfully")
+            
+        except Error as e:
+            logger.error(f"Error inserting inventory as options: {e}")
+    
+    def migrate(self, categories_file, products_file, inventory_file=None, tags_file=None):
         """Main migration function"""
         logger.info("Starting OpenCart migration...")
         
@@ -363,6 +640,7 @@ class OpenCartMigrator:
         try:
             # Create tables
             self.create_tables_if_not_exist()
+            self.create_attribute_tables()
             
             # Setup languages
             self.setup_languages()
@@ -376,6 +654,18 @@ class OpenCartMigrator:
             products = self.load_products(products_file)
             if products:
                 self.insert_products(products)
+            
+            # Load and insert inventory as product options
+            if inventory_file and os.path.exists(inventory_file):
+                inventory = self.load_inventory(inventory_file)
+                if inventory:
+                    self.insert_inventory_as_options(inventory)
+            
+            # Load and insert tags as attributes
+            if tags_file and os.path.exists(tags_file):
+                tags = self.load_tags(tags_file)
+                if tags:
+                    self.insert_tags_as_attributes(tags)
             
             logger.info("Migration completed successfully!")
             return True
@@ -401,12 +691,14 @@ def main():
     # File paths
     categories_file = '/workspace/data/categories_list.csv'
     products_file = '/workspace/data/list.csv'
+    inventory_file = '/workspace/data/inventory.csv'
+    tags_file = '/workspace/data/tags.csv'
     
     # Create migrator instance
     migrator = OpenCartMigrator(db_config)
     
     # Run migration
-    success = migrator.migrate(categories_file, products_file)
+    success = migrator.migrate(categories_file, products_file, inventory_file, tags_file)
     
     if success:
         print("✅ Migration completed successfully!")

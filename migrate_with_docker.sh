@@ -55,18 +55,27 @@ docker compose cp /workspace/opencart_migration.py web:/var/www/html/migration.p
 echo "📋 Copying data files to container..."
 docker compose cp /workspace/data/list.csv web:/var/www/html/list.csv
 docker compose cp /workspace/data/categories_list.csv web:/var/www/html/categories_list.csv
+docker compose cp /workspace/data/inventory.csv web:/var/www/html/inventory.csv
+docker compose cp /workspace/data/tags.csv web:/var/www/html/tags.csv
 
 # Update database configuration in the migration script for Docker environment
 echo "🔧 Updating database configuration for Docker..."
 docker compose exec web bash -c "
     sed -i 's/host.*localhost/host = \"db\"/' /var/www/html/migration.py &&
     sed -i 's|/workspace/data/categories_list.csv|/var/www/html/categories_list.csv|' /var/www/html/migration.py &&
-    sed -i 's|/workspace/data/list.csv|/var/www/html/list.csv|' /var/www/html/migration.py
+    sed -i 's|/workspace/data/list.csv|/var/www/html/list.csv|' /var/www/html/migration.py &&
+    sed -i 's|/workspace/data/inventory.csv|/var/www/html/inventory.csv|' /var/www/html/migration.py &&
+    sed -i 's|/workspace/data/tags.csv|/var/www/html/tags.csv|' /var/www/html/migration.py
 "
 
 # Run the migration
 echo "🔄 Running migration..."
 docker compose exec web python3 /var/www/html/migration.py
+
+# Migrate images
+echo "🖼️  Migrating images..."
+docker compose cp /workspace/migrate_images.py web:/var/www/html/migrate_images.py
+docker compose exec web python3 /var/www/html/migrate_images.py
 
 # Check migration results
 if [ $? -eq 0 ]; then
