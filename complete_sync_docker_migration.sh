@@ -52,8 +52,7 @@ echo "✅ Database connection successful"
 echo "📦 Installing Python dependencies..."
 docker compose exec web bash -c "
     apt-get update && 
-    apt-get install -y python3 python3-pip &&
-    pip3 install pymysql
+    apt-get install -y python3 python3-pip python3-pymysql
 "
 
 # Copy migration script to the container

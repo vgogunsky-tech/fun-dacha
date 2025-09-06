@@ -25,9 +25,10 @@ echo ""
 
 # Check if Docker is available
 if command -v docker &> /dev/null; then
-    echo "🐳 Docker detected - running Docker-based migration..."
+    echo "🐳 Docker detected - running SQL-based migration..."
+    echo "Note: Using SQL approach to avoid Python package issues in container."
     echo ""
-    ./complete_sync_docker_migration.sh
+    ./simple_sql_migration.sh
 else
     echo "⚠️ Docker not available - running local migration..."
     echo "Note: This requires local MySQL server and may not copy images to container."
