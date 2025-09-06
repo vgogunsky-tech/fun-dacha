@@ -7,8 +7,8 @@ set -e
 
 echo "🖼️ Copying images to Docker container..."
 
-# Navigate to opencart-docker directory
-cd opencart-docker
+# We're already in the opencart-docker directory when called from simple_sql_migration.sh
+# No need to cd again
 
 # Check if containers are running
 if ! docker compose ps | grep -q "Up"; then
@@ -20,33 +20,33 @@ fi
 # Check for images in different possible locations
 echo "🔍 Looking for images..."
 
+# Check current directory first
 if [ -d "opencart_data/image/catalog/product" ]; then
     echo "✅ Found product images in opencart_data/image/catalog/product/"
     docker compose cp opencart_data/image/catalog/product web:/var/www/html/image/catalog/product
     echo "✅ Product images copied"
+elif [ -d "../opencart_data/image/catalog/product" ]; then
+    echo "✅ Found product images in ../opencart_data/image/catalog/product/"
+    docker compose cp ../opencart_data/image/catalog/product web:/var/www/html/image/catalog/product
+    echo "✅ Product images copied from parent directory"
 else
-    echo "❌ Product images not found in opencart_data/image/catalog/product/"
+    echo "❌ Product images not found in either location"
+    echo "   Checked: opencart_data/image/catalog/product/"
+    echo "   Checked: ../opencart_data/image/catalog/product/"
 fi
 
 if [ -d "opencart_data/image/catalog/category" ]; then
     echo "✅ Found category images in opencart_data/image/catalog/category/"
     docker compose cp opencart_data/image/catalog/category web:/var/www/html/image/catalog/category
     echo "✅ Category images copied"
-else
-    echo "❌ Category images not found in opencart_data/image/catalog/category/"
-fi
-
-# Also check if images exist in the parent directory
-if [ -d "../opencart_data/image/catalog/product" ]; then
-    echo "✅ Found product images in ../opencart_data/image/catalog/product/"
-    docker compose cp ../opencart_data/image/catalog/product web:/var/www/html/image/catalog/product
-    echo "✅ Product images copied from parent directory"
-fi
-
-if [ -d "../opencart_data/image/catalog/category" ]; then
+elif [ -d "../opencart_data/image/catalog/category" ]; then
     echo "✅ Found category images in ../opencart_data/image/catalog/category/"
     docker compose cp ../opencart_data/image/catalog/category web:/var/www/html/image/catalog/category
     echo "✅ Category images copied from parent directory"
+else
+    echo "❌ Category images not found in either location"
+    echo "   Checked: opencart_data/image/catalog/category/"
+    echo "   Checked: ../opencart_data/image/catalog/category/"
 fi
 
 # Set proper permissions
