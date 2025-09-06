@@ -1,0 +1,503 @@
+2025-09-06 18:26:18,648 - INFO - Starting OpenCart migration...
+2025-09-06 18:26:18,648 - INFO - Successfully connected to database: /workspace/opencart-docker/opencart.db
+2025-09-06 18:26:18,653 - INFO - Table oc_product created/verified successfully
+2025-09-06 18:26:18,656 - INFO - Table oc_product_description created/verified successfully
+2025-09-06 18:26:18,659 - INFO - Table oc_product_to_category created/verified successfully
+2025-09-06 18:26:18,661 - INFO - Table oc_product_image created/verified successfully
+2025-09-06 18:26:18,663 - INFO - Table oc_category created/verified successfully
+2025-09-06 18:26:18,666 - INFO - Table oc_category_description created/verified successfully
+2025-09-06 18:26:18,668 - INFO - Table oc_language created/verified successfully
+2025-09-06 18:26:18,670 - INFO - Table oc_attribute created/verified successfully
+2025-09-06 18:26:18,672 - INFO - Table oc_attribute_description created/verified successfully
+2025-09-06 18:26:18,674 - INFO - Table oc_attribute_group created/verified successfully
+2025-09-06 18:26:18,677 - INFO - Table oc_attribute_group_description created/verified successfully
+2025-09-06 18:26:18,679 - INFO - Table oc_product_attribute created/verified successfully
+2025-09-06 18:26:18,680 - INFO - Table oc_product_option created/verified successfully
+2025-09-06 18:26:18,681 - INFO - Table oc_product_option_value created/verified successfully
+2025-09-06 18:26:18,684 - INFO - Table oc_option created/verified successfully
+2025-09-06 18:26:18,686 - INFO - Table oc_option_description created/verified successfully
+2025-09-06 18:26:18,688 - INFO - Table oc_option_value created/verified successfully
+2025-09-06 18:26:18,692 - INFO - Table oc_option_value_description created/verified successfully
+2025-09-06 18:26:18,692 - INFO - Languages setup completed
+2025-09-06 18:26:18,693 - INFO - Loaded 37 categories
+2025-09-06 18:26:18,693 - INFO - Inserted category: Томати
+2025-09-06 18:26:18,693 - INFO - Inserted category: Томати високорослі
+2025-09-06 18:26:18,693 - INFO - Inserted category: Томати середньорослі
+2025-09-06 18:26:18,693 - INFO - Inserted category: Томати низькорослі
+2025-09-06 18:26:18,693 - INFO - Inserted category: Огірки
+2025-09-06 18:26:18,693 - INFO - Inserted category: Капуста 
+2025-09-06 18:26:18,693 - INFO - Inserted category: Капуста білокачанна
+2025-09-06 18:26:18,693 - INFO - Inserted category: Капуста цвітна
+2025-09-06 18:26:18,693 - INFO - Inserted category: Капуста червонокачанна
+2025-09-06 18:26:18,693 - INFO - Inserted category: Різновиди капусти
+2025-09-06 18:26:18,693 - INFO - Inserted category: Редис
+2025-09-06 18:26:18,693 - INFO - Inserted category: Перець 
+2025-09-06 18:26:18,693 - INFO - Inserted category: Перець солодкий
+2025-09-06 18:26:18,693 - INFO - Inserted category: Перець гіркий
+2025-09-06 18:26:18,693 - INFO - Inserted category: Баклажани
+2025-09-06 18:26:18,693 - INFO - Inserted category: Цибуля
+2025-09-06 18:26:18,693 - INFO - Inserted category: Морква
+2025-09-06 18:26:18,693 - INFO - Inserted category: Буряк
+2025-09-06 18:26:18,693 - INFO - Inserted category: Кавуни
+2025-09-06 18:26:18,694 - INFO - Inserted category: Дині
+2025-09-06 18:26:18,694 - INFO - Inserted category: Гарбузи
+2025-09-06 18:26:18,694 - INFO - Inserted category: Кабачки
+2025-09-06 18:26:18,694 - INFO - Inserted category: Патисони
+2025-09-06 18:26:18,694 - INFO - Inserted category: Зелені культури
+2025-09-06 18:26:18,694 - INFO - Inserted category: Пряносмакові культури
+2025-09-06 18:26:18,694 - INFO - Inserted category: Газонні трави
+2025-09-06 18:26:18,694 - INFO - Inserted category: Бобові культури
+2025-09-06 18:26:18,694 - INFO - Inserted category: Квасоля 
+2025-09-06 18:26:18,694 - INFO - Inserted category: Квасоля спаржева
+2025-09-06 18:26:18,694 - INFO - Inserted category: Квасоля зернова
+2025-09-06 18:26:18,694 - INFO - Inserted category: Кукурудза
+2025-09-06 18:26:18,694 - INFO - Inserted category: Суниця
+2025-09-06 18:26:18,694 - INFO - Inserted category: Рідкісні культури
+2025-09-06 18:26:18,694 - INFO - Inserted category: Лікарські рослини
+2025-09-06 18:26:18,694 - INFO - Inserted category: Квіти
+2025-09-06 18:26:18,694 - INFO - Inserted category: Квіти однорічні
+2025-09-06 18:26:18,694 - INFO - Inserted category: Квіти багаторічні
+2025-09-06 18:26:18,697 - INFO - Categories insertion completed
+2025-09-06 18:26:18,701 - INFO - Loaded 435 products
+2025-09-06 18:26:18,701 - INFO - Inserted product: Амурський тигр
+2025-09-06 18:26:18,701 - INFO - Inserted product: Апельсин
+2025-09-06 18:26:18,701 - INFO - Inserted product: Банан оранжевий
+2025-09-06 18:26:18,701 - INFO - Inserted product: Бичий лоб
+2025-09-06 18:26:18,701 - ERROR - Error inserting product 5: invalid literal for int() with base 10: ''
+2025-09-06 18:26:18,701 - INFO - Inserted product: Ведмежа лапа
+2025-09-06 18:26:18,701 - INFO - Inserted product: Волове серце жовте
+2025-09-06 18:26:18,701 - INFO - Inserted product: Волове серце оранжеве
+2025-09-06 18:26:18,701 - INFO - Inserted product: Волове серце рожеве
+2025-09-06 18:26:18,701 - ERROR - Error inserting product 10: invalid literal for int() with base 10: ''
+2025-09-06 18:26:18,702 - INFO - Inserted product: Волове серце червоний
+2025-09-06 18:26:18,702 - INFO - Inserted product: Гігант лимонний
+2025-09-06 18:26:18,702 - INFO - Inserted product: Дамські пальчики
+2025-09-06 18:26:18,702 - INFO - Inserted product: Де барао оранжевий
+2025-09-06 18:26:18,702 - INFO - Inserted product: Де барао рожевий
+2025-09-06 18:26:18,702 - INFO - Inserted product: Де барао тигровий
+2025-09-06 18:26:18,702 - INFO - Inserted product: Де барао Царський
+2025-09-06 18:26:18,702 - INFO - Inserted product: Де барао Царський червоний
+2025-09-06 18:26:18,702 - INFO - Inserted product: Де барао червоний
+2025-09-06 18:26:18,702 - INFO - Inserted product: Де барао чорний
+2025-09-06 18:26:18,702 - INFO - Inserted product: Жираф
+2025-09-06 18:26:18,702 - INFO - Inserted product: Золоте сердце
+2025-09-06 18:26:18,702 - INFO - Inserted product: Засолочне чудо
+2025-09-06 18:26:18,702 - INFO - Inserted product: Корніївский
+2025-09-06 18:26:18,702 - INFO - Inserted product: Мікадо
+2025-09-06 18:26:18,702 - INFO - Inserted product: Перцевидний оранжевий
+2025-09-06 18:26:18,702 - INFO - Inserted product: Потрібний розмір
+2025-09-06 18:26:18,702 - INFO - Inserted product: Принцеса Турандот
+2025-09-06 18:26:18,702 - INFO - Inserted product: Рожевий гігант
+2025-09-06 18:26:18,702 - INFO - Inserted product: Рожевий слон
+2025-09-06 18:26:18,702 - INFO - Inserted product: Рожевий фламінго
+2025-09-06 18:26:18,702 - INFO - Inserted product: Російський розмір
+2025-09-06 18:26:18,702 - INFO - Inserted product: Сливка гігант (оранжевий)
+2025-09-06 18:26:18,702 - INFO - Inserted product: Сливка гігант (червоний)
+2025-09-06 18:26:18,702 - INFO - Inserted product: Слов'янський Шедевр
+2025-09-06 18:26:18,702 - INFO - Inserted product: Чудо світу (лимон-ліана)
+2025-09-06 18:26:18,702 - INFO - Inserted product: Сосулечка рожева
+2025-09-06 18:26:18,702 - INFO - Inserted product: Фейєрверк
+2025-09-06 18:26:18,703 - INFO - Inserted product: Хурма
+2025-09-06 18:26:18,703 - INFO - Inserted product: Чорний принц
+2025-09-06 18:26:18,703 - INFO - Inserted product: Чорний слон
+2025-09-06 18:26:18,703 - INFO - Inserted product: Агата
+2025-09-06 18:26:18,703 - INFO - Inserted product: Американський ребристий
+2025-09-06 18:26:18,703 - INFO - Inserted product: Аврора
+2025-09-06 18:26:18,703 - INFO - Inserted product: Арізона
+2025-09-06 18:26:18,703 - INFO - Inserted product: Балада
+2025-09-06 18:26:18,703 - INFO - Inserted product: Білий налив 241
+2025-09-06 18:26:18,703 - INFO - Inserted product: Волгоградскій323
+2025-09-06 18:26:18,703 - INFO - Inserted product: Волгоградський 323
+2025-09-06 18:26:18,703 - INFO - Inserted product: Волгоградський 5/95
+2025-09-06 18:26:18,703 - INFO - Inserted product: Волгоградський рожевий
+2025-09-06 18:26:18,703 - INFO - Inserted product: Шедевр Рудас
+2025-09-06 18:26:18,703 - INFO - Inserted product: Господар
+2025-09-06 18:26:18,703 - INFO - Inserted product: Господар
+2025-09-06 18:26:18,703 - INFO - Inserted product: Дар Заволжя
+2025-09-06 18:26:18,703 - INFO - Inserted product: Дар Заволжя рожевий
+2025-09-06 18:26:18,703 - INFO - Inserted product: Дар Заволжя
+2025-09-06 18:26:18,703 - INFO - Inserted product: Джина
+2025-09-06 18:26:18,703 - INFO - Inserted product: Дубок
+2025-09-06 18:26:18,703 - INFO - Inserted product: Ефемер F1
+2025-09-06 18:26:18,703 - INFO - Inserted product: Иришка
+2025-09-06 18:26:18,703 - INFO - Inserted product: Катюша F / 1
+2025-09-06 18:26:18,703 - INFO - Inserted product: Кібіц
+2025-09-06 18:26:18,704 - INFO - Inserted product: Колгоспний
+2025-09-06 18:26:18,704 - INFO - Inserted product: Кременчуцький
+2025-09-06 18:26:18,704 - INFO - Inserted product: Лагідний
+2025-09-06 18:26:18,704 - INFO - Inserted product: Лінда
+2025-09-06 18:26:18,704 - INFO - Inserted product: Улюблений
+2025-09-06 18:26:18,704 - INFO - Inserted product: Ляна
+2025-09-06 18:26:18,704 - INFO - Inserted product: Чайка
+2025-09-06 18:26:18,704 - INFO - Inserted product: Мобіл
+2025-09-06 18:26:18,704 - INFO - Inserted product: Новинка Придністров'я
+2025-09-06 18:26:18,704 - INFO - Inserted product: Новачок
+2025-09-06 18:26:18,704 - INFO - Inserted product: Нота
+2025-09-06 18:26:18,704 - INFO - Inserted product: Ранній 83
+2025-09-06 18:26:18,704 - INFO - Inserted product: Ріо-Гранде
+2025-09-06 18:26:18,704 - INFO - Inserted product: Сан-Марцано
+2025-09-06 18:26:18,704 - INFO - Inserted product: Ріо-Фуего
+2025-09-06 18:26:18,704 - ERROR - Error inserting product 79: invalid literal for int() with base 10: ''
+2025-09-06 18:26:18,704 - INFO - Inserted product: Самий ранній
+2025-09-06 18:26:18,704 - INFO - Inserted product: Санька
+2025-09-06 18:26:18,704 - INFO - Inserted product: Санька
+2025-09-06 18:26:18,704 - INFO - Inserted product: Союз 8 F1
+2025-09-06 18:26:18,704 - INFO - Inserted product: Супер Стрейн
+2025-09-06 18:26:18,704 - INFO - Inserted product: Титан
+2025-09-06 18:26:18,704 - INFO - Inserted product: Факел
+2025-09-06 18:26:18,704 - INFO - Inserted product: Довго зберігаються
+2025-09-06 18:26:18,704 - INFO - Inserted product: Президент
+2025-09-06 18:26:18,705 - INFO - Inserted product: Бедуїн
+2025-09-06 18:26:18,705 - INFO - Inserted product: Лелека
+2025-09-06 18:26:18,705 - INFO - Inserted product: Алексеич F1
+2025-09-06 18:26:18,705 - INFO - Inserted product: Амур F1
+2025-09-06 18:26:18,705 - INFO - Inserted product: Андрус F1
+2025-09-06 18:26:18,705 - INFO - Inserted product: Анулька F1
+2025-09-06 18:26:18,705 - INFO - Inserted product: Астерікс F1
+2025-09-06 18:26:18,705 - INFO - Inserted product: Атлантіс F1
+2025-09-06 18:26:18,705 - INFO - Inserted product: Береговий
+2025-09-06 18:26:18,705 - INFO - Inserted product: Білий ангел
+2025-09-06 18:26:18,705 - ERROR - Error inserting product 101: invalid literal for int() with base 10: ''
+2025-09-06 18:26:18,705 - INFO - Inserted product: Біляївський
+2025-09-06 18:26:18,705 - INFO - Inserted product: Бочковий
+2025-09-06 18:26:18,705 - INFO - Inserted product: Весела компані F1
+2025-09-06 18:26:18,705 - INFO - Inserted product: Виноградне гроно
+2025-09-06 18:26:18,705 - ERROR - Error inserting product 106: invalid literal for int() with base 10: ''
+2025-09-06 18:26:18,705 - INFO - Inserted product: Владко
+2025-09-06 18:26:18,705 - INFO - Inserted product: Водограй
+2025-09-06 18:26:18,705 - INFO - Inserted product: 120
+2025-09-06 18:26:18,705 - INFO - Inserted product: Гейм
+2025-09-06 18:26:18,705 - INFO - Inserted product: Гірлянда F1
+2025-09-06 18:26:18,705 - INFO - Inserted product: ГекторF1
+2025-09-06 18:26:18,705 - INFO - Inserted product: Герман F1
+2025-09-06 18:26:18,705 - INFO - Inserted product: Голубчик F1
+2025-09-06 18:26:18,705 - INFO - Inserted product: Далекосхідний 27
+2025-09-06 18:26:18,705 - INFO - Inserted product: Джерело
+2025-09-06 18:26:18,705 - INFO - Inserted product: Дружна сімейка
+2025-09-06 18:26:18,706 - INFO - Inserted product: Делікатесний
+2025-09-06 18:26:18,706 - INFO - Inserted product: Ємеля
+2025-09-06 18:26:18,706 - INFO - Inserted product: Журавльонок
+2025-09-06 18:26:18,706 - INFO - Inserted product: Засолочний
+2025-09-06 18:26:18,706 - INFO - Inserted product: Засолочний
+2025-09-06 18:26:18,706 - INFO - Inserted product: ЗозуляF1
+2025-09-06 18:26:18,706 - INFO - Inserted product: Зубренок F1
+2025-09-06 18:26:18,706 - INFO - Inserted product: Зятьок
+2025-09-06 18:26:18,706 - INFO - Inserted product: ІраF1
+2025-09-06 18:26:18,706 - INFO - Inserted product: Китайське диво
+2025-09-06 18:26:18,706 - INFO - Inserted product: Кімнатний
+2025-09-06 18:26:18,706 - INFO - Inserted product: Конкурент
+2025-09-06 18:26:18,706 - INFO - Inserted product: Круїз F1
+2025-09-06 18:26:18,706 - INFO - Inserted product: Кущовий
+2025-09-06 18:26:18,706 - INFO - Inserted product: Лялюк
+2025-09-06 18:26:18,706 - INFO - Inserted product: Лялюк
+2025-09-06 18:26:18,706 - INFO - Inserted product: Малий та молодецький F1
+2025-09-06 18:26:18,706 - ERROR - Error inserting product 136: invalid literal for int() with base 10: ''
+2025-09-06 18:26:18,706 - ERROR - Error inserting product 137: invalid literal for int() with base 10: ''
+2025-09-06 18:26:18,706 - INFO - Inserted product: Хлопчик з пальчікF1
+2025-09-06 18:26:18,706 - INFO - Inserted product: Хлопчик з пальчик
+2025-09-06 18:26:18,706 - INFO - Inserted product: Марінда F1
+2025-09-06 18:26:18,706 - INFO - Inserted product: МашаF1
+2025-09-06 18:26:18,706 - INFO - Inserted product: Монастирський
+2025-09-06 18:26:18,706 - INFO - Inserted product: Мар`Їна Роща
+2025-09-06 18:26:18,706 - INFO - Inserted product: Мурашка F1
+2025-09-06 18:26:18,707 - INFO - Inserted product: Ніжинський
+2025-09-06 18:26:18,707 - INFO - Inserted product: Ніжинський
+2025-09-06 18:26:18,707 - INFO - Inserted product: Наташа F1
+2025-09-06 18:26:18,707 - INFO - Inserted product: ОктопусF1
+2025-09-06 18:26:18,707 - INFO - Inserted product: Пальчик
+2025-09-06 18:26:18,707 - INFO - Inserted product: Паризький корнішон
+2025-09-06 18:26:18,707 - INFO - Inserted product: ПасамонтеF1
+2025-09-06 18:26:18,707 - INFO - Inserted product: Пивниця F
+2025-09-06 18:26:18,707 - INFO - Inserted product: Підмосковні вечори F1
+2025-09-06 18:26:18,707 - INFO - Inserted product: ПоланF1
+2025-09-06 18:26:18,707 - INFO - Inserted product: ПотомакF1
+2025-09-06 18:26:18,707 - INFO - Inserted product: РаціборF1
+2025-09-06 18:26:18,707 - INFO - Inserted product: Подарунок осені
+2025-09-06 18:26:18,707 - INFO - Inserted product: Роднічок F1
+2025-09-06 18:26:18,707 - ERROR - Error inserting product 159: invalid literal for int() with base 10: ''
+2025-09-06 18:26:18,707 - INFO - Inserted product: Руфус F1
+2025-09-06 18:26:18,707 - INFO - Inserted product: СамородокF1
+2025-09-06 18:26:18,707 - INFO - Inserted product: Син полкаF1
+2025-09-06 18:26:18,707 - INFO - Inserted product: Сквирський F1
+2025-09-06 18:26:18,707 - INFO - Inserted product: Семко F1
+2025-09-06 18:26:18,707 - INFO - Inserted product: Самозапилюватися F1
+2025-09-06 18:26:18,707 - INFO - Inserted product: Сремский F1
+2025-09-06 18:26:18,707 - INFO - Inserted product: Сусідові на заздрість F1
+2025-09-06 18:26:18,707 - INFO - Inserted product: Тітус F1
+2025-09-06 18:26:18,707 - INFO - Inserted product: Фенікс 640
+2025-09-06 18:26:18,707 - INFO - Inserted product: Фенікс 640
+2025-09-06 18:26:18,707 - INFO - Inserted product: Фенікс плюс
+2025-09-06 18:26:18,707 - INFO - Inserted product: Фенікс плюс
+2025-09-06 18:26:18,708 - INFO - Inserted product: Хрусткий
+2025-09-06 18:26:18,708 - INFO - Inserted product: Цезар
+2025-09-06 18:26:18,708 - INFO - Inserted product: Фаворит
+2025-09-06 18:26:18,708 - INFO - Inserted product: ФермерF1
+2025-09-06 18:26:18,708 - INFO - Inserted product: Лускунчик F1
+2025-09-06 18:26:18,708 - INFO - Inserted product: Меренга F1
+2025-09-06 18:26:18,708 - INFO - Inserted product: Еколь F1
+2025-09-06 18:26:18,708 - INFO - Inserted product: Пучіні
+2025-09-06 18:26:18,708 - INFO - Inserted product: СоловейF1
+2025-09-06 18:26:18,708 - INFO - Inserted product: Надія F1
+2025-09-06 18:26:18,708 - INFO - Inserted product: ПаркерF1
+2025-09-06 18:26:18,708 - INFO - Inserted product: Агресор F1
+2025-09-06 18:26:18,708 - INFO - Inserted product: Амагер 611
+2025-09-06 18:26:18,708 - INFO - Inserted product: Амагер 611
+2025-09-06 18:26:18,708 - INFO - Inserted product: Дітмаршер Фрюєр
+2025-09-06 18:26:18,708 - INFO - Inserted product: Зимівля тисячі чотиреста сімдесят чотири
+2025-09-06 18:26:18,708 - ERROR - Error inserting product 189: invalid literal for int() with base 10: ''
+2025-09-06 18:26:18,708 - ERROR - Error inserting product 190: invalid literal for int() with base 10: ''
+2025-09-06 18:26:18,708 - INFO - Inserted product: Червнева
+2025-09-06 18:26:18,708 - INFO - Inserted product: Кам'яна голова
+2025-09-06 18:26:18,708 - INFO - Inserted product: Кам'яна голова
+2025-09-06 18:26:18,708 - INFO - Inserted product: Козачок F1
+2025-09-06 18:26:18,708 - INFO - Inserted product: КолобокF1
+2025-09-06 18:26:18,708 - ERROR - Error inserting product 196: invalid literal for int() with base 10: ''
+2025-09-06 18:26:18,708 - INFO - Inserted product: Княгиня
+2025-09-06 18:26:18,708 - INFO - Inserted product: Лангедейкер
+2025-09-06 18:26:18,708 - INFO - Inserted product: Лангедейкер
+2025-09-06 18:26:18,709 - INFO - Inserted product: Слава1305
+2025-09-06 18:26:18,709 - INFO - Inserted product: ПарелF1
+2025-09-06 18:26:18,709 - INFO - Inserted product: Перший урожай
+2025-09-06 18:26:18,709 - INFO - Inserted product: Тюркіз
+2025-09-06 18:26:18,709 - INFO - Inserted product: Українська осінь
+2025-09-06 18:26:18,709 - INFO - Inserted product: Українська осінь
+2025-09-06 18:26:18,709 - INFO - Inserted product: Харківська зимова
+2025-09-06 18:26:18,709 - INFO - Inserted product: Літня Альфа
+2025-09-06 18:26:18,709 - INFO - Inserted product: Піонер
+2025-09-06 18:26:18,709 - INFO - Inserted product: Мовір 74
+2025-09-06 18:26:18,709 - INFO - Inserted product: Снігова куля
+2025-09-06 18:26:18,709 - INFO - Inserted product: Сноу болл
+2025-09-06 18:26:18,709 - INFO - Inserted product: Робер
+2025-09-06 18:26:18,709 - INFO - Inserted product: Топаз
+2025-09-06 18:26:18,709 - INFO - Inserted product: Лангедейкер
+2025-09-06 18:26:18,709 - INFO - Inserted product: Червонокачанна
+2025-09-06 18:26:18,709 - INFO - Inserted product: Брюссельська
+2025-09-06 18:26:18,709 - INFO - Inserted product: Брюссельська червона
+2025-09-06 18:26:18,709 - INFO - Inserted product: Брокколі
+2025-09-06 18:26:18,709 - INFO - Inserted product: Кольрабі біла
+2025-09-06 18:26:18,709 - INFO - Inserted product: Кольрабі Блакитна
+2025-09-06 18:26:18,709 - INFO - Inserted product: Кольрабі Гігант
+2025-09-06 18:26:18,709 - INFO - Inserted product: Китайська Пак-Чой
+2025-09-06 18:26:18,709 - INFO - Inserted product: Пекінська
+2025-09-06 18:26:18,709 - INFO - Inserted product: Пекінська
+2025-09-06 18:26:18,709 - INFO - Inserted product: Савійська
+2025-09-06 18:26:18,710 - INFO - Inserted product: Романеско
+2025-09-06 18:26:18,710 - INFO - Inserted product: Дайкон Міновасі
+2025-09-06 18:26:18,710 - INFO - Inserted product: Дайкон Саша
+2025-09-06 18:26:18,710 - INFO - Inserted product: Белий ікло
+2025-09-06 18:26:18,710 - INFO - Inserted product: Червоне серце
+2025-09-06 18:26:18,710 - INFO - Inserted product: Редька Чорна зимова
+2025-09-06 18:26:18,710 - INFO - Inserted product: Сквирська біла
+2025-09-06 18:26:18,710 - INFO - Inserted product: Червона зимова
+2025-09-06 18:26:18,710 - INFO - Inserted product: Лобо Лебідка
+2025-09-06 18:26:18,710 - INFO - Inserted product: Одеська
+2025-09-06 18:26:18,710 - INFO - Inserted product: Маргеланская
+2025-09-06 18:26:18,710 - INFO - Inserted product: Сударушка
+2025-09-06 18:26:18,710 - INFO - Inserted product: Льодяна бурулька
+2025-09-06 18:26:18,710 - INFO - Inserted product: Пролісок
+2025-09-06 18:26:18,710 - INFO - Inserted product: Сора
+2025-09-06 18:26:18,710 - INFO - Inserted product: Сора
+2025-09-06 18:26:18,710 - INFO - Inserted product: Французький сніданок
+2025-09-06 18:26:18,710 - INFO - Inserted product: Червоний з білим кінчиком
+2025-09-06 18:26:18,710 - INFO - Inserted product: Червоний з білим кінчиком
+2025-09-06 18:26:18,710 - INFO - Inserted product: Ранній червоний
+2025-09-06 18:26:18,710 - INFO - Inserted product: 18 днів
+2025-09-06 18:26:18,710 - INFO - Inserted product: Рубін
+2025-09-06 18:26:18,710 - INFO - Inserted product: Насіння з Голландії
+2025-09-06 18:26:18,710 - INFO - Inserted product: Суміш сортів
+2025-09-06 18:26:18,710 - INFO - Inserted product: Редис Злата
+2025-09-06 18:26:18,710 - INFO - Inserted product: Краковянка
+2025-09-06 18:26:18,710 - ERROR - Error inserting product 253: invalid literal for int() with base 10: ''
+2025-09-06 18:26:18,711 - INFO - Inserted product: Ріпа пурпурна
+2025-09-06 18:26:18,711 - INFO - Inserted product: Бруква
+2025-09-06 18:26:18,711 - INFO - Inserted product: Айвенго
+2025-09-06 18:26:18,711 - INFO - Inserted product: Анастасія
+2025-09-06 18:26:18,711 - INFO - Inserted product: Антей
+2025-09-06 18:26:18,711 - INFO - Inserted product: Аджика
+2025-09-06 18:26:18,711 - INFO - Inserted product: Богатир
+2025-09-06 18:26:18,711 - INFO - Inserted product: Баранячий ріг
+2025-09-06 18:26:18,711 - INFO - Inserted product: Богдан
+2025-09-06 18:26:18,711 - INFO - Inserted product: Вікінг
+2025-09-06 18:26:18,711 - INFO - Inserted product: Каліфорнійське чудо
+2025-09-06 18:26:18,711 - INFO - Inserted product: Ластівка
+2025-09-06 18:26:18,711 - INFO - Inserted product: Лумина
+2025-09-06 18:26:18,711 - INFO - Inserted product: Обрій
+2025-09-06 18:26:18,711 - INFO - Inserted product: Ода.
+2025-09-06 18:26:18,711 - INFO - Inserted product: ПАЛАНСЬКА  Бабура
+2025-09-06 18:26:18,711 - INFO - Inserted product: Гриль стручок
+2025-09-06 18:26:18,711 - ERROR - Error inserting product 271: invalid literal for int() with base 10: ''
+2025-09-06 18:26:18,711 - INFO - Inserted product: Подарунок Молдови
+2025-09-06 18:26:18,711 - INFO - Inserted product: Ратунда
+2025-09-06 18:26:18,711 - INFO - Inserted product: Ожаровський
+2025-09-06 18:26:18,711 - INFO - Inserted product: Український гіркий
+2025-09-06 18:26:18,711 - INFO - Inserted product: Кімнатний
+2025-09-06 18:26:18,711 - INFO - Inserted product: Алмаз
+2025-09-06 18:26:18,711 - INFO - Inserted product: Баклажан 02
+2025-09-06 18:26:18,711 - INFO - Inserted product: Геліос
+2025-09-06 18:26:18,712 - INFO - Inserted product: Донецький Урожайний
+2025-09-06 18:26:18,712 - INFO - Inserted product: Чорний красень
+2025-09-06 18:26:18,712 - INFO - Inserted product: Ультраранній
+2025-09-06 18:26:18,712 - INFO - Inserted product: Бегемот F1
+2025-09-06 18:26:18,712 - INFO - Inserted product: Цибуля
+2025-09-06 18:26:18,712 - INFO - Inserted product: Лук Стерлінг
+2025-09-06 18:26:18,712 - INFO - Inserted product: Веселка
+2025-09-06 18:26:18,712 - INFO - Inserted product: Вольський
+2025-09-06 18:26:18,712 - INFO - Inserted product: Глобус
+2025-09-06 18:26:18,712 - INFO - Inserted product: Донецька золотиста
+2025-09-06 18:26:18,712 - INFO - Inserted product: Каратальского
+2025-09-06 18:26:18,712 - INFO - Inserted product: Луганський
+2025-09-06 18:26:18,712 - INFO - Inserted product: Любчик
+2025-09-06 18:26:18,712 - INFO - Inserted product: Марковський
+2025-09-06 18:26:18,712 - INFO - Inserted product: Ред барон
+2025-09-06 18:26:18,712 - INFO - Inserted product: Рубін
+2025-09-06 18:26:18,712 - INFO - Inserted product: Стригуновский
+2025-09-06 18:26:18,712 - INFO - Inserted product: Халцедон
+2025-09-06 18:26:18,712 - INFO - Inserted product: Чорнушка
+2025-09-06 18:26:18,712 - INFO - Inserted product: Ялтинський
+2025-09-06 18:26:18,712 - INFO - Inserted product: Лук на зелень Ельвіра
+2025-09-06 18:26:18,712 - INFO - Inserted product: Лук на зелень озимий
+2025-09-06 18:26:18,712 - INFO - Inserted product: Шніт
+2025-09-06 18:26:18,712 - INFO - Inserted product: Порей
+2025-09-06 18:26:18,712 - INFO - Inserted product: Батун
+2025-09-06 18:26:18,712 - INFO - Inserted product: Амстердамська
+2025-09-06 18:26:18,713 - INFO - Inserted product: Артек
+2025-09-06 18:26:18,713 - INFO - Inserted product: Оленка
+2025-09-06 18:26:18,713 - INFO - Inserted product: Болтекс
+2025-09-06 18:26:18,713 - INFO - Inserted product: Віта Лонга
+2025-09-06 18:26:18,713 - INFO - Inserted product: Вітамінна 6
+2025-09-06 18:26:18,713 - INFO - Inserted product: Каротель
+2025-09-06 18:26:18,713 - INFO - Inserted product: Корал
+2025-09-06 18:26:18,713 - INFO - Inserted product: Королева осені
+2025-09-06 18:26:18,713 - INFO - Inserted product: Красавка.
+2025-09-06 18:26:18,713 - INFO - Inserted product: Московська зимова
+2025-09-06 18:26:18,713 - INFO - Inserted product: Нантская
+2025-09-06 18:26:18,713 - INFO - Inserted product: Червона без серцевини
+2025-09-06 18:26:18,713 - INFO - Inserted product: Ням ням
+2025-09-06 18:26:18,713 - INFO - Inserted product: Шантане
+2025-09-06 18:26:18,713 - INFO - Inserted product: Цариця полів
+2025-09-06 18:26:18,713 - ERROR - Error inserting product 321: invalid literal for int() with base 10: ''
+2025-09-06 18:26:18,713 - ERROR - Error inserting product 322: invalid literal for int() with base 10: ''
+2025-09-06 18:26:18,713 - INFO - Inserted product: Червоний велетень
+2025-09-06 18:26:18,713 - INFO - Inserted product: Бордо 237
+2025-09-06 18:26:18,713 - INFO - Inserted product: Бордо Харківська
+2025-09-06 18:26:18,713 - INFO - Inserted product: Кубанская борщевая43
+2025-09-06 18:26:18,713 - INFO - Inserted product: Борщова
+2025-09-06 18:26:18,713 - INFO - Inserted product: Болівар
+2025-09-06 18:26:18,713 - INFO - Inserted product: 350 вінегретних
+2025-09-06 18:26:18,713 - INFO - Inserted product: Вінегретна мармеладка
+2025-09-06 18:26:18,713 - INFO - Inserted product: Делікатесна
+2025-09-06 18:26:18,713 - INFO - Inserted product: Дейтройт
+2025-09-06 18:26:18,713 - INFO - Inserted product: Єгипетська плоска
+2025-09-06 18:26:18,714 - INFO - Inserted product: Кардинал
+2025-09-06 18:26:18,714 - ERROR - Error inserting product 335: invalid literal for int() with base 10: ''
+2025-09-06 18:26:18,714 - INFO - Inserted product: Кросбі
+2025-09-06 18:26:18,714 - INFO - Inserted product: Негритянка
+2025-09-06 18:26:18,714 - INFO - Inserted product: Носівський плоский
+2025-09-06 18:26:18,714 - INFO - Inserted product: Опольська
+2025-09-06 18:26:18,714 - ERROR - Error inserting product 340: invalid literal for int() with base 10: ''
+2025-09-06 18:26:18,714 - INFO - Inserted product: Рівал
+2025-09-06 18:26:18,714 - INFO - Inserted product: Мулатка
+2025-09-06 18:26:18,714 - INFO - Inserted product: Пабло F1
+2025-09-06 18:26:18,714 - INFO - Inserted product: Циліндра
+2025-09-06 18:26:18,714 - INFO - Inserted product: Циліндра
+2025-09-06 18:26:18,714 - INFO - Inserted product: Київська рожева
+2025-09-06 18:26:18,714 - INFO - Inserted product: Урсус Полі
+2025-09-06 18:26:18,714 - INFO - Inserted product: Екендорфская жовта
+2025-09-06 18:26:18,714 - INFO - Inserted product: Цукрова
+2025-09-06 18:26:18,714 - INFO - Inserted product: Астраханський
+2025-09-06 18:26:18,714 - INFO - Inserted product: Бінго
+2025-09-06 18:26:18,714 - INFO - Inserted product: Борчанський
+2025-09-06 18:26:18,714 - INFO - Inserted product: Княжич
+2025-09-06 18:26:18,714 - INFO - Inserted product: Княжич
+2025-09-06 18:26:18,714 - INFO - Inserted product: Каховський
+2025-09-06 18:26:18,714 - INFO - Inserted product: Кримсон світ
+2025-09-06 18:26:18,714 - INFO - Inserted product: Мелітопольський
+2025-09-06 18:26:18,714 - INFO - Inserted product: Вогник
+2025-09-06 18:26:18,714 - INFO - Inserted product: Північне сяйво
+2025-09-06 18:26:18,714 - INFO - Inserted product: Роза південного сходу
+2025-09-06 18:26:18,714 - INFO - Inserted product: Цукровий малюк
+2025-09-06 18:26:18,715 - INFO - Inserted product: Таврійський
+2025-09-06 18:26:18,715 - INFO - Inserted product: Чарльстон грей
+2025-09-06 18:26:18,715 - INFO - Inserted product: Холодок
+2025-09-06 18:26:18,715 - ERROR - Error inserting product 365: invalid literal for int() with base 10: ''
+2025-09-06 18:26:18,715 - ERROR - Error inserting product 366: invalid literal for int() with base 10: ''
+2025-09-06 18:26:18,715 - INFO - Inserted product: Алушта
+2025-09-06 18:26:18,715 - INFO - Inserted product: Ананас
+2025-09-06 18:26:18,715 - INFO - Inserted product: Амал F1
+2025-09-06 18:26:18,715 - INFO - Inserted product: Берегиня
+2025-09-06 18:26:18,715 - INFO - Inserted product: Дубівка
+2025-09-06 18:26:18,715 - INFO - Inserted product: Золотиста
+2025-09-06 18:26:18,715 - INFO - Inserted product: Золотиста
+2025-09-06 18:26:18,715 - INFO - Inserted product: Інея
+2025-09-06 18:26:18,715 - INFO - Inserted product: Козачка 244
+2025-09-06 18:26:18,715 - INFO - Inserted product: Колгоспниця
+2025-09-06 18:26:18,715 - INFO - Inserted product: Криничанка
+2025-09-06 18:26:18,715 - INFO - Inserted product: Леся
+2025-09-06 18:26:18,715 - INFO - Inserted product: Медовий аромат
+2025-09-06 18:26:18,715 - INFO - Inserted product: Титовка
+2025-09-06 18:26:18,715 - INFO - Inserted product: Ефіопка
+2025-09-06 18:26:18,715 - INFO - Inserted product: Придністровська
+2025-09-06 18:26:18,715 - INFO - Inserted product: Рання 133
+2025-09-06 18:26:18,715 - ERROR - Error inserting product 384: invalid literal for int() with base 10: ''
+2025-09-06 18:26:18,715 - ERROR - Error inserting product 385: invalid literal for int() with base 10: ''
+2025-09-06 18:26:18,715 - ERROR - Error inserting product 386: invalid literal for int() with base 10: ''
+2025-09-06 18:26:18,715 - ERROR - Error inserting product 387: invalid literal for int() with base 10: ''
+2025-09-06 18:26:18,715 - ERROR - Error inserting product 388: invalid literal for int() with base 10: ''
+2025-09-06 18:26:18,715 - ERROR - Error inserting product 389: invalid literal for int() with base 10: ''
+2025-09-06 18:26:18,715 - ERROR - Error inserting product 390: invalid literal for int() with base 10: ''
+2025-09-06 18:26:18,715 - ERROR - Error inserting product 391: invalid literal for int() with base 10: ''
+2025-09-06 18:26:18,715 - ERROR - Error inserting product 392: invalid literal for int() with base 10: ''
+2025-09-06 18:26:18,715 - ERROR - Error inserting product 393: invalid literal for int() with base 10: ''
+2025-09-06 18:26:18,715 - ERROR - Error inserting product 394: invalid literal for int() with base 10: ''
+2025-09-06 18:26:18,715 - ERROR - Error inserting product 395: invalid literal for int() with base 10: ''
+2025-09-06 18:26:18,715 - ERROR - Error inserting product 396: invalid literal for int() with base 10: ''
+2025-09-06 18:26:18,715 - ERROR - Error inserting product 397: invalid literal for int() with base 10: ''
+2025-09-06 18:26:18,716 - ERROR - Error inserting product 398: invalid literal for int() with base 10: ''
+2025-09-06 18:26:18,716 - ERROR - Error inserting product 399: invalid literal for int() with base 10: ''
+2025-09-06 18:26:18,716 - ERROR - Error inserting product 400: invalid literal for int() with base 10: ''
+2025-09-06 18:26:18,716 - ERROR - Error inserting product 401: invalid literal for int() with base 10: ''
+2025-09-06 18:26:18,716 - ERROR - Error inserting product 402: invalid literal for int() with base 10: ''
+2025-09-06 18:26:18,716 - ERROR - Error inserting product 403: invalid literal for int() with base 10: ''
+2025-09-06 18:26:18,716 - ERROR - Error inserting product 404: invalid literal for int() with base 10: ''
+2025-09-06 18:26:18,716 - ERROR - Error inserting product 405: invalid literal for int() with base 10: ''
+2025-09-06 18:26:18,716 - ERROR - Error inserting product 406: invalid literal for int() with base 10: ''
+2025-09-06 18:26:18,716 - ERROR - Error inserting product 407: invalid literal for int() with base 10: ''
+2025-09-06 18:26:18,716 - ERROR - Error inserting product 408: invalid literal for int() with base 10: ''
+2025-09-06 18:26:18,716 - ERROR - Error inserting product 409: invalid literal for int() with base 10: ''
+2025-09-06 18:26:18,716 - ERROR - Error inserting product 410: invalid literal for int() with base 10: ''
+2025-09-06 18:26:18,716 - ERROR - Error inserting product 411: invalid literal for int() with base 10: ''
+2025-09-06 18:26:18,716 - ERROR - Error inserting product 412: invalid literal for int() with base 10: ''
+2025-09-06 18:26:18,716 - ERROR - Error inserting product 413: invalid literal for int() with base 10: ''
+2025-09-06 18:26:18,716 - ERROR - Error inserting product 414: invalid literal for int() with base 10: ''
+2025-09-06 18:26:18,716 - ERROR - Error inserting product 415: invalid literal for int() with base 10: ''
+2025-09-06 18:26:18,716 - ERROR - Error inserting product 416: invalid literal for int() with base 10: ''
+2025-09-06 18:26:18,716 - ERROR - Error inserting product 417: invalid literal for int() with base 10: ''
+2025-09-06 18:26:18,716 - ERROR - Error inserting product 418: invalid literal for int() with base 10: ''
+2025-09-06 18:26:18,716 - ERROR - Error inserting product 419: invalid literal for int() with base 10: ''
+2025-09-06 18:26:18,716 - ERROR - Error inserting product 420: invalid literal for int() with base 10: ''
+2025-09-06 18:26:18,716 - ERROR - Error inserting product 421: invalid literal for int() with base 10: ''
+2025-09-06 18:26:18,716 - ERROR - Error inserting product 422: invalid literal for int() with base 10: ''
+2025-09-06 18:26:18,716 - ERROR - Error inserting product 423: invalid literal for int() with base 10: ''
+2025-09-06 18:26:18,716 - ERROR - Error inserting product 424: invalid literal for int() with base 10: ''
+2025-09-06 18:26:18,716 - ERROR - Error inserting product 425: invalid literal for int() with base 10: ''
+2025-09-06 18:26:18,716 - ERROR - Error inserting product 426: invalid literal for int() with base 10: ''
+2025-09-06 18:26:18,716 - ERROR - Error inserting product 427: invalid literal for int() with base 10: ''
+2025-09-06 18:26:18,716 - ERROR - Error inserting product 428: invalid literal for int() with base 10: ''
+2025-09-06 18:26:18,716 - ERROR - Error inserting product 429: invalid literal for int() with base 10: ''
+2025-09-06 18:26:18,716 - ERROR - Error inserting product 430: invalid literal for int() with base 10: ''
+2025-09-06 18:26:18,716 - ERROR - Error inserting product 431: invalid literal for int() with base 10: ''
+2025-09-06 18:26:18,716 - ERROR - Error inserting product 432: invalid literal for int() with base 10: ''
+2025-09-06 18:26:18,716 - ERROR - Error inserting product 433: invalid literal for int() with base 10: ''
+2025-09-06 18:26:18,716 - ERROR - Error inserting product 434: invalid literal for int() with base 10: ''
+2025-09-06 18:26:18,716 - ERROR - Error inserting product 435: invalid literal for int() with base 10: ''
+2025-09-06 18:26:18,716 - ERROR - Error inserting product 436: invalid literal for int() with base 10: ''
+2025-09-06 18:26:18,716 - ERROR - Error inserting product 437: invalid literal for int() with base 10: ''
+2025-09-06 18:26:18,716 - ERROR - Error inserting product 438: invalid literal for int() with base 10: ''
+2025-09-06 18:26:18,716 - ERROR - Error inserting product 439: invalid literal for int() with base 10: ''
+2025-09-06 18:26:18,722 - INFO - Products insertion completed
+2025-09-06 18:26:18,722 - INFO - Loaded 3 inventory records
+2025-09-06 18:26:18,726 - INFO - Inventory inserted as product options successfully
+2025-09-06 18:26:18,727 - INFO - Loaded tags for 16 categories
+2025-09-06 18:26:18,731 - INFO - Tags inserted as attributes successfully
+2025-09-06 18:26:18,731 - INFO - Migration completed successfully!
+2025-09-06 18:26:18,732 - INFO - Database connection closed
