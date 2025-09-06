@@ -15,7 +15,7 @@ if ! command -v docker &> /dev/null; then
 fi
 
 # Navigate to opencart-docker directory
-cd /workspace/opencart-docker
+cd opencart-docker
 
 # Check if containers are running
 echo "📋 Checking OpenCart containers status..."
@@ -49,14 +49,14 @@ docker compose exec web bash -c "
 
 # Copy migration script to the container
 echo "📋 Copying migration script to container..."
-docker compose cp /workspace/complete_migration.py web:/var/www/html/migration.py
+docker compose cp ../complete_migration.py web:/var/www/html/migration.py
 
 # Copy data files to the container
 echo "📋 Copying data files to container..."
-docker compose cp /workspace/data/list.csv web:/var/www/html/list.csv
-docker compose cp /workspace/data/categories_list.csv web:/var/www/html/categories_list.csv
-docker compose cp /workspace/data/inventory.csv web:/var/www/html/inventory.csv
-docker compose cp /workspace/data/tags.csv web:/var/www/html/tags.csv
+docker compose cp ../data/list.csv web:/var/www/html/list.csv
+docker compose cp ../data/categories_list.csv web:/var/www/html/categories_list.csv
+docker compose cp ../data/inventory.csv web:/var/www/html/inventory.csv
+docker compose cp ../data/tags.csv web:/var/www/html/tags.csv
 
 # Update database configuration in the migration script for Docker environment
 echo "🔧 Updating database configuration for Docker..."
@@ -74,7 +74,7 @@ docker compose exec web python3 /var/www/html/migration.py
 
 # Migrate images
 echo "🖼️  Migrating images..."
-docker compose cp /workspace/migrate_images.py web:/var/www/html/migrate_images.py
+docker compose cp ../migrate_images.py web:/var/www/html/migrate_images.py
 docker compose exec web python3 /var/www/html/migrate_images.py
 
 # Check migration results
