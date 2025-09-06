@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# OpenCart Migration Script using Docker
-# This script runs the migration inside the OpenCart Docker environment
+# Real Data Docker Migration Script
+# This script runs the real data migration using Docker containers
 
 set -e
 
-echo "🚀 Starting OpenCart Product Migration..."
+echo "🚀 Starting Real Data OpenCart Migration..."
 
 # Check if Docker is available
 if ! command -v docker &> /dev/null; then
@@ -13,6 +13,14 @@ if ! command -v docker &> /dev/null; then
     echo "Please install Docker and try again"
     exit 1
 fi
+
+# Check if migration script exists
+if [ ! -f "real_data_migration.py" ]; then
+    echo "❌ real_data_migration.py not found in current directory"
+    exit 1
+fi
+
+echo "📋 Found migration script: real_data_migration.py"
 
 # Navigate to opencart-docker directory
 cd opencart-docker
@@ -28,7 +36,7 @@ if ! docker compose ps | grep -q "Up"; then
     sleep 30
 fi
 
-# Check if database is accessible
+# Test database connection
 echo "🔍 Testing database connection..."
 docker compose exec db mysql -u root -pexample -e "SELECT 1;" opencart
 
@@ -69,17 +77,11 @@ docker compose exec web bash -c "
 "
 
 # Run the migration
-echo "🔄 Running migration..."
+echo "🔄 Running real data migration..."
 docker compose exec web python3 /var/www/html/migration.py
 
-# Migrate images
-echo "🖼️  Migrating images..."
-docker compose cp ../migrate_images.py web:/var/www/html/migrate_images.py
-docker compose exec web python3 /var/www/html/migrate_images.py
-
-# Check migration results
 if [ $? -eq 0 ]; then
-    echo "✅ Migration completed successfully!"
+    echo "✅ Real data migration completed successfully!"
     echo ""
     echo "📊 Migration Summary:"
     echo "   - OpenCart is running at: http://localhost:8080"
@@ -90,11 +92,17 @@ if [ $? -eq 0 ]; then
     echo "   1. Checking the OpenCart frontend"
     echo "   2. Logging into the admin panel"
     echo "   3. Using phpMyAdmin to inspect the database"
+    echo ""
+    echo "📋 Real data migrated:"
+    echo "   - Categories from categories_list.csv"
+    echo "   - Products from list.csv"
+    echo "   - Inventory from inventory.csv"
+    echo "   - Attributes from tags.csv"
 else
     echo "❌ Migration failed!"
     echo "Check the migration.log file in the container for details:"
-    echo "docker compose exec web cat /var/www/html/migration.log"
+    echo "docker compose exec web cat /var/www/html/real_data_migration.log"
     exit 1
 fi
 
-echo "🎉 Migration process completed!"
+echo "🎉 Real data migration process completed!"

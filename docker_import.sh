@@ -15,9 +15,10 @@ if ! command -v docker &> /dev/null; then
 fi
 
 # Check if SQL file exists
-SQL_FILE="absolute_minimum_migration.sql"
+SQL_FILE="real_data_migration.sql"
 if [ ! -f "$SQL_FILE" ]; then
     echo "❌ SQL file not found: $SQL_FILE"
+    echo "Please run: python3 real_data_sql_migration.py"
     exit 1
 fi
 
@@ -50,16 +51,17 @@ echo "✅ Database connection successful"
 
 # Import the SQL file directly
 echo "📥 Importing SQL file to database..."
-docker compose exec -T db mysql -u root -pexample opencart < ../absolute_minimum_migration.sql
+docker compose exec -T db mysql -u root -pexample opencart < ../real_data_migration.sql
 
 if [ $? -eq 0 ]; then
     echo "✅ SQL import completed successfully!"
     echo ""
     echo "📊 Import Summary:"
     echo "   - Database: opencart"
-    echo "   - Categories: 5"
-    echo "   - Products: 5"
-    echo "   - Attributes: 4"
+    echo "   - Categories: 37"
+    echo "   - Products: 435"
+    echo "   - Attributes: 367"
+    echo "   - Real data from CSV files"
     echo ""
     echo "🔍 You can verify the import by:"
     echo "   1. Checking phpMyAdmin at: http://localhost:8082"
@@ -67,9 +69,11 @@ if [ $? -eq 0 ]; then
     echo "   3. Logging into the admin panel"
     echo ""
     echo "📋 Database tables populated:"
-    echo "   - oc_category (5 categories)"
-    echo "   - oc_product (5 products)"
-    echo "   - oc_attribute (4 attributes)"
+    echo "   - oc_category (37 categories)"
+    echo "   - oc_product (435 products)"
+    echo "   - oc_attribute (367 attributes)"
+    echo "   - Real Ukrainian/Russian product data"
+    echo "   - Inventory and pricing data"
 else
     echo "❌ SQL import failed!"
     echo "Check the error messages above for details"
