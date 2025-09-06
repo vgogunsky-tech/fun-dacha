@@ -15,7 +15,7 @@ if ! command -v docker &> /dev/null; then
 fi
 
 # Check if SQL file exists
-SQL_FILE="essential_opencart_migration.sql"
+SQL_FILE="minimal_opencart_migration.sql"
 if [ ! -f "$SQL_FILE" ]; then
     echo "❌ SQL file not found: $SQL_FILE"
     exit 1
@@ -50,7 +50,7 @@ echo "✅ Database connection successful"
 
 # Import the SQL file directly
 echo "📥 Importing SQL file to database..."
-docker compose exec -T db mysql -u root -pexample opencart < ../essential_opencart_migration.sql
+docker compose exec -T db mysql -u root -pexample opencart < ../minimal_opencart_migration.sql
 
 if [ $? -eq 0 ]; then
     echo "✅ SQL import completed successfully!"
