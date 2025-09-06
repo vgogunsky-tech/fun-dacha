@@ -100,14 +100,22 @@ DELETE FROM oc_attribute WHERE attribute_id > 0;
         name = cat_data['name'].replace("'", "\\'")
         description = cat_data['description'].replace("'", "\\'")
         tag = cat_data['tag'].replace("'", "\\'")
-        sql_content += f"INSERT INTO oc_category_description (category_id, language_id, name, description, meta_title, meta_description, meta_keyword) VALUES ({cat_id}, 2, '{name}', '{description}', '{name}', '{description}', '{tag}');\n"
+        
+        # Truncate meta_description to fit database column (usually 255 chars)
+        meta_desc = description[:250] if len(description) > 250 else description
+        
+        sql_content += f"INSERT INTO oc_category_description (category_id, language_id, name, description, meta_title, meta_description, meta_keyword) VALUES ({cat_id}, 2, '{name}', '{description}', '{name}', '{meta_desc}', '{tag}');\n"
     
     sql_content += "\n-- Insert category descriptions (Russian/English)\n"
     for cat_id, cat_data in categories.items():
         name = cat_data['name'].replace("'", "\\'")
         description = cat_data['description'].replace("'", "\\'")
         tag = cat_data['tag'].replace("'", "\\'")
-        sql_content += f"INSERT INTO oc_category_description (category_id, language_id, name, description, meta_title, meta_description, meta_keyword) VALUES ({cat_id}, 1, '{name}', '{description}', '{name}', '{description}', '{tag}');\n"
+        
+        # Truncate meta_description to fit database column (usually 255 chars)
+        meta_desc = description[:250] if len(description) > 250 else description
+        
+        sql_content += f"INSERT INTO oc_category_description (category_id, language_id, name, description, meta_title, meta_description, meta_keyword) VALUES ({cat_id}, 1, '{name}', '{description}', '{name}', '{meta_desc}', '{tag}');\n"
     
     sql_content += "\n-- Insert category paths\n"
     for cat_id in categories.keys():
@@ -140,7 +148,11 @@ DELETE FROM oc_attribute WHERE attribute_id > 0;
         name_ua = product.get('Название (укр)', '').replace("'", "\\'")
         desc_ua = product.get('Описание (укр)', '').replace("'", "\\'")
         tags = product.get('tags', '').replace("'", "\\'")
-        sql_content += f"INSERT INTO oc_product_description (product_id, language_id, name, description, tag, meta_title, meta_description, meta_keyword) VALUES ({product_id}, 2, '{name_ua}', '{desc_ua}', '{tags}', '{name_ua}', '{desc_ua}', '{tags}');\n"
+        
+        # Truncate meta_description to fit database column (usually 255 chars)
+        meta_desc_ua = desc_ua[:250] if len(desc_ua) > 250 else desc_ua
+        
+        sql_content += f"INSERT INTO oc_product_description (product_id, language_id, name, description, tag, meta_title, meta_description, meta_keyword) VALUES ({product_id}, 2, '{name_ua}', '{desc_ua}', '{tags}', '{name_ua}', '{meta_desc_ua}', '{tags}');\n"
         product_id += 1
     
     sql_content += "\n-- Insert product descriptions (Russian/English)\n"
@@ -149,7 +161,11 @@ DELETE FROM oc_attribute WHERE attribute_id > 0;
         name_ru = product.get('Название (рус)', '').replace("'", "\\'")
         desc_ru = product.get('Описание (рус)', '').replace("'", "\\'")
         tags = product.get('tags', '').replace("'", "\\'")
-        sql_content += f"INSERT INTO oc_product_description (product_id, language_id, name, description, tag, meta_title, meta_description, meta_keyword) VALUES ({product_id}, 1, '{name_ru}', '{desc_ru}', '{tags}', '{name_ru}', '{desc_ru}', '{tags}');\n"
+        
+        # Truncate meta_description to fit database column (usually 255 chars)
+        meta_desc_ru = desc_ru[:250] if len(desc_ru) > 250 else desc_ru
+        
+        sql_content += f"INSERT INTO oc_product_description (product_id, language_id, name, description, tag, meta_title, meta_description, meta_keyword) VALUES ({product_id}, 1, '{name_ru}', '{desc_ru}', '{tags}', '{name_ru}', '{meta_desc_ru}', '{tags}');\n"
         product_id += 1
     
     # Add product to category relationships

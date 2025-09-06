@@ -98,6 +98,9 @@ class RealDataOpenCartMigrator:
                         ))
                         
                         # Insert category description (Ukrainian)
+                        desc_ua = row.get('description (ukr)', '')
+                        meta_desc_ua = desc_ua[:250] if len(desc_ua) > 250 else desc_ua
+                        
                         self.cursor.execute("""
                             INSERT INTO oc_category_description 
                             (category_id, language_id, name, description, meta_title, meta_description, meta_keyword)
@@ -106,9 +109,9 @@ class RealDataOpenCartMigrator:
                             category_id,
                             2,  # Ukrainian
                             row['name'],
-                            row.get('description (ukr)', ''),
+                            desc_ua,
                             row['name'],
-                            row.get('description (ukr)', ''),
+                            meta_desc_ua,
                             row.get('tag', '')
                         ))
                         
@@ -121,9 +124,9 @@ class RealDataOpenCartMigrator:
                             category_id,
                             1,  # English (using Russian as English for now)
                             row['name'],
-                            row.get('description (ukr)', ''),
+                            desc_ua,
                             row['name'],
-                            row.get('description (ukr)', ''),
+                            meta_desc_ua,
                             row.get('tag', '')
                         ))
                         
@@ -195,6 +198,9 @@ class RealDataOpenCartMigrator:
                         ))
                         
                         # Insert product description (Ukrainian)
+                        desc_ua = row.get('Описание (укр)', '')
+                        meta_desc_ua = desc_ua[:250] if len(desc_ua) > 250 else desc_ua
+                        
                         self.cursor.execute("""
                             INSERT INTO oc_product_description 
                             (product_id, language_id, name, description, tag, meta_title, meta_description, meta_keyword)
@@ -203,14 +209,17 @@ class RealDataOpenCartMigrator:
                             product_id,
                             2,  # Ukrainian
                             row.get('Название (укр)', ''),
-                            row.get('Описание (укр)', ''),
+                            desc_ua,
                             row.get('tags', ''),
                             row.get('Название (укр)', ''),
-                            row.get('Описание (укр)', ''),
+                            meta_desc_ua,
                             row.get('tags', '')
                         ))
                         
                         # Insert product description (Russian/English)
+                        desc_ru = row.get('Описание (рус)', '')
+                        meta_desc_ru = desc_ru[:250] if len(desc_ru) > 250 else desc_ru
+                        
                         self.cursor.execute("""
                             INSERT INTO oc_product_description 
                             (product_id, language_id, name, description, tag, meta_title, meta_description, meta_keyword)
@@ -219,10 +228,10 @@ class RealDataOpenCartMigrator:
                             product_id,
                             1,  # English (using Russian as English for now)
                             row.get('Название (рус)', ''),
-                            row.get('Описание (рус)', ''),
+                            desc_ru,
                             row.get('tags', ''),
                             row.get('Название (рус)', ''),
-                            row.get('Описание (рус)', ''),
+                            meta_desc_ru,
                             row.get('tags', '')
                         ))
                         
