@@ -3,31 +3,31 @@ USE opencart;
 -- Ensure option exists and capture @opt_id
 SET @opt_id := (SELECT option_id FROM oc_option_description WHERE name IN ('Пакет','Package') LIMIT 1);
 INSERT INTO oc_option (type, sort_order) SELECT 'select', 0 FROM DUAL WHERE @opt_id IS NULL;
-SET @opt_id := IFNULL(@opt_id, LAST_INSERT_ID());
+SET @opt_id := (SELECT option_id FROM oc_option ORDER BY option_id DESC LIMIT 1);
 INSERT IGNORE INTO oc_option_description (option_id, language_id, name) VALUES (@opt_id, 1, 'Package');
 INSERT IGNORE INTO oc_option_description (option_id, language_id, name) VALUES (@opt_id, 2, 'Пакет');
 INSERT IGNORE INTO oc_option_description (option_id, language_id, name) VALUES (@opt_id, 3, 'Пакет');
 
 -- Ensure option values exist and capture their ids (SMALL)
 SET @ov_small := (SELECT ovd.option_value_id FROM oc_option_value_description ovd WHERE ovd.option_id=@opt_id AND ovd.name IN ('Маленький пакет','Small pack') LIMIT 1);
-INSERT INTO oc_option_value (option_id, image, sort_order) SELECT @opt_id, '', 1 FROM DUAL WHERE @ov_small IS NULL;
-SET @ov_small := IFNULL(@ov_small, LAST_INSERT_ID());
+INSERT INTO oc_option_value (option_id, sort_order) SELECT @opt_id, 1 FROM DUAL WHERE @ov_small IS NULL;
+SET @ov_small := (SELECT option_value_id FROM oc_option_value WHERE option_id=@opt_id AND sort_order=1 ORDER BY option_value_id DESC LIMIT 1);
 INSERT IGNORE INTO oc_option_value_description (option_value_id, language_id, option_id, name) VALUES (@ov_small, 1, @opt_id, 'Small pack');
 INSERT IGNORE INTO oc_option_value_description (option_value_id, language_id, option_id, name) VALUES (@ov_small, 2, @opt_id, 'Маленький пакет');
 INSERT IGNORE INTO oc_option_value_description (option_value_id, language_id, option_id, name) VALUES (@ov_small, 3, @opt_id, 'Маленький  пакет');
 
 -- MEDIUM
 SET @ov_medium := (SELECT ovd.option_value_id FROM oc_option_value_description ovd WHERE ovd.option_id=@opt_id AND ovd.name IN ('Середній пакет','Medium pack') LIMIT 1);
-INSERT INTO oc_option_value (option_id, image, sort_order) SELECT @opt_id, '', 2 FROM DUAL WHERE @ov_medium IS NULL;
-SET @ov_medium := IFNULL(@ov_medium, LAST_INSERT_ID());
+INSERT INTO oc_option_value (option_id, sort_order) SELECT @opt_id, 2 FROM DUAL WHERE @ov_medium IS NULL;
+SET @ov_medium := (SELECT option_value_id FROM oc_option_value WHERE option_id=@opt_id AND sort_order=2 ORDER BY option_value_id DESC LIMIT 1);
 INSERT IGNORE INTO oc_option_value_description (option_value_id, language_id, option_id, name) VALUES (@ov_medium, 1, @opt_id, 'Medium pack');
 INSERT IGNORE INTO oc_option_value_description (option_value_id, language_id, option_id, name) VALUES (@ov_medium, 2, @opt_id, 'Середній пакет');
 INSERT IGNORE INTO oc_option_value_description (option_value_id, language_id, option_id, name) VALUES (@ov_medium, 3, @opt_id, 'Средний  пакет');
 
 -- LARGE
 SET @ov_large := (SELECT ovd.option_value_id FROM oc_option_value_description ovd WHERE ovd.option_id=@opt_id AND ovd.name IN ('Великий пакет','Large pack') LIMIT 1);
-INSERT INTO oc_option_value (option_id, image, sort_order) SELECT @opt_id, '', 3 FROM DUAL WHERE @ov_large IS NULL;
-SET @ov_large := IFNULL(@ov_large, LAST_INSERT_ID());
+INSERT INTO oc_option_value (option_id, sort_order) SELECT @opt_id, 3 FROM DUAL WHERE @ov_large IS NULL;
+SET @ov_large := (SELECT option_value_id FROM oc_option_value WHERE option_id=@opt_id AND sort_order=3 ORDER BY option_value_id DESC LIMIT 1);
 INSERT IGNORE INTO oc_option_value_description (option_value_id, language_id, option_id, name) VALUES (@ov_large, 1, @opt_id, 'Large pack');
 INSERT IGNORE INTO oc_option_value_description (option_value_id, language_id, option_id, name) VALUES (@ov_large, 2, @opt_id, 'Великий пакет');
 INSERT IGNORE INTO oc_option_value_description (option_value_id, language_id, option_id, name) VALUES (@ov_large, 3, @opt_id, 'Большой  пакет');
