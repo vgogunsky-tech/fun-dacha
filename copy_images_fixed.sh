@@ -23,10 +23,12 @@ echo "🔍 Looking for images..."
 # Check current directory first
 if [ -d "opencart_data/image/catalog/product" ]; then
     echo "✅ Found product images in opencart_data/image/catalog/product/"
+    echo "📁 Copying $(ls opencart_data/image/catalog/product/ | wc -l) product images..."
     docker compose cp opencart_data/image/catalog/product web:/var/www/html/image/catalog/product
     echo "✅ Product images copied"
 elif [ -d "../opencart_data/image/catalog/product" ]; then
     echo "✅ Found product images in ../opencart_data/image/catalog/product/"
+    echo "📁 Copying $(ls ../opencart_data/image/catalog/product/ | wc -l) product images..."
     docker compose cp ../opencart_data/image/catalog/product web:/var/www/html/image/catalog/product
     echo "✅ Product images copied from parent directory"
 else
@@ -37,10 +39,12 @@ fi
 
 if [ -d "opencart_data/image/catalog/category" ]; then
     echo "✅ Found category images in opencart_data/image/catalog/category/"
+    echo "📁 Copying $(ls opencart_data/image/catalog/category/ | wc -l) category images..."
     docker compose cp opencart_data/image/catalog/category web:/var/www/html/image/catalog/category
     echo "✅ Category images copied"
 elif [ -d "../opencart_data/image/catalog/category" ]; then
     echo "✅ Found category images in ../opencart_data/image/catalog/category/"
+    echo "📁 Copying $(ls ../opencart_data/image/catalog/category/ | wc -l) category images..."
     docker compose cp ../opencart_data/image/catalog/category web:/var/www/html/image/catalog/category
     echo "✅ Category images copied from parent directory"
 else

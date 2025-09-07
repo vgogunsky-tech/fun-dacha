@@ -26,10 +26,14 @@ echo "🖼️  Staging images from data/images into opencart-docker/opencart_dat
 mkdir -p opencart-docker/opencart_data/image/catalog/product
 mkdir -p opencart-docker/opencart_data/image/catalog/category
 if [ -d data/images/products ]; then
-    rsync -a --delete data/images/products/ opencart-docker/opencart_data/image/catalog/product/
+    echo "📁 Copying product images (force update)..."
+    rsync -av --delete --force data/images/products/ opencart-docker/opencart_data/image/catalog/product/
+    echo "✅ Product images staged: $(ls opencart-docker/opencart_data/image/catalog/product/ | wc -l) files"
 fi
 if [ -d data/images/categories ]; then
-    rsync -a --delete data/images/categories/ opencart-docker/opencart_data/image/catalog/category/
+    echo "📁 Copying category images (force update)..."
+    rsync -av --delete --force data/images/categories/ opencart-docker/opencart_data/image/catalog/category/
+    echo "✅ Category images staged: $(ls opencart-docker/opencart_data/image/catalog/category/ | wc -l) files"
 fi
 
 # Navigate to opencart-docker directory
