@@ -28,6 +28,10 @@ HEADERS_REQUIRED = {
 	'product_id', 'title_ua', 'title_ru', 'original_price', 'stock_qty'
 }
 
+DEFAULT_SMALL_PRICE = 10.0
+DEFAULT_LARGE_PRICE = 20.0
+DEFAULT_QTY = 100
+
 
 def load_inventory():
 	if not INVENTORY_PATH.exists():
@@ -90,7 +94,7 @@ def write_sql(by_prod):
 		try:
 			return float(s)
 		except:
-			return 0.0
+			return None
 
 	for model, variants in by_prod.items():
 		lines += [
@@ -105,7 +109,8 @@ def write_sql(by_prod):
 		qty_sum = 0
 		for v in variants:
 			tua = (v.get('title_ua') or '').strip()
-			price = parse_price(v.get('original_price'))
+			pval = parse_price(v.get('original_price'))
+			price = pval if pval is not None else 0.0
 			qty = 0
 			try:
 				qty = int((v.get('stock_qty') or '0') or 0)
@@ -114,23 +119,36 @@ def write_sql(by_prod):
 			present[tua] = (price, qty)
 			qty_sum += max(qty, 0)
 
+		# Determine base price for product (min of available or default small)
+		candidate_prices = []
+		for name in (SMALL_UA, MEDIUM_UA, LARGE_UA):
+			if name in present and present[name][0] > 0:
+				candidate_prices.append(present[name][0])
+		if not candidate_prices:
+			candidate_prices = [DEFAULT_SMALL_PRICE]
+		base_price = min(candidate_prices)
+
 		pairs = [
-			(SMALL_UA, '@ov_small'),
-			(MEDIUM_UA, '@ov_medium'),
-			(LARGE_UA, '@ov_large'),
+			(SMALL_UA, '@ov_small', DEFAULT_SMALL_PRICE),
+			(MEDIUM_UA, '@ov_medium', None),
+			(LARGE_UA, '@ov_large', DEFAULT_LARGE_PRICE),
 		]
-		for name, ov_var in pairs:
-			price, qty = present.get(name, (0.0, 0))
-			must_have = name in (SMALL_UA, LARGE_UA)
+		for name, ov_var, default_price in pairs:
+			if name in present:
+				price, qty = present[name]
+			else:
+				price = default_price if default_price is not None else 0.0
+				qty = DEFAULT_QTY if default_price is not None else 0
+			must_have = default_price is not None  # small & large
 			cond = " OR 1=1" if must_have else ""
 			lines.append(
 				f"INSERT INTO oc_product_option_value (product_option_id, product_id, option_id, option_value_id, quantity, subtract, price, price_prefix, points, points_prefix, weight, weight_prefix) "
-				f"SELECT @poid, @pid, @opt_id, {ov_var}, {max(qty,0)}, 1, {price:.2f}, '+', 0, '+', 0, '+' FROM DUAL WHERE @poid IS NOT NULL AND ((SELECT 1 FROM DUAL WHERE {1 if name in present else 0}=1){cond});"
+				f"SELECT @poid, @pid, @opt_id, {ov_var}, {max(qty,0)}, 1, {price:.2f}, '=', 0, '+', 0, '+' FROM DUAL WHERE @poid IS NOT NULL AND ((SELECT 1 FROM DUAL WHERE {1 if name in present else 0}=1){cond});"
 			)
 
-		# Update product quantity and stock_status by aggregated qty
+		# Update product base price and stock status
 		lines.append(
-			f"UPDATE oc_product SET quantity = {qty_sum}, stock_status_id = (CASE WHEN {qty_sum} > 0 THEN 5 ELSE 8 END) WHERE product_id=@pid;\n"
+			f"UPDATE oc_product SET price = {base_price:.2f}, quantity = {qty_sum}, stock_status_id = (CASE WHEN {qty_sum} > 0 THEN 5 ELSE 8 END) WHERE product_id=@pid;\n"
 		)
 
 	OUT_SQL.write_text("\n".join(lines), encoding='utf-8')
