@@ -173,26 +173,11 @@
                 <label>Код моделі (model)</label>
                 <input type="text" name="model" value="{{ product.get('model') or (product.get('product_id') or '') }}" placeholder="Напр., p100001" />
               </div>
-              <div>
-                <label>SKU</label>
-                <input type="text" name="sku" value="{{ product.get('sku') or (product.get('product_id') or '') }}" />
-              </div>
 
-              <div>
-                <label>Податкова група (tax_class_id)</label>
-                <input type="text" name="tax_class_id" value="{{ product.get('tax_class_id') or '' }}" placeholder="0" />
-              </div>
-              <div>
-                <label>Одиниця ваги (weight_class_id)</label>
-                <input type="text" name="weight_class_id" value="{{ product.get('weight_class_id') or '' }}" placeholder="1" />
-              </div>
-              <div>
-                <label>Одиниця довжини (length_class_id)</label>
-                <input type="text" name="length_class_id" value="{{ product.get('length_class_id') or '' }}" placeholder="1" />
-              </div>
-              <div>
-                <label>Дата доступності (date_available)</label>
-                <input type="date" name="date_available" value="{{ product.get('date_available') or '' }}" />
+              <div style="grid-column: 1 / -1;">
+                <label>SEO (чПУ / keyword)</label>
+                <input type="text" name="seo" value="{{ product.get('seo') or '' }}" placeholder="Напр., amurskyj-tyhr" />
+                <div class="muted">Використовується для SEO-URL (OpenCart oc_seo_url). Латиниця, без пробілів.</div>
               </div>
 
               <div class="image" style="grid-column: 1 / -1;">

@@ -11,11 +11,7 @@ NEEDED_COLUMNS = [
 	'width',
 	'height',
 	'model',
-	'sku',
-	'tax_class_id',
-	'weight_class_id',
-	'length_class_id',
-	'date_available'
+	'seo'
 ]
 
 DEFAULTS = {
@@ -25,11 +21,7 @@ DEFAULTS = {
 	'width': '',
 	'height': '',
 	'model': '',
-	'sku': '',
-	'tax_class_id': '',
-	'weight_class_id': '',
-	'length_class_id': '',
-	'date_available': ''
+	'seo': ''
 }
 
 def main():
@@ -51,6 +43,9 @@ def main():
 		for m in missing:
 			if m not in r:
 				r[m] = DEFAULTS.get(m, '')
+		# Populate model with product_id if empty
+		if (not r.get('model')) and r.get('product_id'):
+			r['model'] = r['product_id']
 
 	with LIST_PATH.open('w', encoding='utf-8', newline='') as f:
 		writer = csv.DictWriter(f, fieldnames=new_headers)
