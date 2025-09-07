@@ -5,7 +5,7 @@
 
 set -e
 
-echo "🚀 Starting OpenCart Product Migration..."
+echo "🚀 Starting OpenCart Complete Migration (SQL-based)..."
 
 # Check if Docker is available
 if ! command -v docker &> /dev/null; then
@@ -13,6 +13,13 @@ if ! command -v docker &> /dev/null; then
     echo "Please install Docker and try again"
     exit 1
 fi
+
+# Generate SQL artifacts from CSV (run in repo root)
+echo "🔧 Generating migration SQL from CSV..."
+python3 complete_sync_sql_migration.py | cat
+
+echo "🔧 Generating inventory options SQL from inventory.csv..."
+python3 generate_inventory_options_sql.py | cat
 
 # Navigate to opencart-docker directory
 cd opencart-docker
@@ -39,43 +46,17 @@ fi
 
 echo "✅ Database connection successful"
 
-# Install Python dependencies in the web container
-echo "📦 Installing Python dependencies..."
-docker compose exec web bash -c "
-    apt-get update && 
-    apt-get install -y python3 python3-pip &&
-    pip3 install pymysql
-"
+# Import main migration SQL
+echo "📥 Importing main migration SQL..."
+docker compose exec -T db mysql -u root -pexample opencart < ../complete_sync_migration.sql
 
-# Copy migration script to the container
-echo "📋 Copying migration script to container..."
-docker compose cp ../real_data_migration.py web:/var/www/html/migration.py
+# Apply inventory options SQL
+echo "🧩 Applying inventory options SQL..."
+docker compose exec -T db mysql -u root -pexample opencart < ../inventory_options.sql
 
-# Copy data files to the container
-echo "📋 Copying data files to container..."
-docker compose cp ../data/list.csv web:/var/www/html/list.csv
-docker compose cp ../data/categories_list.csv web:/var/www/html/categories_list.csv
-docker compose cp ../data/inventory.csv web:/var/www/html/inventory.csv
-docker compose cp ../data/tags.csv web:/var/www/html/tags.csv
-
-# Update database configuration in the migration script for Docker environment
-echo "🔧 Updating database configuration for Docker..."
-docker compose exec web bash -c "
-    sed -i 's/host.*localhost/host = \"db\"/' /var/www/html/migration.py &&
-    sed -i 's|data/categories_list.csv|/var/www/html/categories_list.csv|' /var/www/html/migration.py &&
-    sed -i 's|data/list.csv|/var/www/html/list.csv|' /var/www/html/migration.py &&
-    sed -i 's|data/inventory.csv|/var/www/html/inventory.csv|' /var/www/html/migration.py &&
-    sed -i 's|data/tags.csv|/var/www/html/tags.csv|' /var/www/html/migration.py
-"
-
-# Run the migration
-echo "🔄 Running migration..."
-docker compose exec web python3 /var/www/html/migration.py
-
-# Migrate images
-echo "🖼️  Migrating images..."
-docker compose cp ../migrate_images.py web:/var/www/html/migrate_images.py
-docker compose exec web python3 /var/www/html/migrate_images.py
+# Copy images into container and set permissions
+echo "🖼️  Copying images into container..."
+bash ../copy_images_fixed.sh | cat
 
 # Check migration results
 if [ $? -eq 0 ]; then
@@ -90,6 +71,7 @@ if [ $? -eq 0 ]; then
     echo "   1. Checking the OpenCart frontend"
     echo "   2. Logging into the admin panel"
     echo "   3. Using phpMyAdmin to inspect the database"
+    echo "   4. Verifying options under Admin → Catalog → Products → Options"
 else
     echo "❌ Migration failed!"
     echo "Check the migration.log file in the container for details:"
