@@ -149,10 +149,19 @@ ALTER TABLE oc_attribute AUTO_INCREMENT = 1;
     # Add categories with images
     category_mapping = {}
     category_id = 1
+    # Pre-compute parent mapping using old ids; we'll translate to new ids after
     for old_id, cat_data in categories.items():
         category_mapping[old_id] = category_id
         image_path = f"catalog/category/{cat_data['image']}" if cat_data['image'] else ""
-        sql_content += f"INSERT INTO oc_category (category_id, parent_id, sort_order, status, image) VALUES ({category_id}, {cat_data['parent_id']}, {category_id}, 1, '{image_path}');\n"
+        # Translate parent_id from old id space to new id space if present
+        parent_old = cat_data['parent_id']
+        parent_new = 0
+        if parent_old and parent_old in category_mapping:
+            parent_new = category_mapping[parent_old]
+        elif parent_old and parent_old in categories:
+            # If parent appears later, approximate by original id (will be 0 otherwise)
+            parent_new = 0
+        sql_content += f"INSERT INTO oc_category (category_id, parent_id, sort_order, status, image) VALUES ({category_id}, {parent_new}, {category_id}, 1, '{image_path}');\n"
         category_id += 1
     
     sql_content += "\n-- Insert category descriptions (Ukrainian)\n"
@@ -178,9 +187,13 @@ ALTER TABLE oc_attribute AUTO_INCREMENT = 1;
         sql_content += f"INSERT INTO oc_category_description (category_id, language_id, name, description, meta_title, meta_description, meta_keyword) VALUES ({cat_id}, 1, '{name}', '{description}', '{name}', '{meta_desc}', '{tag}');\n"
     
     sql_content += "\n-- Insert category paths\n"
-    for old_id in categories.keys():
+    for old_id, cat_data in categories.items():
         cat_id = category_mapping[old_id]
-        sql_content += f"INSERT INTO oc_category_path (category_id, path_id, level) VALUES ({cat_id}, {cat_id}, 0);\n"
+        parent_old = cat_data['parent_id']
+        if parent_old and parent_old in category_mapping:
+            parent_new = category_mapping[parent_old]
+            sql_content += f"INSERT INTO oc_category_path (category_id, path_id, level) VALUES ({cat_id}, {parent_new}, 0);\n"
+        sql_content += f"INSERT INTO oc_category_path (category_id, path_id, level) VALUES ({cat_id}, {cat_id}, 1);\n"
     
     # Add products with images and timestamps (respect new CSV fields)
     sql_content += "\n-- Insert products with images and timestamps\n"
@@ -218,6 +231,19 @@ ALTER TABLE oc_attribute AUTO_INCREMENT = 1;
         height_sql = float(height_val) if height_val not in ('', None) else 0.0
         # OpenCart requires model; sku optional – set sku=model for visibility
         sql_content += f"INSERT INTO oc_product (product_id, model, sku, quantity, stock_status_id, manufacturer_id, shipping, price, points, tax_class_id, date_available, weight, length, width, height, subtract, minimum, sort_order, status, image, date_added, date_modified) VALUES ({product_id}, '{model_val}', '{model_val}', {quantity}, 5, 0, 1, {price}, 0, 0, '{current_date}', {weight_sql}, {length_sql}, {width_sql}, {height_sql}, 1, 1, {product_id}, 1, '{image_path}', '{current_time}', '{current_time}');\n"
+        # Insert secondary images
+        images_raw = (product.get('images') or '').strip()
+        if images_raw:
+            sep = ','
+            try:
+                secondaries = [s.strip() for s in images_raw.split(',') if s.strip()]
+            except Exception:
+                secondaries = []
+            sort_order = 1
+            for img in secondaries:
+                img_path = f"catalog/product/{img}"
+                sql_content += f"INSERT INTO oc_product_image (product_id, image, sort_order) VALUES ({product_id}, '{img_path}', {sort_order});\n"
+                sort_order += 1
         product_id += 1
     
     # Add product descriptions with localized tags
@@ -255,6 +281,13 @@ ALTER TABLE oc_attribute AUTO_INCREMENT = 1;
         if product.get('category_id') and int(product['category_id']) in category_mapping:
             category_id = category_mapping[int(product['category_id'])]
         sql_content += f"INSERT INTO oc_product_to_category (product_id, category_id) VALUES ({product_id}, {category_id});\n"
+        # Also map subcategory if present
+        sub_raw = (product.get('subcategory_id') or '').strip()
+        if sub_raw and sub_raw.isdigit():
+            sub_old = int(sub_raw)
+            if sub_old in category_mapping:
+                sub_new = category_mapping[sub_old]
+                sql_content += f"INSERT INTO oc_product_to_category (product_id, category_id) VALUES ({product_id}, {sub_new});\n"
         # SEO keyword from CSV 'seo' (same for both languages if provided)
         seo_kw = (product.get('seo') or '').strip()
         if seo_kw:

@@ -21,6 +21,17 @@ python3 complete_sync_sql_migration.py | cat
 echo "🔧 Generating inventory options SQL from inventory.csv..."
 python3 generate_inventory_options_sql.py | cat
 
+# Stage images from data/ into opencart-docker/opencart_data for copying
+echo "🖼️  Staging images from data/images into opencart-docker/opencart_data..."
+mkdir -p opencart-docker/opencart_data/image/catalog/product
+mkdir -p opencart-docker/opencart_data/image/catalog/category
+if [ -d data/images/products ]; then
+    rsync -a --delete data/images/products/ opencart-docker/opencart_data/image/catalog/product/
+fi
+if [ -d data/images/categories ]; then
+    rsync -a --delete data/images/categories/ opencart-docker/opencart_data/image/catalog/category/
+fi
+
 # Navigate to opencart-docker directory
 cd opencart-docker
 
