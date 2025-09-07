@@ -14,6 +14,13 @@ SMALL_RU = 'Маленький  пакет'
 MEDIUM_RU = 'Средний  пакет'
 LARGE_RU = 'Большой  пакет'
 
+# English fallbacks to ensure rendering when store language is English
+OPTION_EN = 'Package'
+SMALL_EN = 'Small pack'
+MEDIUM_EN = 'Medium pack'
+LARGE_EN = 'Large pack'
+
+LANG_EN = 1
 LANG_UA = 2
 LANG_RU = 3
 
@@ -43,31 +50,38 @@ def write_sql(by_prod):
 	lines = []
 	lines.append("USE opencart;\n")
 
-	# Ensure single option 'Пакет' exists and get @opt_id
+	# Ensure single option exists and get @opt_id
 	lines += [
-		"-- Ensure option 'Пакет' exists and capture @opt_id",
-		"SET @opt_id := (SELECT option_id FROM oc_option_description WHERE name='Пакет' LIMIT 1);",
+		"-- Ensure option exists and capture @opt_id",
+		"SET @opt_id := (SELECT option_id FROM oc_option_description WHERE name IN ('Пакет','Package') LIMIT 1);",
 		"INSERT INTO oc_option (type, sort_order) SELECT 'select', 0 FROM DUAL WHERE @opt_id IS NULL;",
 		"SET @opt_id := IFNULL(@opt_id, LAST_INSERT_ID());",
+		# Descriptions for EN, UA, RU
+		f"INSERT IGNORE INTO oc_option_description (option_id, language_id, name) VALUES (@opt_id, {LANG_EN}, '{OPTION_EN}');",
 		f"INSERT IGNORE INTO oc_option_description (option_id, language_id, name) VALUES (@opt_id, {LANG_UA}, 'Пакет');",
 		f"INSERT IGNORE INTO oc_option_description (option_id, language_id, name) VALUES (@opt_id, {LANG_RU}, 'Пакет');",
 		"",
-		"-- Ensure option values exist and capture their ids",
-		f"SET @ov_small := (SELECT ovd.option_value_id FROM oc_option_value_description ovd WHERE ovd.option_id=@opt_id AND ovd.name='{SMALL_UA}' LIMIT 1);",
+		"-- Ensure option values exist and capture their ids (SMALL)",
+		f"SET @ov_small := (SELECT ovd.option_value_id FROM oc_option_value_description ovd WHERE ovd.option_id=@opt_id AND ovd.name IN ('{SMALL_UA}','{SMALL_EN}') LIMIT 1);",
 		f"INSERT INTO oc_option_value (option_id, image, sort_order) SELECT @opt_id, '', 1 FROM DUAL WHERE @ov_small IS NULL;",
 		"SET @ov_small := IFNULL(@ov_small, LAST_INSERT_ID());",
+		f"INSERT IGNORE INTO oc_option_value_description (option_value_id, language_id, option_id, name) VALUES (@ov_small, {LANG_EN}, @opt_id, '{SMALL_EN}');",
 		f"INSERT IGNORE INTO oc_option_value_description (option_value_id, language_id, option_id, name) VALUES (@ov_small, {LANG_UA}, @opt_id, '{SMALL_UA}');",
 		f"INSERT IGNORE INTO oc_option_value_description (option_value_id, language_id, option_id, name) VALUES (@ov_small, {LANG_RU}, @opt_id, '{SMALL_RU}');",
 		"",
-		f"SET @ov_medium := (SELECT ovd.option_value_id FROM oc_option_value_description ovd WHERE ovd.option_id=@opt_id AND ovd.name='{MEDIUM_UA}' LIMIT 1);",
+		"-- MEDIUM",
+		f"SET @ov_medium := (SELECT ovd.option_value_id FROM oc_option_value_description ovd WHERE ovd.option_id=@opt_id AND ovd.name IN ('{MEDIUM_UA}','{MEDIUM_EN}') LIMIT 1);",
 		f"INSERT INTO oc_option_value (option_id, image, sort_order) SELECT @opt_id, '', 2 FROM DUAL WHERE @ov_medium IS NULL;",
 		"SET @ov_medium := IFNULL(@ov_medium, LAST_INSERT_ID());",
+		f"INSERT IGNORE INTO oc_option_value_description (option_value_id, language_id, option_id, name) VALUES (@ov_medium, {LANG_EN}, @opt_id, '{MEDIUM_EN}');",
 		f"INSERT IGNORE INTO oc_option_value_description (option_value_id, language_id, option_id, name) VALUES (@ov_medium, {LANG_UA}, @opt_id, '{MEDIUM_UA}');",
 		f"INSERT IGNORE INTO oc_option_value_description (option_value_id, language_id, option_id, name) VALUES (@ov_medium, {LANG_RU}, @opt_id, '{MEDIUM_RU}');",
 		"",
-		f"SET @ov_large := (SELECT ovd.option_value_id FROM oc_option_value_description ovd WHERE ovd.option_id=@opt_id AND ovd.name='{LARGE_UA}' LIMIT 1);",
+		"-- LARGE",
+		f"SET @ov_large := (SELECT ovd.option_value_id FROM oc_option_value_description ovd WHERE ovd.option_id=@opt_id AND ovd.name IN ('{LARGE_UA}','{LARGE_EN}') LIMIT 1);",
 		f"INSERT INTO oc_option_value (option_id, image, sort_order) SELECT @opt_id, '', 3 FROM DUAL WHERE @ov_large IS NULL;",
 		"SET @ov_large := IFNULL(@ov_large, LAST_INSERT_ID());",
+		f"INSERT IGNORE INTO oc_option_value_description (option_value_id, language_id, option_id, name) VALUES (@ov_large, {LANG_EN}, @opt_id, '{LARGE_EN}');",
 		f"INSERT IGNORE INTO oc_option_value_description (option_value_id, language_id, option_id, name) VALUES (@ov_large, {LANG_UA}, @opt_id, '{LARGE_UA}');",
 		f"INSERT IGNORE INTO oc_option_value_description (option_value_id, language_id, option_id, name) VALUES (@ov_large, {LANG_RU}, @opt_id, '{LARGE_RU}');",
 		""
@@ -84,10 +98,8 @@ def write_sql(by_prod):
 		lines += [
 			f"-- Attach options for product model={model}",
 			f"SET @pid := (SELECT product_id FROM oc_product WHERE model='{model}' LIMIT 1);",
-			"-- Ensure product option exists",
 			"INSERT INTO oc_product_option (product_id, option_id, required) SELECT @pid, @opt_id, 1 FROM DUAL WHERE @pid IS NOT NULL AND NOT EXISTS (SELECT 1 FROM oc_product_option WHERE product_id=@pid AND option_id=@opt_id);",
 			"SET @poid := (SELECT product_option_id FROM oc_product_option WHERE product_id=@pid AND option_id=@opt_id LIMIT 1);",
-			"-- Clear previous values for clean reattach",
 			"DELETE FROM oc_product_option_value WHERE product_id=@pid AND option_id=@opt_id;",
 		]
 
@@ -111,7 +123,6 @@ def write_sql(by_prod):
 			price, qty = present.get(name, (0.0, 0))
 			must_have = name in (SMALL_UA, LARGE_UA)
 			cond = " OR 1=1" if must_have else ""
-			# Insert only if poid resolved and (present or must_have)
 			lines.append(
 				f"INSERT INTO oc_product_option_value (product_option_id, product_id, option_id, option_value_id, quantity, subtract, price, price_prefix, points, points_prefix, weight, weight_prefix) "
 				f"SELECT @poid, @pid, @opt_id, {ov_var}, {max(qty,0)}, 1, {price:.2f}, '=', 0, '+', 0, '+' FROM DUAL WHERE @poid IS NOT NULL AND ((SELECT 1 FROM DUAL WHERE {1 if name in present else 0}=1){cond});"
