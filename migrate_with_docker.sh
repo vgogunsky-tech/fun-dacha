@@ -62,6 +62,27 @@ docker compose exec -T db mysql -u root -pexample opencart < ../complete_sync_mi
 echo "🧩 Applying inventory options SQL..."
 docker compose exec -T db mysql -u root -pexample opencart < ../inventory_options.sql
 
+# Constrain to UA language only and set UAH as sole/default currency
+echo "🌍🇺🇦 Enforcing UA language only and UAH currency..."
+docker compose exec -T db mysql -u root -pexample opencart -e "
+-- Ensure UA language exists and is default
+INSERT IGNORE INTO oc_language (language_id, name, code, status) VALUES (2, 'Українська', 'ua', 1);
+UPDATE oc_setting SET value='2' WHERE `key` IN ('config_language','config_admin_language') AND store_id=0;
+-- Disable/remove other languages and non-UA content
+DELETE FROM oc_product_description WHERE language_id <> 2;
+DELETE FROM oc_category_description WHERE language_id <> 2;
+DELETE FROM oc_attribute_description WHERE language_id <> 2;
+DELETE FROM oc_option_description WHERE language_id <> 2;
+DELETE FROM oc_option_value_description WHERE language_id <> 2;
+UPDATE oc_language SET status=0 WHERE language_id <> 2;
+
+-- Ensure UAH currency exists and set default
+INSERT IGNORE INTO oc_currency (title, code, symbol_left, symbol_right, decimal_place, value, status) VALUES ('Ukrainian Hryvnia','UAH','',' ₴',2,1.00000,1);
+UPDATE oc_currency SET value=1.00000, status=1 WHERE code='UAH';
+UPDATE oc_currency SET status=0 WHERE code<>'UAH';
+UPDATE oc_setting SET value='UAH' WHERE `key`='config_currency' AND store_id=0;
+" | cat
+
 # Copy images into container and set permissions
 echo "🖼️  Copying images into container..."
 bash ../copy_images_fixed.sh | cat
