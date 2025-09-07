@@ -120,11 +120,14 @@ USE opencart;
 
 -- Complete sync: Remove all existing data first
 -- Remove all product relationships and descriptions
+DELETE FROM oc_product_option_value;
+DELETE FROM oc_product_option;
 DELETE FROM oc_product_to_category;
 DELETE FROM oc_product_description;
+DELETE FROM oc_product_image;
+DELETE FROM oc_product_attribute;
 DELETE FROM oc_product_to_store;
 DELETE FROM oc_product_to_layout;
-DELETE FROM oc_product_attribute;
 DELETE FROM oc_product;
 
 -- Remove all category relationships and descriptions
@@ -138,10 +141,21 @@ DELETE FROM oc_category;
 DELETE FROM oc_attribute_description;
 DELETE FROM oc_attribute;
 
+-- Remove all options
+DELETE FROM oc_option_value_description;
+DELETE FROM oc_option_value;
+DELETE FROM oc_option_description;
+DELETE FROM oc_option;
+
+-- Remove SEO URLs
+DELETE FROM oc_seo_url;
+
 -- Reset auto-increment counters
 ALTER TABLE oc_product AUTO_INCREMENT = 1;
 ALTER TABLE oc_category AUTO_INCREMENT = 1;
 ALTER TABLE oc_attribute AUTO_INCREMENT = 1;
+ALTER TABLE oc_option AUTO_INCREMENT = 1;
+ALTER TABLE oc_option_value AUTO_INCREMENT = 1;
 
 -- Insert categories with images
 """
@@ -214,9 +228,9 @@ ALTER TABLE oc_attribute AUTO_INCREMENT = 1;
                 price = inventory[product_id]['price']
             quantity = inventory[product_id]['quantity']
         
-        # Get image path
-        image_name = product.get('primary_image', '')
-        image_path = f"catalog/product/{image_name}" if image_name else ""
+        # Get primary image path
+        primary_image_name = product.get('primary_image', '')
+        primary_image_path = f"catalog/product/{primary_image_name}" if primary_image_name else ""
         
         # Model from CSV 'model' or fallback to product_id
         model_val = (product.get('model') or product.get('product_id') or f'PROD-{product_id}').replace("'", "\\'")
@@ -230,20 +244,25 @@ ALTER TABLE oc_attribute AUTO_INCREMENT = 1;
         width_sql = float(width_val) if width_val not in ('', None) else 0.0
         height_sql = float(height_val) if height_val not in ('', None) else 0.0
         # OpenCart requires model; sku optional – set sku=model for visibility
-        sql_content += f"INSERT INTO oc_product (product_id, model, sku, quantity, stock_status_id, manufacturer_id, shipping, price, points, tax_class_id, date_available, weight, length, width, height, subtract, minimum, sort_order, status, image, date_added, date_modified) VALUES ({product_id}, '{model_val}', '{model_val}', {quantity}, 5, 0, 1, {price}, 0, 0, '{current_date}', {weight_sql}, {length_sql}, {width_sql}, {height_sql}, 1, 1, {product_id}, 1, '{image_path}', '{current_time}', '{current_time}');\n"
-        # Insert secondary images
+        sql_content += f"INSERT INTO oc_product (product_id, model, sku, quantity, stock_status_id, manufacturer_id, shipping, price, points, tax_class_id, date_available, weight, length, width, height, subtract, minimum, sort_order, status, image, date_added, date_modified) VALUES ({product_id}, '{model_val}', '{model_val}', {quantity}, 5, 0, 1, {price}, 0, 0, '{current_date}', {weight_sql}, {length_sql}, {width_sql}, {height_sql}, 1, 1, {product_id}, 1, '{primary_image_path}', '{current_time}', '{current_time}');\n"
+        
+        # Handle secondary images (avoid duplicates with primary)
         images_raw = (product.get('images') or '').strip()
         if images_raw:
-            sep = ','
             try:
                 secondaries = [s.strip() for s in images_raw.split(',') if s.strip()]
+                # Remove primary image from secondaries to avoid duplication
+                if primary_image_name and primary_image_name in secondaries:
+                    secondaries.remove(primary_image_name)
             except Exception:
                 secondaries = []
+            
             sort_order = 1
             for img in secondaries:
-                img_path = f"catalog/product/{img}"
-                sql_content += f"INSERT INTO oc_product_image (product_id, image, sort_order) VALUES ({product_id}, '{img_path}', {sort_order});\n"
-                sort_order += 1
+                if img and img != primary_image_name:  # Double check no duplicates
+                    img_path = f"catalog/product/{img}"
+                    sql_content += f"INSERT INTO oc_product_image (product_id, image, sort_order) VALUES ({product_id}, '{img_path}', {sort_order});\n"
+                    sort_order += 1
         product_id += 1
     
     # Add product descriptions with localized tags
