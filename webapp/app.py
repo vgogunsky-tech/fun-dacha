@@ -1266,7 +1266,7 @@ def product_save():
     rows, fields, read_from = read_products_csv()
 
     # Ensure required columns
-    for col in REQUIRED_PRODUCT_COLS + ["primary_image"]:
+    for col in REQUIRED_PRODUCT_COLS + ["primary_image", "price", "weight"]:
         if col not in fields:
             fields.append(col)
             for r in rows:
@@ -1288,6 +1288,8 @@ def product_save():
         "Описание (укр)",
         "Описание (рус)",
         "tags",
+        "price",
+        "weight",
     ]:
         if key in form:
             target[key] = form.get(key, "")
