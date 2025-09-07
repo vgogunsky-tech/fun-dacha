@@ -46,6 +46,14 @@ fi
 
 echo "✅ Database connection successful"
 
+# Ensure languages UA/RU exist (minimal, schema-safe)
+echo "🌍 Ensuring languages (UA/RU) exist..."
+docker compose exec db mysql -u root -pexample opencart -e "
+INSERT IGNORE INTO oc_language (language_id, name, code, status) VALUES (2, 'Українська', 'ua', 1);
+INSERT IGNORE INTO oc_language (language_id, name, code, status) VALUES (3, 'Русский', 'ru', 1);
+UPDATE oc_language SET language_id = 1 WHERE code = 'en' AND language_id != 1;
+" | cat
+
 # Import main migration SQL
 echo "📥 Importing main migration SQL..."
 docker compose exec -T db mysql -u root -pexample opencart < ../complete_sync_migration.sql
