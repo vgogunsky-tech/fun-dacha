@@ -151,6 +151,50 @@
                 </select>
               </div>
 
+              <div>
+                <label>Ціна (price)</label>
+                <input type="text" name="price" value="{{ product.get('price') or '' }}" placeholder="e.g. 25.50" />
+                <div class="muted">Базова ціна товару. Для діапазону цін використовуйте опції в "Склад".</div>
+              </div>
+              <div>
+                <label>Вага (weight)</label>
+                <input type="text" name="weight" value="{{ product.get('weight') or '' }}" placeholder="e.g. 0.10" />
+              </div>
+
+              <div>
+                <label>Габарити (length × width × height)</label>
+                <div style="display:flex; gap:8px;">
+                  <input type="text" name="length" value="{{ product.get('length') or '' }}" placeholder="Довжина" />
+                  <input type="text" name="width" value="{{ product.get('width') or '' }}" placeholder="Ширина" />
+                  <input type="text" name="height" value="{{ product.get('height') or '' }}" placeholder="Висота" />
+                </div>
+              </div>
+              <div>
+                <label>Код моделі (model)</label>
+                <input type="text" name="model" value="{{ product.get('model') or (product.get('product_id') or '') }}" placeholder="Напр., p100001" />
+              </div>
+              <div>
+                <label>SKU</label>
+                <input type="text" name="sku" value="{{ product.get('sku') or (product.get('product_id') or '') }}" />
+              </div>
+
+              <div>
+                <label>Податкова група (tax_class_id)</label>
+                <input type="text" name="tax_class_id" value="{{ product.get('tax_class_id') or '' }}" placeholder="0" />
+              </div>
+              <div>
+                <label>Одиниця ваги (weight_class_id)</label>
+                <input type="text" name="weight_class_id" value="{{ product.get('weight_class_id') or '' }}" placeholder="1" />
+              </div>
+              <div>
+                <label>Одиниця довжини (length_class_id)</label>
+                <input type="text" name="length_class_id" value="{{ product.get('length_class_id') or '' }}" placeholder="1" />
+              </div>
+              <div>
+                <label>Дата доступності (date_available)</label>
+                <input type="date" name="date_available" value="{{ product.get('date_available') or '' }}" />
+              </div>
+
               <div class="image" style="grid-column: 1 / -1;">
                 <label>Головне зображення</label>
                 {% if image_url %}
