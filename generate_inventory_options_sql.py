@@ -122,7 +122,7 @@ def write_sql(by_prod):
 		# Determine base price for product (min of available or default small)
 		candidate_prices = []
 		for name in (SMALL_UA, MEDIUM_UA, LARGE_UA):
-			if name in present and present[name][0] > 0:
+			if name in present and present[name][0] is not None and present[name][0] > 0:
 				candidate_prices.append(present[name][0])
 		if not candidate_prices:
 			candidate_prices = [DEFAULT_SMALL_PRICE]
@@ -136,14 +136,17 @@ def write_sql(by_prod):
 		for name, ov_var, default_price in pairs:
 			if name in present:
 				price, qty = present[name]
+				if price is None or price <= 0:
+					price = default_price if default_price is not None else base_price
 			else:
-				price = default_price if default_price is not None else 0.0
+				price = default_price if default_price is not None else base_price
 				qty = DEFAULT_QTY if default_price is not None else 0
+			diff = max(price - base_price, 0.0)
 			must_have = default_price is not None  # small & large
 			cond = " OR 1=1" if must_have else ""
 			lines.append(
 				f"INSERT INTO oc_product_option_value (product_option_id, product_id, option_id, option_value_id, quantity, subtract, price, price_prefix, points, points_prefix, weight, weight_prefix) "
-				f"SELECT @poid, @pid, @opt_id, {ov_var}, {max(qty,0)}, 1, {price:.2f}, '=', 0, '+', 0, '+' FROM DUAL WHERE @poid IS NOT NULL AND ((SELECT 1 FROM DUAL WHERE {1 if name in present else 0}=1){cond});"
+				f"SELECT @poid, @pid, @opt_id, {ov_var}, {max(qty,0)}, 1, {diff:.2f}, '+', 0, '+', 0, '+' FROM DUAL WHERE @poid IS NOT NULL AND ((SELECT 1 FROM DUAL WHERE {1 if name in present else 0}=1){cond});"
 			)
 
 		# Update product base price and stock status
