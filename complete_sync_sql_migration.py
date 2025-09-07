@@ -259,10 +259,10 @@ ALTER TABLE oc_attribute AUTO_INCREMENT = 1;
         seo_kw = (product.get('seo') or '').strip()
         if seo_kw:
             safe_kw = seo_kw.replace("'", "\\'")
-            # Remove any existing for this query to avoid duplicates
-            sql_content += f"DELETE FROM oc_seo_url WHERE query='product_id={product_id}';\n"
-            sql_content += f"INSERT INTO oc_seo_url (store_id, language_id, query, keyword) VALUES (0, 1, 'product_id={product_id}', '{safe_kw}');\n"
-            sql_content += f"INSERT INTO oc_seo_url (store_id, language_id, query, keyword) VALUES (0, 2, 'product_id={product_id}', '{safe_kw}');\n"
+            # OC4 schema uses key/value instead of query
+            sql_content += f"DELETE FROM oc_seo_url WHERE `key`='product_id' AND `value`='{product_id}';\n"
+            sql_content += f"INSERT INTO oc_seo_url (store_id, language_id, `key`, `value`, keyword) VALUES (0, 1, 'product_id', '{product_id}', '{safe_kw}');\n"
+            sql_content += f"INSERT INTO oc_seo_url (store_id, language_id, `key`, `value`, keyword) VALUES (0, 2, 'product_id', '{product_id}', '{safe_kw}');\n"
         product_id += 1
     
     # Add attributes with proper localization
