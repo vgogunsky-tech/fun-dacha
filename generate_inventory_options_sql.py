@@ -14,7 +14,7 @@ SMALL_RU = 'Маленький  пакет'
 MEDIUM_RU = 'Средний  пакет'
 LARGE_RU = 'Большой  пакет'
 
-# English fallbacks to ensure rendering when store language is English
+# English fallbacks
 OPTION_EN = 'Package'
 SMALL_EN = 'Small pack'
 MEDIUM_EN = 'Medium pack'
@@ -56,7 +56,6 @@ def write_sql(by_prod):
 		"SET @opt_id := (SELECT option_id FROM oc_option_description WHERE name IN ('Пакет','Package') LIMIT 1);",
 		"INSERT INTO oc_option (type, sort_order) SELECT 'select', 0 FROM DUAL WHERE @opt_id IS NULL;",
 		"SET @opt_id := IFNULL(@opt_id, LAST_INSERT_ID());",
-		# Descriptions for EN, UA, RU
 		f"INSERT IGNORE INTO oc_option_description (option_id, language_id, name) VALUES (@opt_id, {LANG_EN}, '{OPTION_EN}');",
 		f"INSERT IGNORE INTO oc_option_description (option_id, language_id, name) VALUES (@opt_id, {LANG_UA}, 'Пакет');",
 		f"INSERT IGNORE INTO oc_option_description (option_id, language_id, name) VALUES (@opt_id, {LANG_RU}, 'Пакет');",
@@ -87,7 +86,6 @@ def write_sql(by_prod):
 		""
 	]
 
-	# Per product, attach option and values with prices
 	def parse_price(s):
 		try:
 			return float(s)
@@ -97,13 +95,14 @@ def write_sql(by_prod):
 	for model, variants in by_prod.items():
 		lines += [
 			f"-- Attach options for product model={model}",
-			f"SET @pid := (SELECT product_id FROM oc_product WHERE model='{model}' LIMIT 1);",
+			f"SET @pid := (SELECT product_id FROM oc_product WHERE model='{model}' OR sku='{model}' LIMIT 1);",
 			"INSERT INTO oc_product_option (product_id, option_id, required) SELECT @pid, @opt_id, 1 FROM DUAL WHERE @pid IS NOT NULL AND NOT EXISTS (SELECT 1 FROM oc_product_option WHERE product_id=@pid AND option_id=@opt_id);",
 			"SET @poid := (SELECT product_option_id FROM oc_product_option WHERE product_id=@pid AND option_id=@opt_id LIMIT 1);",
 			"DELETE FROM oc_product_option_value WHERE product_id=@pid AND option_id=@opt_id;",
 		]
 
 		present = {}
+		qty_sum = 0
 		for v in variants:
 			tua = (v.get('title_ua') or '').strip()
 			price = parse_price(v.get('original_price'))
@@ -113,6 +112,7 @@ def write_sql(by_prod):
 			except:
 				qty = 0
 			present[tua] = (price, qty)
+			qty_sum += max(qty, 0)
 
 		pairs = [
 			(SMALL_UA, '@ov_small'),
@@ -125,9 +125,13 @@ def write_sql(by_prod):
 			cond = " OR 1=1" if must_have else ""
 			lines.append(
 				f"INSERT INTO oc_product_option_value (product_option_id, product_id, option_id, option_value_id, quantity, subtract, price, price_prefix, points, points_prefix, weight, weight_prefix) "
-				f"SELECT @poid, @pid, @opt_id, {ov_var}, {max(qty,0)}, 1, {price:.2f}, '=', 0, '+', 0, '+' FROM DUAL WHERE @poid IS NOT NULL AND ((SELECT 1 FROM DUAL WHERE {1 if name in present else 0}=1){cond});"
+				f"SELECT @poid, @pid, @opt_id, {ov_var}, {max(qty,0)}, 1, {price:.2f}, '+', 0, '+', 0, '+' FROM DUAL WHERE @poid IS NOT NULL AND ((SELECT 1 FROM DUAL WHERE {1 if name in present else 0}=1){cond});"
 			)
-		lines.append("")
+
+		# Update product quantity and stock_status by aggregated qty
+		lines.append(
+			f"UPDATE oc_product SET quantity = {qty_sum}, stock_status_id = (CASE WHEN {qty_sum} > 0 THEN 5 ELSE 8 END) WHERE product_id=@pid;\n"
+		)
 
 	OUT_SQL.write_text("\n".join(lines), encoding='utf-8')
 	print(f"Wrote SQL to {OUT_SQL}")
