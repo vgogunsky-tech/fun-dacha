@@ -182,7 +182,7 @@ ALTER TABLE oc_attribute AUTO_INCREMENT = 1;
         cat_id = category_mapping[old_id]
         sql_content += f"INSERT INTO oc_category_path (category_id, path_id, level) VALUES ({cat_id}, {cat_id}, 0);\n"
     
-    # Add products with images and timestamps
+    # Add products with images and timestamps (respect new CSV fields)
     sql_content += "\n-- Insert products with images and timestamps\n"
     product_id = 1
     for product in products:
@@ -191,19 +191,33 @@ ALTER TABLE oc_attribute AUTO_INCREMENT = 1;
         if product.get('category_id') and int(product['category_id']) in category_mapping:
             category_id = category_mapping[int(product['category_id'])]
         
-        # Get inventory data
-        price = 0.0
+        # Determine pricing and quantity
+        # Prefer explicit CSV price if provided, else inventory
+        price_csv = (product.get('price') or '').strip()
+        price = float(price_csv) if price_csv not in (None, '',) else 0.0
         quantity = 10
         if product_id in inventory:
-            price = inventory[product_id]['price']
+            if price == 0.0:
+                price = inventory[product_id]['price']
             quantity = inventory[product_id]['quantity']
         
         # Get image path
         image_name = product.get('primary_image', '')
         image_path = f"catalog/product/{image_name}" if image_name else ""
         
-        model = product.get('product_id', f'PROD-{product_id}').replace("'", "\\'")
-        sql_content += f"INSERT INTO oc_product (product_id, model, sku, quantity, stock_status_id, manufacturer_id, shipping, price, points, tax_class_id, date_available, weight, weight_class_id, length, width, height, length_class_id, subtract, minimum, sort_order, status, image, date_added, date_modified) VALUES ({product_id}, '{model}', '{model}', {quantity}, 5, 0, 1, {price}, 0, 0, '{current_date}', 0.0, 1, 0.0, 0.0, 0.0, 1, 1, 1, {product_id}, 1, '{image_path}', '{current_time}', '{current_time}');\n"
+        # Model from CSV 'model' or fallback to product_id
+        model_val = (product.get('model') or product.get('product_id') or f'PROD-{product_id}').replace("'", "\\'")
+        # Weight and dimensions from CSV if present
+        weight_val = (product.get('weight') or '').strip()
+        length_val = (product.get('length') or '').strip()
+        width_val = (product.get('width') or '').strip()
+        height_val = (product.get('height') or '').strip()
+        weight_sql = float(weight_val) if weight_val not in ('', None) else 0.0
+        length_sql = float(length_val) if length_val not in ('', None) else 0.0
+        width_sql = float(width_val) if width_val not in ('', None) else 0.0
+        height_sql = float(height_val) if height_val not in ('', None) else 0.0
+        # OpenCart requires model; sku optional – set sku=model for visibility
+        sql_content += f"INSERT INTO oc_product (product_id, model, sku, quantity, stock_status_id, manufacturer_id, shipping, price, points, tax_class_id, date_available, weight, length, width, height, subtract, minimum, sort_order, status, image, date_added, date_modified) VALUES ({product_id}, '{model_val}', '{model_val}', {quantity}, 5, 0, 1, {price}, 0, 0, '{current_date}', {weight_sql}, {length_sql}, {width_sql}, {height_sql}, 1, 1, {product_id}, 1, '{image_path}', '{current_time}', '{current_time}');\n"
         product_id += 1
     
     # Add product descriptions with localized tags
@@ -233,7 +247,7 @@ ALTER TABLE oc_attribute AUTO_INCREMENT = 1;
         sql_content += f"INSERT INTO oc_product_description (product_id, language_id, name, description, tag, meta_title, meta_description, meta_keyword) VALUES ({product_id}, 1, '{name_ru}', '{desc_ru}', '{tags_ru}', '{name_ru}', '{meta_desc_ru}', '{tags_ru}');\n"
         product_id += 1
     
-    # Add product to category relationships
+    # Add product to category relationships and SEO URLs (if provided)
     sql_content += "\n-- Insert product to category relationships\n"
     product_id = 1
     for product in products:
@@ -241,6 +255,14 @@ ALTER TABLE oc_attribute AUTO_INCREMENT = 1;
         if product.get('category_id') and int(product['category_id']) in category_mapping:
             category_id = category_mapping[int(product['category_id'])]
         sql_content += f"INSERT INTO oc_product_to_category (product_id, category_id) VALUES ({product_id}, {category_id});\n"
+        # SEO keyword from CSV 'seo' (same for both languages if provided)
+        seo_kw = (product.get('seo') or '').strip()
+        if seo_kw:
+            safe_kw = seo_kw.replace("'", "\\'")
+            # Remove any existing for this query to avoid duplicates
+            sql_content += f"DELETE FROM oc_seo_url WHERE query='product_id={product_id}';\n"
+            sql_content += f"INSERT INTO oc_seo_url (store_id, language_id, query, keyword) VALUES (0, 1, 'product_id={product_id}', '{safe_kw}');\n"
+            sql_content += f"INSERT INTO oc_seo_url (store_id, language_id, query, keyword) VALUES (0, 2, 'product_id={product_id}', '{safe_kw}');\n"
         product_id += 1
     
     # Add attributes with proper localization
