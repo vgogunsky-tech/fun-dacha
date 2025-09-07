@@ -1,0 +1,12 @@
+# Generated SQL artifacts
+complete_sync_migration.sql
+inventory_options.sql
+
+# Logs
+*.log
+
+# Local data caches
+opencart-docker/db_data/
+opencart-docker/opencart_data/
+opencart-docker/opencart.db
+
