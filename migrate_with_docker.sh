@@ -108,11 +108,13 @@ if [ -f ../localization/install.sql ]; then
   echo "📥 Applying localisation SQL (schema-aware cleanup and fixes)..."
   # Use awk (portable) to:
   #  - drop legacy oc_country.name updates (schema without name column)
+  #  - drop legacy oc_zone.name updates (schema without name column)
   #  - fix malformed WHERE clause missing key column for config_currency
   awk 'BEGIN{IGNORECASE=1}
     {
       line=$0;
       if (line ~ /UPDATE[[:space:]]+`?oc_country`?[[:space:]]+SET[[:space:]]+`?name`?/) next;
+      if (line ~ /UPDATE[[:space:]]+`?oc_zone`?[[:space:]]+SET[[:space:]]+`?name`?/) next;
       gsub(/WHERE[[:space:]]*=\x27config_currency\x27/, "WHERE `key`=\x27config_currency\x27", line);
       print line;
     }
