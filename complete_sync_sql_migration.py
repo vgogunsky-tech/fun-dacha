@@ -122,6 +122,10 @@ USE opencart;
 SET @OLD_FK_CHECKS := @@FOREIGN_KEY_CHECKS;
 SET FOREIGN_KEY_CHECKS = 0;
 
+-- Resolve language ids dynamically by code (OC3/OC4 compatible)
+SET @lang_ua := (SELECT language_id FROM oc_language WHERE code='uk-ua' LIMIT 1);
+SET @lang_en := (SELECT language_id FROM oc_language WHERE code='en-gb' LIMIT 1);
+
 -- Complete sync: Remove all existing data first
 -- Remove all product relationships and descriptions
 DELETE FROM oc_product_option_value;
@@ -191,9 +195,9 @@ ALTER TABLE oc_option_value AUTO_INCREMENT = 1;
         
         meta_desc = description[:250] if len(description) > 250 else description
         
-        sql_content += f"INSERT INTO oc_category_description (category_id, language_id, name, description, meta_title, meta_description, meta_keyword) VALUES ({cat_id}, 2, '{name}', '{description}', '{name}', '{meta_desc}', '{tag}');\n"
+        sql_content += f"INSERT INTO oc_category_description (category_id, language_id, name, description, meta_title, meta_description, meta_keyword) SELECT {cat_id}, @lang_ua, '{name}', '{description}', '{name}', '{meta_desc}', '{tag}' WHERE @lang_ua IS NOT NULL;\n"
     
-    sql_content += "\n-- Insert category descriptions (Russian)\n"
+    sql_content += "\n-- Insert category descriptions (English fallback to UA text)\n"
     for old_id, cat_data in categories.items():
         cat_id = category_mapping[old_id]
         name = cat_data['name'].replace("'", "\\'")
@@ -202,7 +206,7 @@ ALTER TABLE oc_option_value AUTO_INCREMENT = 1;
         
         meta_desc = description[:250] if len(description) > 250 else description
         
-        sql_content += f"INSERT INTO oc_category_description (category_id, language_id, name, description, meta_title, meta_description, meta_keyword) VALUES ({cat_id}, 1, '{name}', '{description}', '{name}', '{meta_desc}', '{tag}');\n"
+        sql_content += f"INSERT INTO oc_category_description (category_id, language_id, name, description, meta_title, meta_description, meta_keyword) SELECT {cat_id}, @lang_en, '{name}', '{description}', '{name}', '{meta_desc}', '{tag}' WHERE @lang_en IS NOT NULL;\n"
     
     sql_content += "\n-- Insert category paths\n"
     for old_id, cat_data in categories.items():
@@ -280,20 +284,20 @@ ALTER TABLE oc_option_value AUTO_INCREMENT = 1;
         
         meta_desc_ua = desc_ua[:250] if len(desc_ua) > 250 else desc_ua
         
-        sql_content += f"INSERT INTO oc_product_description (product_id, language_id, name, description, tag, meta_title, meta_description, meta_keyword) VALUES ({product_id}, 2, '{name_ua}', '{desc_ua}', '{tags_ua}', '{name_ua}', '{meta_desc_ua}', '{tags_ua}');\n"
+        sql_content += f"INSERT INTO oc_product_description (product_id, language_id, name, description, tag, meta_title, meta_description, meta_keyword) SELECT {product_id}, @lang_ua, '{name_ua}', '{desc_ua}', '{tags_ua}', '{name_ua}', '{meta_desc_ua}', '{tags_ua}' WHERE @lang_ua IS NOT NULL;\n"
         product_id += 1
     
-    sql_content += "\n-- Insert product descriptions (Russian) with localized tags\n"
+    sql_content += "\n-- Insert product descriptions (English fallback to UA text)\n"
     product_id = 1
     for product in products:
-        name_ru = product.get('Название (рус)', '').replace("'", "\\'")
-        desc_ru = product.get('Описание (рус)', '').replace("'", "\\'")
+        name_en = product.get('Название (укр)', '').replace("'", "\\'")
+        desc_en = product.get('Описание (укр)', '').replace("'", "\\'")
         tags_string = product.get('tags', '')
-        tags_ru = localize_tags(tags_string, 1).replace("'", "\\'")
+        tags_en = localize_tags(tags_string, 2).replace("'", "\\'")
         
-        meta_desc_ru = desc_ru[:250] if len(desc_ru) > 250 else desc_ru
+        meta_desc_en = desc_en[:250] if len(desc_en) > 250 else desc_en
         
-        sql_content += f"INSERT INTO oc_product_description (product_id, language_id, name, description, tag, meta_title, meta_description, meta_keyword) VALUES ({product_id}, 1, '{name_ru}', '{desc_ru}', '{tags_ru}', '{name_ru}', '{meta_desc_ru}', '{tags_ru}');\n"
+        sql_content += f"INSERT INTO oc_product_description (product_id, language_id, name, description, tag, meta_title, meta_description, meta_keyword) SELECT {product_id}, @lang_en, '{name_en}', '{desc_en}', '{tags_en}', '{name_en}', '{meta_desc_en}', '{tags_en}' WHERE @lang_en IS NOT NULL;\n"
         product_id += 1
     
     # Add product to category relationships and SEO URLs (if provided)
@@ -311,14 +315,14 @@ ALTER TABLE oc_option_value AUTO_INCREMENT = 1;
             if sub_old in category_mapping:
                 sub_new = category_mapping[sub_old]
                 sql_content += f"INSERT INTO oc_product_to_category (product_id, category_id) VALUES ({product_id}, {sub_new});\n"
-        # SEO keyword from CSV 'seo' (same for both languages if provided)
+        # SEO keyword from CSV 'seo' (set for both languages if provided)
         seo_kw = (product.get('seo') or '').strip()
         if seo_kw:
             safe_kw = seo_kw.replace("'", "\\'")
             # OC4 schema uses key/value instead of query
             sql_content += f"DELETE FROM oc_seo_url WHERE `key`='product_id' AND `value`='{product_id}';\n"
-            sql_content += f"INSERT INTO oc_seo_url (store_id, language_id, `key`, `value`, keyword) VALUES (0, 1, 'product_id', '{product_id}', '{safe_kw}');\n"
-            sql_content += f"INSERT INTO oc_seo_url (store_id, language_id, `key`, `value`, keyword) VALUES (0, 2, 'product_id', '{product_id}', '{safe_kw}');\n"
+            sql_content += f"INSERT INTO oc_seo_url (store_id, language_id, `key`, `value`, keyword) SELECT 0, @lang_en, 'product_id', '{product_id}', '{safe_kw}' WHERE @lang_en IS NOT NULL;\n"
+            sql_content += f"INSERT INTO oc_seo_url (store_id, language_id, `key`, `value`, keyword) SELECT 0, @lang_ua, 'product_id', '{product_id}', '{safe_kw}' WHERE @lang_ua IS NOT NULL;\n"
         product_id += 1
     
     # Add attributes with proper localization
