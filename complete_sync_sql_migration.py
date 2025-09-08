@@ -118,6 +118,10 @@ def generate_complete_sync_sql():
 
 USE opencart;
 
+-- Disable foreign key checks during full refresh to avoid constraint issues
+SET @OLD_FK_CHECKS := @@FOREIGN_KEY_CHECKS;
+SET FOREIGN_KEY_CHECKS = 0;
+
 -- Complete sync: Remove all existing data first
 -- Remove all product relationships and descriptions
 DELETE FROM oc_product_option_value;
@@ -362,6 +366,9 @@ UPDATE oc_product SET price = 0.01 WHERE price IS NULL OR price = 0;
 UPDATE oc_product SET quantity = GREATEST(COALESCE(quantity,0),0) WHERE product_id > 0;
 """
     
+    # Re-enable FK checks at end
+    sql_content += "\nSET FOREIGN_KEY_CHECKS = IFNULL(@OLD_FK_CHECKS, 1);\n"
+
     # Write SQL file
     with open('complete_sync_migration.sql', 'w', encoding='utf-8') as f:
         f.write(sql_content)

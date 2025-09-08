@@ -121,15 +121,7 @@ INSERT INTO oc_setting (store_id, `code`, `key`, `value`, serialized) SELECT 0, 
 INSERT INTO oc_setting (store_id, `code`, `key`, `value`, serialized) SELECT 0, 'config', 'config_admin_language', 'uk-ua', 0 FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM oc_setting WHERE store_id=0 AND `key`='config_admin_language');
 " | cat
 
-# Remove non-UA content from description tables (language_id depends on schema; keep both if present)
-docker compose exec -T db mysql -u root -pexample opencart -e "
-SET @lang_ua := (SELECT language_id FROM oc_language WHERE code='uk-ua' LIMIT 1);
-DELETE FROM oc_product_description WHERE @lang_ua IS NOT NULL AND language_id <> @lang_ua;
-DELETE FROM oc_category_description WHERE @lang_ua IS NOT NULL AND language_id <> @lang_ua;
-DELETE FROM oc_attribute_description WHERE @lang_ua IS NOT NULL AND language_id <> @lang_ua;
-DELETE FROM oc_option_description WHERE @lang_ua IS NOT NULL AND language_id <> @lang_ua;
-DELETE FROM oc_option_value_description WHERE @lang_ua IS NOT NULL AND language_id <> @lang_ua;
-" | cat
+# Do NOT delete other language rows here; main SQL may insert multiple languages
 
 # Normalize country name to Ukrainian (ensure records exist, schema-aware) – after languages set
 echo "🗺️  Normalizing country name for UA to 'Україна'..."
@@ -163,11 +155,11 @@ docker compose exec web bash -lc "rm -rf /var/www/html/system/storage/cache/* /v
 
 # Import main migration SQL
 echo "📥 Importing main migration SQL..."
-docker compose exec -T db mysql -u root -pexample opencart < ../complete_sync_migration.sql
+docker compose exec -T db mysql -u root -pexample --force opencart < ../complete_sync_migration.sql
 
 # Apply inventory options SQL
 echo "🧩 Applying inventory options SQL..."
-docker compose exec -T db mysql -u root -pexample opencart < ../inventory_options.sql
+docker compose exec -T db mysql -u root -pexample --force opencart < ../inventory_options.sql
 
 echo "💱 Enforcing UAH as the only/default currency across settings..."
 docker compose exec -T db mysql -u root -pexample opencart -e "
