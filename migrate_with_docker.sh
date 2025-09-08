@@ -66,36 +66,7 @@ fi
 
 echo "✅ Database connection successful"
 
-# Normalize country name to Ukrainian (ensure records exist, schema-aware)
-echo "🗺️  Normalizing country name for UA to 'Україна'..."
-# Ensure UA country exists in oc_country
-docker compose exec -T db mysql -u root -pexample opencart -e "
-SET @cid := (SELECT country_id FROM oc_country WHERE iso_code_2='UA' LIMIT 1);
-INSERT INTO oc_country (country_id, iso_code_2, iso_code_3, address_format_id, postcode_required, status)
-SELECT 804, 'UA', 'UKR', 0, 0, 1 FROM DUAL WHERE @cid IS NULL;
-SET @cid := COALESCE(@cid, 804);
-" | cat
-
-# Prefer OC4-style descriptions; fallback to legacy oc_country.name if present
-if docker compose exec -T db mysql -u root -pexample opencart -e "SHOW TABLES LIKE 'oc_country_description';" | grep -q oc_country_description; then
-  docker compose exec -T db mysql -u root -pexample opencart -e "
-  SET @lang_ua := (SELECT language_id FROM oc_language WHERE code='uk-ua' LIMIT 1);
-  -- Ensure description row exists then update to Україна for Ukrainian
-  INSERT INTO oc_country_description (country_id, language_id, name)
-  SELECT @cid, @lang_ua, 'Україна'
-  WHERE @lang_ua IS NOT NULL AND NOT EXISTS (
-    SELECT 1 FROM oc_country_description WHERE country_id=@cid AND language_id=@lang_ua
-  );
-  UPDATE oc_country_description SET name='Україна' WHERE country_id=@cid AND language_id=@lang_ua;
-  " | cat
-else
-  # Legacy schemas: update name column if present
-  if docker compose exec -T db mysql -u root -pexample opencart -e "SHOW COLUMNS FROM oc_country LIKE 'name';" | grep -q name; then
-    docker compose exec -T db mysql -u root -pexample opencart -e "
-    UPDATE oc_country SET name='Україна' WHERE iso_code_2='UA' OR name='Ukraine';
-    " | cat
-  fi
-fi
+# (Country normalization moved below after languages are ensured)
 
 # Apply localisation files (copy upload/ into web root) and SQL if available
 if [ -d ../localization/upload ]; then
@@ -159,6 +130,32 @@ DELETE FROM oc_attribute_description WHERE @lang_ua IS NOT NULL AND language_id 
 DELETE FROM oc_option_description WHERE @lang_ua IS NOT NULL AND language_id <> @lang_ua;
 DELETE FROM oc_option_value_description WHERE @lang_ua IS NOT NULL AND language_id <> @lang_ua;
 " | cat
+
+# Normalize country name to Ukrainian (ensure records exist, schema-aware) – after languages set
+echo "🗺️  Normalizing country name for UA to 'Україна'..."
+docker compose exec -T db mysql -u root -pexample opencart -e "
+SET @cid := (SELECT country_id FROM oc_country WHERE iso_code_2='UA' LIMIT 1);
+INSERT INTO oc_country (country_id, iso_code_2, iso_code_3, address_format_id, postcode_required, status)
+SELECT 804, 'UA', 'UKR', 0, 0, 1 FROM DUAL WHERE @cid IS NULL;
+SET @cid := COALESCE(@cid, 804);
+SET @lang_ua := (SELECT language_id FROM oc_language WHERE code='uk-ua' LIMIT 1);
+CREATE TEMPORARY TABLE IF NOT EXISTS tmp_flag (ok INT);
+DELETE FROM tmp_flag;
+INSERT INTO tmp_flag VALUES (1);
+" | cat
+
+if docker compose exec -T db mysql -u root -pexample opencart -e "SHOW TABLES LIKE 'oc_country_description';" | grep -q oc_country_description; then
+  docker compose exec -T db mysql -u root -pexample opencart -e "
+  SET @cid := (SELECT country_id FROM oc_country WHERE iso_code_2='UA' LIMIT 1);
+  SET @lang_ua := (SELECT language_id FROM oc_language WHERE code='uk-ua' LIMIT 1);
+  INSERT INTO oc_country_description (country_id, language_id, name)
+  SELECT @cid, @lang_ua, 'Україна'
+  WHERE @cid IS NOT NULL AND @lang_ua IS NOT NULL AND NOT EXISTS (
+    SELECT 1 FROM oc_country_description WHERE country_id=@cid AND language_id=@lang_ua
+  );
+  UPDATE oc_country_description SET name='Україна' WHERE country_id=@cid AND language_id=@lang_ua;
+  " | cat
+fi
 
 # Clear caches to avoid stale language data
 echo "🧼 Clearing caches..."

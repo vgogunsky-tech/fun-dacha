@@ -347,15 +347,19 @@ ALTER TABLE oc_option_value AUTO_INCREMENT = 1;
             sql_content += f"INSERT INTO oc_attribute_description (attribute_id, language_id, name) VALUES ({attribute_id}, 1, '{name_ru}');\n"
             attribute_id += 1
     
-    # Add display fixes
+    # Add display + visibility fixes (ensure products are attached to default store and have price/quantity)
     sql_content += f"""
--- Fix product display issues
+-- Fix product and category visibility
 UPDATE oc_product SET status = 1 WHERE product_id > 0;
 UPDATE oc_category SET status = 1 WHERE category_id > 0;
 INSERT IGNORE INTO oc_product_to_store (product_id, store_id) SELECT product_id, 0 FROM oc_product WHERE product_id > 0;
 INSERT IGNORE INTO oc_category_to_store (category_id, store_id) SELECT category_id, 0 FROM oc_category WHERE category_id > 0;
 UPDATE oc_product SET stock_status_id = 5 WHERE product_id > 0;
 UPDATE oc_product SET date_available = '{current_date}' WHERE product_id > 0;
+-- Ensure non-zero price for listing (fallback to 0.01 if zero)
+UPDATE oc_product SET price = 0.01 WHERE price IS NULL OR price = 0;
+-- Ensure non-negative quantity
+UPDATE oc_product SET quantity = GREATEST(COALESCE(quantity,0),0) WHERE product_id > 0;
 """
     
     # Write SQL file
