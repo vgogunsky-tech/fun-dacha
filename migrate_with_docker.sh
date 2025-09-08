@@ -105,10 +105,18 @@ if [ -d ../localization/upload ]; then
 fi
 
 if [ -f ../localization/install.sql ]; then
-  echo "📥 Applying localisation SQL (schema-aware, ignoring legacy oc_country.name updates)..."
-  # Filter out legacy updates that reference non-existent oc_country.name using awk (portable)
-  awk 'BEGIN{IGNORECASE=1} !($0 ~ /UPDATE[[:space:]]+`?oc_country`?[[:space:]]+SET[[:space:]]+`?name`?/) {print}' \
-    ../localization/install.sql > /tmp/localization_install_filtered.sql
+  echo "📥 Applying localisation SQL (schema-aware cleanup and fixes)..."
+  # Use awk (portable) to:
+  #  - drop legacy oc_country.name updates (schema without name column)
+  #  - fix malformed WHERE clause missing key column for config_currency
+  awk 'BEGIN{IGNORECASE=1}
+    {
+      line=$0;
+      if (line ~ /UPDATE[[:space:]]+`?oc_country`?[[:space:]]+SET[[:space:]]+`?name`?/) next;
+      gsub(/WHERE[[:space:]]*=\x27config_currency\x27/, "WHERE `key`=\x27config_currency\x27", line);
+      print line;
+    }
+  ' ../localization/install.sql > /tmp/localization_install_filtered.sql
   # Apply with --force so non-critical warnings don't stop execution
   docker compose exec -T db sh -lc "mysql -u root -pexample --force opencart" < /tmp/localization_install_filtered.sql
 fi
