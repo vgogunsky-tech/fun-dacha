@@ -66,6 +66,26 @@ fi
 
 echo "✅ Database connection successful"
 
+# Normalize country name to Ukrainian (schema-aware)
+echo "🗺️  Normalizing country name for UA to 'Україна'..."
+# Try OC4 style (oc_country_description)
+if docker compose exec -T db mysql -u root -pexample opencart -e "SHOW COLUMNS FROM oc_country_description LIKE 'name';" | grep -q name; then
+  docker compose exec -T db mysql -u root -pexample opencart -e "
+  SET @lang := (SELECT language_id FROM oc_language WHERE code='uk-ua' LIMIT 1);
+  UPDATE oc_country_description cd
+  JOIN oc_country c ON c.country_id = cd.country_id
+  SET cd.name = 'Україна'
+  WHERE c.iso_code_2 = 'UA' AND (@lang IS NULL OR cd.language_id = @lang);
+  " | cat
+else
+  # Fallback: older schemas may store name directly in oc_country
+  if docker compose exec -T db mysql -u root -pexample opencart -e "SHOW COLUMNS FROM oc_country LIKE 'name';" | grep -q name; then
+    docker compose exec -T db mysql -u root -pexample opencart -e "
+    UPDATE oc_country SET name='Україна' WHERE iso_code_2='UA' OR name='Ukraine';
+    " | cat
+  fi
+fi
+
 # Apply localisation files (copy upload/ into web root) and SQL if available
 if [ -d ../localization/upload ]; then
   echo "📦 Copying localisation files into container..."
