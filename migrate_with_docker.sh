@@ -122,25 +122,40 @@ if [ -f ../localization/install.sql ]; then
 fi
 
 echo "🌍 Resetting languages (keep en-gb fallback) and enforcing defaults..."
-docker compose exec -T db mysql -u root -pexample opencart -e "
--- Remove existing languages to avoid duplicates
-DELETE FROM oc_language;
--- Insert Ukrainian and English (fallback)
-INSERT INTO oc_language (language_id, name, code, locale, image, directory, sort_order, status) VALUES 
-(2, 'Українська', 'uk-ua', 'uk_UA.UTF-8,uk_UA,uk-ua,ukrainian', 'ua.png', 'uk-ua', 1, 1),
-(1, 'English', 'en-gb', 'en_GB.UTF-8,en_GB,en-gb,english', 'gb.png', 'english', 0, 1);
+# Detect oc_language schema (OC3 vs OC4). OC3 has columns image,directory; OC4 does not.
+if docker compose exec -T db mysql -u root -pexample opencart -e "SHOW COLUMNS FROM oc_language LIKE 'image';" | grep -q image; then
+  docker compose exec -T db mysql -u root -pexample opencart -e "
+  -- OC3-style: image,directory present
+  DELETE FROM oc_language;
+  INSERT INTO oc_language (language_id, name, code, locale, image, directory, sort_order, status) VALUES 
+  (2, 'Українська', 'uk-ua', 'uk_UA.UTF-8,uk_UA,uk-ua,ukrainian', 'ua.png', 'uk-ua', 1, 1),
+  (1, 'English', 'en-gb', 'en_GB.UTF-8,en_GB,en-gb,english', 'gb.png', 'english', 0, 1);
+  " | cat
+else
+  docker compose exec -T db mysql -u root -pexample opencart -e "
+  -- OC4-style: no image,directory columns
+  DELETE FROM oc_language;
+  INSERT INTO oc_language (name, code, locale, sort_order, status) VALUES 
+  ('Українська', 'uk-ua', 'uk_UA.UTF-8,uk_UA,uk-ua,ukrainian', 1, 1),
+  ('English', 'en-gb', 'en_GB.UTF-8,en_GB,en-gb,english', 0, 1);
+  " | cat
+fi
 
--- Update settings to use Ukrainian for all stores
+# Update settings to use Ukrainian for all stores (codes, not ids)
+docker compose exec -T db mysql -u root -pexample opencart -e "
 UPDATE oc_setting SET value='uk-ua' WHERE `key` IN ('config_language','config_admin_language');
 INSERT INTO oc_setting (store_id, `code`, `key`, `value`, serialized) SELECT 0, 'config', 'config_language', 'uk-ua', 0 FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM oc_setting WHERE store_id=0 AND `key`='config_language');
 INSERT INTO oc_setting (store_id, `code`, `key`, `value`, serialized) SELECT 0, 'config', 'config_admin_language', 'uk-ua', 0 FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM oc_setting WHERE store_id=0 AND `key`='config_admin_language');
+" | cat
 
--- Remove non-UA content from description tables
-DELETE FROM oc_product_description WHERE language_id <> 2;
-DELETE FROM oc_category_description WHERE language_id <> 2;
-DELETE FROM oc_attribute_description WHERE language_id <> 2;
-DELETE FROM oc_option_description WHERE language_id <> 2;
-DELETE FROM oc_option_value_description WHERE language_id <> 2;
+# Remove non-UA content from description tables (language_id depends on schema; keep both if present)
+docker compose exec -T db mysql -u root -pexample opencart -e "
+SET @lang_ua := (SELECT language_id FROM oc_language WHERE code='uk-ua' LIMIT 1);
+DELETE FROM oc_product_description WHERE @lang_ua IS NOT NULL AND language_id <> @lang_ua;
+DELETE FROM oc_category_description WHERE @lang_ua IS NOT NULL AND language_id <> @lang_ua;
+DELETE FROM oc_attribute_description WHERE @lang_ua IS NOT NULL AND language_id <> @lang_ua;
+DELETE FROM oc_option_description WHERE @lang_ua IS NOT NULL AND language_id <> @lang_ua;
+DELETE FROM oc_option_value_description WHERE @lang_ua IS NOT NULL AND language_id <> @lang_ua;
 " | cat
 
 # Clear caches to avoid stale language data
