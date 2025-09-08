@@ -131,9 +131,6 @@ INSERT INTO oc_country (country_id, iso_code_2, iso_code_3, address_format_id, p
 SELECT 804, 'UA', 'UKR', 0, 0, 1 FROM DUAL WHERE @cid IS NULL;
 SET @cid := COALESCE(@cid, 804);
 SET @lang_ua := (SELECT language_id FROM oc_language WHERE code='uk-ua' LIMIT 1);
-CREATE TEMPORARY TABLE IF NOT EXISTS tmp_flag (ok INT);
-DELETE FROM tmp_flag;
-INSERT INTO tmp_flag VALUES (1);
 " | cat
 
 if docker compose exec -T db mysql -u root -pexample opencart -e "SHOW TABLES LIKE 'oc_country_description';" | grep -q oc_country_description; then
