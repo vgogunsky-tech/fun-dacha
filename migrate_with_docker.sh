@@ -21,6 +21,11 @@ python3 complete_sync_sql_migration.py | cat
 echo "🔧 Generating inventory options SQL from inventory.csv..."
 python3 generate_inventory_options_sql.py | cat
 
+# Install Ukrainian localisation if present
+if [ -d localization/upload ] || [ -f localization/install.sql ]; then
+  echo "🌐 Ukrainian localisation detected. Installing..."
+fi
+
 # Stage images from data/ into opencart-docker/opencart_data for copying
 echo "🖼️  Staging images from data/images into opencart-docker/opencart_data..."
 mkdir -p opencart-docker/opencart_data/image/catalog/product
@@ -61,17 +66,29 @@ fi
 
 echo "✅ Database connection successful"
 
+# Apply localisation files (copy upload/ into web root) and SQL if available
+if [ -d ../localization/upload ]; then
+  echo "📦 Copying localisation files into container..."
+  docker compose cp ../localization/upload/. web:/var/www/html/
+  docker compose exec web bash -lc "chown -R www-data:www-data /var/www/html"
+fi
+
+if [ -f ../localization/install.sql ]; then
+  echo "📥 Applying localisation SQL..."
+  docker compose exec -T db mysql -u root -pexample opencart < ../localization/install.sql
+fi
+
 echo "🌍 Resetting languages to Ukrainian only and enforcing defaults..."
 docker compose exec -T db mysql -u root -pexample opencart -e "
 -- Remove all languages and re-insert Ukrainian only
 DELETE FROM oc_language;
 INSERT INTO oc_language (language_id, name, code, locale, image, directory, sort_order, status) VALUES 
-(2, 'Українська', 'ua', 'uk_UA.UTF-8', 'ua.png', 'ukrainian', 1, 1);
+(2, 'Українська', 'uk-ua', 'uk_UA.UTF-8,uk_UA,uk-ua,ukrainian', 'ua.png', 'uk-ua', 1, 1);
 
 -- Update settings to use Ukrainian for all stores
-UPDATE oc_setting SET value='2' WHERE `key` IN ('config_language','config_admin_language');
-INSERT INTO oc_setting (store_id, `code`, `key`, `value`, serialized) SELECT 0, 'config', 'config_language', '2', 0 FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM oc_setting WHERE store_id=0 AND `key`='config_language');
-INSERT INTO oc_setting (store_id, `code`, `key`, `value`, serialized) SELECT 0, 'config', 'config_admin_language', '2', 0 FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM oc_setting WHERE store_id=0 AND `key`='config_admin_language');
+UPDATE oc_setting SET value='uk-ua' WHERE `key` IN ('config_language','config_admin_language');
+INSERT INTO oc_setting (store_id, `code`, `key`, `value`, serialized) SELECT 0, 'config', 'config_language', 'uk-ua', 0 FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM oc_setting WHERE store_id=0 AND `key`='config_language');
+INSERT INTO oc_setting (store_id, `code`, `key`, `value`, serialized) SELECT 0, 'config', 'config_admin_language', 'uk-ua', 0 FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM oc_setting WHERE store_id=0 AND `key`='config_admin_language');
 
 -- Remove non-UA content from description tables
 DELETE FROM oc_product_description WHERE language_id <> 2;
