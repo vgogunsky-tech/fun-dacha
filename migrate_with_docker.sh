@@ -61,12 +61,24 @@ fi
 
 echo "✅ Database connection successful"
 
-# Ensure languages UA/RU exist (minimal, schema-safe)
-echo "🌍 Ensuring languages (UA/RU) exist..."
-docker compose exec db mysql -u root -pexample opencart -e "
-INSERT IGNORE INTO oc_language (language_id, name, code, status) VALUES (2, 'Українська', 'ua', 1);
-INSERT IGNORE INTO oc_language (language_id, name, code, status) VALUES (3, 'Русский', 'ru', 1);
-UPDATE oc_language SET language_id = 1 WHERE code = 'en' AND language_id != 1;
+echo "🌍 Resetting languages to Ukrainian only and enforcing defaults..."
+docker compose exec -T db mysql -u root -pexample opencart -e "
+-- Remove all languages and re-insert Ukrainian only
+DELETE FROM oc_language;
+INSERT INTO oc_language (language_id, name, code, locale, image, directory, sort_order, status) VALUES 
+(2, 'Українська', 'ua', 'uk_UA.UTF-8', 'ua.png', 'ukrainian', 1, 1);
+
+-- Update settings to use Ukrainian for all stores
+UPDATE oc_setting SET value='2' WHERE `key` IN ('config_language','config_admin_language');
+INSERT INTO oc_setting (store_id, `code`, `key`, `value`, serialized) SELECT 0, 'config', 'config_language', '2', 0 FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM oc_setting WHERE store_id=0 AND `key`='config_language');
+INSERT INTO oc_setting (store_id, `code`, `key`, `value`, serialized) SELECT 0, 'config', 'config_admin_language', '2', 0 FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM oc_setting WHERE store_id=0 AND `key`='config_admin_language');
+
+-- Remove non-UA content from description tables
+DELETE FROM oc_product_description WHERE language_id <> 2;
+DELETE FROM oc_category_description WHERE language_id <> 2;
+DELETE FROM oc_attribute_description WHERE language_id <> 2;
+DELETE FROM oc_option_description WHERE language_id <> 2;
+DELETE FROM oc_option_value_description WHERE language_id <> 2;
 " | cat
 
 # Import main migration SQL
@@ -77,25 +89,19 @@ docker compose exec -T db mysql -u root -pexample opencart < ../complete_sync_mi
 echo "🧩 Applying inventory options SQL..."
 docker compose exec -T db mysql -u root -pexample opencart < ../inventory_options.sql
 
-# Constrain to UA language only and set UAH as sole/default currency
-echo "🌍🇺🇦 Enforcing UA language only and UAH currency..."
+echo "💱 Enforcing UAH as the only/default currency across settings..."
 docker compose exec -T db mysql -u root -pexample opencart -e "
--- Ensure UA language exists and is default
-INSERT IGNORE INTO oc_language (language_id, name, code, status) VALUES (2, 'Українська', 'ua', 1);
-UPDATE oc_setting SET value='2' WHERE `key` IN ('config_language','config_admin_language') AND store_id=0;
--- Disable/remove other languages and non-UA content
-DELETE FROM oc_product_description WHERE language_id <> 2;
-DELETE FROM oc_category_description WHERE language_id <> 2;
-DELETE FROM oc_attribute_description WHERE language_id <> 2;
-DELETE FROM oc_option_description WHERE language_id <> 2;
-DELETE FROM oc_option_value_description WHERE language_id <> 2;
-UPDATE oc_language SET status=0 WHERE language_id <> 2;
-
--- Ensure UAH currency exists and set default
+-- Ensure UAH exists and is enabled
 INSERT IGNORE INTO oc_currency (title, code, symbol_left, symbol_right, decimal_place, value, status) VALUES ('Ukrainian Hryvnia','UAH','',' ₴',2,1.00000,1);
 UPDATE oc_currency SET value=1.00000, status=1 WHERE code='UAH';
+-- Disable all other currencies
 UPDATE oc_currency SET status=0 WHERE code<>'UAH';
-UPDATE oc_setting SET value='UAH' WHERE `key`='config_currency' AND store_id=0;
+
+-- Update settings for all stores (store_id any) to UAH
+UPDATE oc_setting SET value='UAH' WHERE `key`='config_currency';
+INSERT INTO oc_setting (store_id, `code`, `key`, `value`, serialized)
+SELECT 0, 'config', 'config_currency', 'UAH', 0 FROM DUAL
+WHERE NOT EXISTS (SELECT 1 FROM oc_setting WHERE store_id=0 AND `key`='config_currency');
 " | cat
 
 # Copy images into container and set permissions
