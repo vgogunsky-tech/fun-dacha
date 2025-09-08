@@ -106,8 +106,9 @@ fi
 
 if [ -f ../localization/install.sql ]; then
   echo "📥 Applying localisation SQL (schema-aware, ignoring legacy oc_country.name updates)..."
-  # Filter out legacy updates that reference non-existent oc_country.name
-  sed -E "/UPDATE[[:space:]]+`?oc_country`?[[:space:]]+SET[[:space:]]+`?name`?/I d" ../localization/install.sql > /tmp/localization_install_filtered.sql
+  # Filter out legacy updates that reference non-existent oc_country.name using awk (portable)
+  awk 'BEGIN{IGNORECASE=1} !($0 ~ /UPDATE[[:space:]]+`?oc_country`?[[:space:]]+SET[[:space:]]+`?name`?/) {print}' \
+    ../localization/install.sql > /tmp/localization_install_filtered.sql
   # Apply with --force so non-critical warnings don't stop execution
   docker compose exec -T db sh -lc "mysql -u root -pexample --force opencart" < /tmp/localization_install_filtered.sql
 fi
