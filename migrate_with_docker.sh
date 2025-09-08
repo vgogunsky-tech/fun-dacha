@@ -113,12 +113,14 @@ if [ -f ../localization/install.sql ]; then
   docker compose exec -T db sh -lc "mysql -u root -pexample --force opencart" < /tmp/localization_install_filtered.sql
 fi
 
-echo "🌍 Resetting languages to Ukrainian only and enforcing defaults..."
+echo "🌍 Resetting languages (keep en-gb fallback) and enforcing defaults..."
 docker compose exec -T db mysql -u root -pexample opencart -e "
--- Remove all languages and re-insert Ukrainian only
+-- Remove existing languages to avoid duplicates
 DELETE FROM oc_language;
+-- Insert Ukrainian and English (fallback)
 INSERT INTO oc_language (language_id, name, code, locale, image, directory, sort_order, status) VALUES 
-(2, 'Українська', 'uk-ua', 'uk_UA.UTF-8,uk_UA,uk-ua,ukrainian', 'ua.png', 'uk-ua', 1, 1);
+(2, 'Українська', 'uk-ua', 'uk_UA.UTF-8,uk_UA,uk-ua,ukrainian', 'ua.png', 'uk-ua', 1, 1),
+(1, 'English', 'en-gb', 'en_GB.UTF-8,en_GB,en-gb,english', 'gb.png', 'english', 0, 1);
 
 -- Update settings to use Ukrainian for all stores
 UPDATE oc_setting SET value='uk-ua' WHERE `key` IN ('config_language','config_admin_language');
@@ -132,6 +134,10 @@ DELETE FROM oc_attribute_description WHERE language_id <> 2;
 DELETE FROM oc_option_description WHERE language_id <> 2;
 DELETE FROM oc_option_value_description WHERE language_id <> 2;
 " | cat
+
+# Clear caches to avoid stale language data
+echo "🧼 Clearing caches..."
+docker compose exec web bash -lc "rm -rf /var/www/html/system/storage/cache/* /var/www/html/image/cache/* || true && service apache2 reload || true"
 
 # Import main migration SQL
 echo "📥 Importing main migration SQL..."
