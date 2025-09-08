@@ -105,8 +105,11 @@ if [ -d ../localization/upload ]; then
 fi
 
 if [ -f ../localization/install.sql ]; then
-  echo "📥 Applying localisation SQL..."
-  docker compose exec -T db mysql -u root -pexample opencart < ../localization/install.sql
+  echo "📥 Applying localisation SQL (schema-aware, ignoring legacy oc_country.name updates)..."
+  # Filter out legacy updates that reference non-existent oc_country.name
+  sed -E "/UPDATE[[:space:]]+`?oc_country`?[[:space:]]+SET[[:space:]]+`?name`?/I d" ../localization/install.sql > /tmp/localization_install_filtered.sql
+  # Apply with --force so non-critical warnings don't stop execution
+  docker compose exec -T db sh -lc "mysql -u root -pexample --force opencart" < /tmp/localization_install_filtered.sql
 fi
 
 echo "🌍 Resetting languages to Ukrainian only and enforcing defaults..."
