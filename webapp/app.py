@@ -746,9 +746,9 @@ def load_tag_ua_map(category_id: int) -> Dict[str, str]:
     return mapping
 
 
-def find_category_image(cid: str) -> Optional[str]:
-    # Prefer c{cid}.jpg then {cid}.jpg
-    candidates = [f"c{cid}.jpg", f"{cid}.jpg"]
+def find_category_image(category_id: str) -> Optional[str]:
+    # Prefer c{category_id}.jpg then {category_id}.jpg
+    candidates = [f"c{category_id}.jpg", f"{category_id}.jpg"]
     for name in candidates:
         path = os.path.join(CATEGORY_IMAGES_DIR, name)
         if os.path.isfile(path):
@@ -1096,18 +1096,18 @@ def index():
     # Only show categories where id ends with 0 (root categories)
     root_cats: List[Dict[str, str]] = []
     for c in cats:
-        cid = (c.get("id") or "").strip()
-        if not cid:
+        category_id = (c.get("id") or "").strip()
+        if not category_id:
             continue
         try:
-            cid_int = int(float(cid))
+            category_id_int = int(float(category_id))
         except Exception:
             continue
-        if cid_int % 10 != 0:
+        if category_id_int % 10 != 0:
             continue
-        img = find_category_image(str(cid_int))
+        img = find_category_image(str(category_id_int))
         root_cats.append({
-            "id": str(cid_int),
+            "id": str(category_id_int),
             "name": c.get("name") or "",
             "image": img,
         })
@@ -1158,6 +1158,30 @@ def categories():
     cats = load_categories()
     return render_template("categories.html", categories=cats)
 
+@app.route("/category/<int:category_id>/edit")
+def category_edit(category_id: int):
+    """Edit category page"""
+    ensure_product_columns()
+    categories = load_categories()
+    category = None
+    for cat in categories:
+        if str(cat.get('id', '')) == str(category_id):
+            category = cat
+            break
+    
+    if not category:
+        flash("Category not found.")
+        return redirect(url_for('index'))
+    
+    # Find category image
+    img = None
+    img_name = (category.get("primary_image") or "").strip()
+    if img_name:
+        if os.path.isfile(os.path.join(CATEGORY_IMAGES_DIR, img_name)):
+            img = img_name
+    
+    return render_template("category_edit.html", category=category, category_id=category_id, image=img)
+
 
 @app.get("/products")
 def products_list():
@@ -1174,9 +1198,9 @@ def products_list():
     # Map category id -> name
     category_name_by_id: Dict[str, str] = {}
     for c in categories:
-        cid = (c.get("id") or "").strip()
-        if cid:
-            category_name_by_id[cid] = c.get("name") or ""
+        category_id = (c.get("id") or "").strip()
+        if category_id:
+            category_name_by_id[category_id] = c.get("name") or ""
 
     # Filter by search query in Ukrainian name
     if q:
@@ -1703,19 +1727,19 @@ def categories_create():
     form = request.form
     files = request.files
 
-    cid_raw = (form.get("id") or "").strip()
+    category_id_raw = (form.get("id") or "").strip()
     name = (form.get("name") or "").strip()
     parentId = (form.get("parentId") or "").strip()
     tag = (form.get("tag") or "").strip()
     description = (form.get("description") or "").strip()
     return_to = (form.get("return_to") or "").strip()
 
-    if not cid_raw or not name:
+    if not category_id_raw or not name:
         flash("Category ID and name are required.")
         return redirect(return_to if return_to.startswith("/") else url_for("index"))
 
     try:
-        cid_int = int(float(cid_raw))
+        category_id_int = int(float(category_id_raw))
     except Exception:
         flash("Category ID must be an integer.")
         return redirect(return_to if return_to.startswith("/") else url_for("index"))
@@ -1731,7 +1755,7 @@ def categories_create():
 
     # Check uniqueness
     for r in rows:
-        if (r.get("id") or "").strip() == str(cid_int):
+        if (r.get("id") or "").strip() == str(category_id_int):
             flash("Category ID already exists.")
             return redirect(return_to if return_to.startswith("/") else url_for("index"))
 
@@ -1740,13 +1764,13 @@ def categories_create():
     primary_image = ""
     if image_file and image_file.filename:
         os.makedirs(CATEGORY_IMAGES_DIR, exist_ok=True)
-        primary_image = f"c{cid_int}.jpg"
+        primary_image = f"c{category_id_int}.jpg"
         dest_path = os.path.join(CATEGORY_IMAGES_DIR, primary_image)
         image_file.save(dest_path)
 
     # Append new row
     new_row = {
-        "id": str(cid_int),
+        "id": str(category_id_int),
         "name": name,
         "parentId": str(int(float(parentId))) if parentId else "",
         "tag": tag,
@@ -1756,19 +1780,19 @@ def categories_create():
     rows.append(new_row)
 
     write_csv(CATEGORIES_CSV, rows, fields)
-    commit_and_push_async([CATEGORIES_CSV, os.path.join(CATEGORY_IMAGES_DIR, primary_image) if primary_image else CATEGORIES_CSV], f"Create category {cid_int} via webapp")
+    commit_and_push_async([CATEGORIES_CSV, os.path.join(CATEGORY_IMAGES_DIR, primary_image) if primary_image else CATEGORIES_CSV], f"Create category {category_id_int} via webapp")
     flash("Category created. Changes are being saved to git in the background.")
     return redirect(return_to if return_to.startswith("/") else url_for("index"))
 
 # -------------------- Category edit --------------------
 
-@app.get("/category/<int:cid>/edit")
-def category_edit(cid: int):
+@app.get("/category/<int:category_id>/edit")
+def category_edit(category_id: int):
     rows, fields = read_csv(CATEGORIES_CSV)
     target: Optional[Dict[str, str]] = None
     for r in rows:
         try:
-            if int(float((r.get("id") or "").strip() or 0)) == cid:
+            if int(float((r.get("id") or "").strip() or 0)) == category_id:
                 target = r
                 break
         except Exception:
@@ -1778,15 +1802,15 @@ def category_edit(cid: int):
     # Determine image
     img = target.get("primary_image") or ""
     if not img:
-        # try to find by convention c{cid}.jpg
-        candidate = f"c{cid}.jpg"
+        # try to find by convention c{category_id}.jpg
+        candidate = f"c{category_id}.jpg"
         if os.path.isfile(os.path.join(CATEGORY_IMAGES_DIR, candidate)):
             img = candidate
-    return render_template("category_edit.html", category=target, cid=cid, image=img)
+    return render_template("category_edit.html", category=target, category_id=category_id, image=img)
 
 
-@app.post("/category/<int:cid>/edit")
-def category_update(cid: int):
+@app.post("/category/<int:category_id>/edit")
+def category_update(category_id: int):
     form = request.form
     files = request.files
 
@@ -1802,7 +1826,7 @@ def category_update(cid: int):
     target: Optional[Dict[str, str]] = None
     for r in rows:
         try:
-            if int(float((r.get("id") or "").strip() or 0)) == cid:
+            if int(float((r.get("id") or "").strip() or 0)) == category_id:
                 target = r
                 break
         except Exception:
@@ -1831,7 +1855,7 @@ def category_update(cid: int):
         changed = True
     if image_file and image_file.filename:
         os.makedirs(CATEGORY_IMAGES_DIR, exist_ok=True)
-        dest_name = f"c{cid}.jpg"
+        dest_name = f"c{category_id}.jpg"
         image_file.save(os.path.join(CATEGORY_IMAGES_DIR, dest_name))
         target["primary_image"] = dest_name
         changed = True
@@ -1842,7 +1866,7 @@ def category_update(cid: int):
         # If image updated or removed, include potential image path
         if target.get("primary_image"):
             changed_paths.append(os.path.join(CATEGORY_IMAGES_DIR, target.get("primary_image")))
-        commit_and_push_async(changed_paths, f"Update category {cid} via webapp")
+        commit_and_push_async(changed_paths, f"Update category {category_id} via webapp")
         flash("Category updated. Changes are being saved to git in the background.")
     else:
         flash("No changes.")

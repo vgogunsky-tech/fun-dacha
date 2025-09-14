@@ -8,7 +8,7 @@
     <style>
       .container { max-width: 1400px; margin: 0 auto; }
       .nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-      .actions { display: flex; gap: 12px; align-items: center; }
+      .actions { display: flex; gap: 15px; align-items: center; }
       .products-grid { 
         display: grid; 
         grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); 
@@ -150,11 +150,11 @@
         <a href="{{ url_for('index') }}">← До категорій</a>
       </div>
       <div class="actions">
-        <a href="{{ url_for('product_new') }}?return_to={{ request.url | urlencode }}" class="button" style="background: #28a745; color: white; text-decoration: none;">
+        <a href="{{ url_for('product_new') }}?return_to={{ request.url | urlencode }}" class="button" style="background: #28a745; color: white; text-decoration: none; padding: 12px 20px; font-size: 16px;">
           ➕ Додати товар
         </a>
-        <a href="{{ url_for('categories') }}" class="button" style="background: #6c757d; color: white; text-decoration: none;">
-          ✏️ Редагувати категорії
+        <a href="{{ url_for('category_edit', category_id=category_id) }}" class="button" style="background: #6c757d; color: white; text-decoration: none; padding: 12px 20px; font-size: 16px;">
+          ✏️ Редагувати категорію
         </a>
       </div>
     </header>

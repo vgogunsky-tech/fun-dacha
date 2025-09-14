@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Редагувати категорію {{ cid }}</title>
+    <title>Редагувати категорію {{ category_id }}</title>
     <link rel="stylesheet" href="https://unpkg.com/mvp.css">
     <style>
       .container { max-width: 960px; margin: 0 auto; }
@@ -14,8 +14,8 @@
   </head>
   <body>
     <header class="container">
-      <h1>Редагувати категорію {{ cid }}</h1>
-      <a href="{{ url_for('index') }}">← До категорій</a>
+      <h1>Редагувати категорію {{ category_id }}</h1>
+      <a href="{{ url_for('category', category_id=category_id) }}">← До категорії</a>
     </header>
 
     <main class="container">
@@ -27,7 +27,7 @@
         {% endif %}
       {% endwith %}
 
-      <form action="{{ url_for('category_update', cid=cid) }}" method="post" enctype="multipart/form-data">
+      <form action="{{ url_for('category_update', category_id=category_id) }}" method="post" enctype="multipart/form-data">
         <div class="grid">
           <div>
             <label>Назва</label>
