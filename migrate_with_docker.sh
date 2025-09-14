@@ -128,13 +128,13 @@ SET @cid := (SELECT country_id FROM oc_country WHERE iso_code_2='UA' LIMIT 1);
 INSERT INTO oc_country (country_id, iso_code_2, iso_code_3, address_format_id, postcode_required, status)
 SELECT 804, 'UA', 'UKR', 0, 0, 1 FROM DUAL WHERE @cid IS NULL;
 SET @cid := COALESCE(@cid, 804);
-SET @lang_ua := (SELECT language_id FROM oc_language WHERE code='uk-ua' LIMIT 1);
+SET @lang_ua := 20;
 " | cat
 
 if docker compose exec -T db mysql -u root -pexample opencart -e "SHOW TABLES LIKE 'oc_country_description';" | grep -q oc_country_description; then
   docker compose exec -T db mysql -u root -pexample opencart -e "
   SET @cid := (SELECT country_id FROM oc_country WHERE iso_code_2='UA' LIMIT 1);
-  SET @lang_ua := (SELECT language_id FROM oc_language WHERE code='uk-ua' LIMIT 1);
+  SET @lang_ua := 20;
   INSERT INTO oc_country_description (country_id, language_id, name)
   SELECT @cid, @lang_ua, 'Україна'
   WHERE @cid IS NOT NULL AND @lang_ua IS NOT NULL AND NOT EXISTS (

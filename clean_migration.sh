@@ -73,12 +73,11 @@ cd opencart-docker
 echo "🌍 Setting up languages (UA/RU)..."
 docker compose exec db mysql -u root -pexample opencart -e "
 -- Clean up any existing language data
-DELETE FROM oc_language WHERE language_id IN (1,2,3);
+DELETE FROM oc_language WHERE language_id IN (1,2,3,20,21);
 -- Insert fresh language data
 INSERT INTO oc_language (language_id, name, code, locale, image, directory, sort_order, status) VALUES 
-(1, 'English', 'en', 'en_US.UTF-8', 'en.png', 'english', 1, 1),
-(2, 'Українська', 'ua', 'uk_UA.UTF-8', 'ua.png', 'ukrainian', 2, 1),
-(3, 'Русский', 'ru', 'ru_RU.UTF-8', 'ru.png', 'russian', 3, 1);
+(20, 'Українська', 'uk-ua', 'uk_UA.UTF-8,uk_UA,uk-ua,ukrainian', 'ua.png', 'uk-ua', 1, 1),
+(21, 'English', 'en-gb', 'en_GB.UTF-8,en_GB,en-gb,english', 'gb.png', 'english', 0, 1);
 " | cat
 
 # Import main migration SQL

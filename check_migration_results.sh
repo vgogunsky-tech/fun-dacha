@@ -18,7 +18,7 @@ if ! docker compose ps | grep -q "Up"; then
 fi
 
 echo "📋 Checking categories..."
-docker compose exec db mysql -u root -pexample -e "SELECT category_id, name FROM opencart.oc_category_description WHERE language_id = 1;"
+docker compose exec db mysql -u root -pexample -e "SELECT category_id, name FROM opencart.oc_category_description WHERE language_id = 20;"
 
 echo ""
 echo "📋 Checking products..."
@@ -26,7 +26,7 @@ docker compose exec db mysql -u root -pexample -e "SELECT product_id, model, sku
 
 echo ""
 echo "📋 Checking product descriptions..."
-docker compose exec db mysql -u root -pexample -e "SELECT product_id, name FROM opencart.oc_product_description WHERE language_id = 1;"
+docker compose exec db mysql -u root -pexample -e "SELECT product_id, name FROM opencart.oc_product_description WHERE language_id = 20;"
 
 echo ""
 echo "📋 Checking product to category relationships..."

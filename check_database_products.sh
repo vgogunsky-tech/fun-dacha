@@ -26,7 +26,7 @@ SELECT
     pd.name,
     pd.description
 FROM oc_product p
-LEFT JOIN oc_product_description pd ON p.product_id = pd.product_id AND pd.language_id = 1
+LEFT JOIN oc_product_description pd ON p.product_id = pd.product_id AND pd.language_id = 20
 ORDER BY p.product_id;
 "
 
@@ -41,5 +41,5 @@ SELECT 'Products with images:' as status, COUNT(*) as count FROM oc_product WHER
 echo ""
 echo "🔍 Sample product names:"
 docker compose exec db mysql -u root -pexample opencart -e "
-SELECT name FROM oc_product_description WHERE language_id = 1 ORDER BY product_id LIMIT 10;
+SELECT name FROM oc_product_description WHERE language_id = 20 ORDER BY product_id LIMIT 10;
 "

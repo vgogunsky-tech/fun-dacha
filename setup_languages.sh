@@ -79,25 +79,24 @@ SELECT 'Languages configured:' as status;
 SELECT language_id, name, code, status FROM oc_language ORDER BY language_id;
 
 SELECT 'Sample Ukrainian products:' as status;
-SELECT pd.name FROM oc_product_description pd WHERE pd.language_id = 2 LIMIT 5;
+SELECT pd.name FROM oc_product_description pd WHERE pd.language_id = 20 LIMIT 5;
 
-SELECT 'Sample Russian products:' as status;
-SELECT pd.name FROM oc_product_description pd WHERE pd.language_id = 3 LIMIT 5;
+SELECT 'Sample English products:' as status;
+SELECT pd.name FROM oc_product_description pd WHERE pd.language_id = 21 LIMIT 5;
 
 SELECT 'Sample Ukrainian categories:' as status;
-SELECT cd.name FROM oc_category_description cd WHERE cd.language_id = 2 LIMIT 5;
+SELECT cd.name FROM oc_category_description cd WHERE cd.language_id = 20 LIMIT 5;
 
-SELECT 'Sample Russian categories:' as status;
-SELECT cd.name FROM oc_category_description cd WHERE cd.language_id = 3 LIMIT 5;
+SELECT 'Sample English categories:' as status;
+SELECT cd.name FROM oc_category_description cd WHERE cd.language_id = 21 LIMIT 5;
 "
 
 echo ""
 echo "🎉 Language setup completed successfully!"
 echo ""
 echo "📊 Language Support Summary:"
-echo "   - Ukrainian (Українська) - language_id = 2"
-echo "   - Russian (Русский) - language_id = 3"
-echo "   - English - language_id = 1"
+echo "   - Ukrainian (Українська) - language_id = 20"
+echo "   - English - language_id = 21"
 echo "   - Default language: Ukrainian"
 echo ""
 echo "🔍 Language Features:"
