@@ -229,7 +229,24 @@ ALTER TABLE oc_option_value AUTO_INCREMENT = 1;
         # Determine pricing and quantity
         # Prefer explicit CSV price if provided, else inventory
         price_csv = (product.get('price') or '').strip()
-        price = float(price_csv) if price_csv not in (None, '',) else 0.0
+        # Clean price string - remove currency symbols and normalize decimal separator
+        if price_csv:
+            # Remove common currency symbols and text
+            price_clean = price_csv.replace('гр', '').replace('₴', '').replace('UAH', '').replace('$', '').strip()
+            # Replace comma with dot for decimal separator
+            price_clean = price_clean.replace(',', '.')
+            # Extract only numbers and decimal point
+            import re
+            price_match = re.search(r'[\d.]+', price_clean)
+            if price_match:
+                try:
+                    price = float(price_match.group())
+                except ValueError:
+                    price = 0.0
+            else:
+                price = 0.0
+        else:
+            price = 0.0
         quantity = 10
         if product_id in inventory:
             if price == 0.0:

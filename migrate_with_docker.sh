@@ -116,7 +116,7 @@ fi
 
 # Update settings to use Ukrainian for all stores (codes, not ids)
 docker compose exec -T db mysql -u root -pexample opencart -e "
-UPDATE oc_setting SET value='uk-ua' WHERE `key` IN ('config_language','config_admin_language');
+UPDATE oc_setting SET value='uk-ua' WHERE \`key\` IN ('config_language','config_admin_language');
 INSERT INTO oc_setting (store_id, `code`, `key`, `value`, serialized) SELECT 0, 'config', 'config_language', 'uk-ua', 0 FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM oc_setting WHERE store_id=0 AND `key`='config_language');
 INSERT INTO oc_setting (store_id, `code`, `key`, `value`, serialized) SELECT 0, 'config', 'config_admin_language', 'uk-ua', 0 FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM oc_setting WHERE store_id=0 AND `key`='config_admin_language');
 " | cat
@@ -167,7 +167,7 @@ UPDATE oc_currency SET value=1.00000, status=1 WHERE code='UAH';
 UPDATE oc_currency SET status=0 WHERE code<>'UAH';
 
 -- Update settings for all stores (store_id any) to UAH
-UPDATE oc_setting SET value='UAH' WHERE `key`='config_currency';
+UPDATE oc_setting SET value='UAH' WHERE \`key\`='config_currency';
 INSERT INTO oc_setting (store_id, `code`, `key`, `value`, serialized)
 SELECT 0, 'config', 'config_currency', 'UAH', 0 FROM DUAL
 WHERE NOT EXISTS (SELECT 1 FROM oc_setting WHERE store_id=0 AND `key`='config_currency');
