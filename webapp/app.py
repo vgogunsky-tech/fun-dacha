@@ -1786,27 +1786,6 @@ def categories_create():
 
 # -------------------- Category edit --------------------
 
-@app.get("/category/<int:category_id>/edit")
-def category_edit(category_id: int):
-    rows, fields = read_csv(CATEGORIES_CSV)
-    target: Optional[Dict[str, str]] = None
-    for r in rows:
-        try:
-            if int(float((r.get("id") or "").strip() or 0)) == category_id:
-                target = r
-                break
-        except Exception:
-            continue
-    if target is None:
-        abort(404)
-    # Determine image
-    img = target.get("primary_image") or ""
-    if not img:
-        # try to find by convention c{category_id}.jpg
-        candidate = f"c{category_id}.jpg"
-        if os.path.isfile(os.path.join(CATEGORY_IMAGES_DIR, candidate)):
-            img = candidate
-    return render_template("category_edit.html", category=target, category_id=category_id, image=img)
 
 
 @app.post("/category/<int:category_id>/edit")
