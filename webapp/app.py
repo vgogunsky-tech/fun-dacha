@@ -1567,8 +1567,11 @@ def product_create():
         flash("Image, title and description and category are required.")
         return redirect(request.referrer or url_for('index'))
 
+    # Check for selected library image first
+    selected_library_image = form.get("selected_library_image", "").strip()
     image_file = files.get("image")
-    if not image_file or not image_file.filename:
+    
+    if not selected_library_image and (not image_file or not image_file.filename):
         flash("Image is required.")
         return redirect(request.referrer or url_for('index'))
 
@@ -1593,7 +1596,26 @@ def product_create():
     # Save image and compute SKU
     image_name = build_product_image_name(cat_id, str(new_id))
     os.makedirs(PRODUCT_IMAGES_DIR, exist_ok=True)
-    image_file.save(os.path.join(PRODUCT_IMAGES_DIR, image_name))
+    
+    if selected_library_image:
+        # Handle selected library image
+        try:
+            import json
+            image_data = json.loads(selected_library_image)
+            source_path = os.path.join(DATA_DIR, "imageLibrary", image_data["category"], image_data["filename"])
+            if os.path.exists(source_path):
+                dest_path = os.path.join(PRODUCT_IMAGES_DIR, image_name)
+                shutil.copy2(source_path, dest_path)
+            else:
+                flash("Selected library image not found.")
+                return redirect(request.referrer or url_for('index'))
+        except Exception as e:
+            app.logger.error(f"Error copying library image: {e}")
+            flash("Error copying library image.")
+            return redirect(request.referrer or url_for('index'))
+    else:
+        # Handle uploaded file
+        image_file.save(os.path.join(PRODUCT_IMAGES_DIR, image_name))
 
     sku = build_sku(cat_id, str(new_id))
 

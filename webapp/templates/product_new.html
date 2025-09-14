@@ -82,7 +82,13 @@
 
           <div>
             <label>Зображення *</label>
-            <input type="file" name="image" accept="image/*" required />
+            <div style="display: flex; gap: 10px; margin: 10px 0;">
+              <input type="file" name="image" accept="image/*" required style="flex: 1;" />
+              <a href="{{ url_for('library') }}?return_to={{ request.url | urlencode }}" class="button" style="background: #1976d2; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; text-decoration: none; display: inline-block;">
+                📚 Бібліотека зображень
+              </a>
+            </div>
+            <input type="hidden" name="selected_library_image" id="selected-library-image" value="" />
           </div>
         </div>
         <button type="submit" id="submitBtn">Створити</button>
@@ -96,6 +102,66 @@
           document.getElementById('submitBtn').disabled = true;
           document.getElementById('submitBtn').textContent = 'Створюємо...';
           document.getElementById('loadingMsg').style.display = 'block';
+        });
+
+        // Handle selected image from library
+        document.addEventListener('DOMContentLoaded', function() {
+          const selectedLibraryImage = document.getElementById('selected-library-image');
+          const fileInput = document.querySelector('input[name="image"]');
+          
+          // Check if we have a selected image from the library
+          const urlParams = new URLSearchParams(window.location.search);
+          const selectedImageData = urlParams.get('selected_image');
+          
+          if (selectedImageData) {
+            try {
+              const selectedImage = JSON.parse(decodeURIComponent(selectedImageData));
+              
+              // Set the hidden input value
+              selectedLibraryImage.value = JSON.stringify(selectedImage);
+              
+              // Create an image preview
+              const imageContainer = document.querySelector('div:has(input[name="image"])');
+              const existingPreview = imageContainer.querySelector('.image-preview');
+              if (existingPreview) {
+                existingPreview.remove();
+              }
+              
+              const previewDiv = document.createElement('div');
+              previewDiv.className = 'image-preview';
+              previewDiv.style.marginTop = '10px';
+              previewDiv.innerHTML = `
+                <img src="${selectedImage.url}" alt="Selected image" style="max-width: 200px; max-height: 200px; object-fit: contain; border-radius: 4px; border: 1px solid #ddd;">
+                <div style="margin-top: 5px; font-size: 12px; color: #666;">Вибрано: ${selectedImage.filename}</div>
+              `;
+              imageContainer.appendChild(previewDiv);
+              
+              // Clear the file input since we're using library image
+              if (fileInput) {
+                fileInput.value = '';
+                fileInput.required = false; // Make it not required since we have library image
+              }
+              
+              // Show a success message
+              const flashContainer = document.querySelector('aside');
+              if (flashContainer) {
+                const successMsg = document.createElement('p');
+                successMsg.textContent = `Зображення "${selectedImage.filename}" вибрано з бібліотеки`;
+                successMsg.style.color = '#1976d2';
+                successMsg.style.fontWeight = 'bold';
+                flashContainer.appendChild(successMsg);
+              }
+              
+              // Clean up the URL
+              const newUrl = new URL(window.location);
+              newUrl.searchParams.delete('selected_image');
+              window.history.replaceState({}, '', newUrl);
+              
+              console.log('Selected image from library:', selectedImage);
+            } catch (error) {
+              console.error('Error parsing selected image data:', error);
+            }
+          }
         });
       </script>
     </main>
