@@ -28,7 +28,7 @@
         {% if request.args.get('return_to') %}
           <a href="{{ request.args.get('return_to') }}">← Назад до списку</a>
         {% else %}
-          <a href="{{ url_for('index') }}">← До категорій</a>
+          <a href="{{ url_for('category', category_id=category_id) }}">← До категорії</a>
         {% endif %}
       </div>
       <div>Категорія: {{ category_id }}</div>
