@@ -4147,10 +4147,10 @@ SET @pid := (SELECT product_id FROM oc_product WHERE model='p220416' OR sku='p22
 INSERT INTO oc_product_option (product_id, option_id, required) SELECT @pid, @opt_id, 1 FROM DUAL WHERE @pid IS NOT NULL AND NOT EXISTS (SELECT 1 FROM oc_product_option WHERE product_id=@pid AND option_id=@opt_id);
 SET @poid := (SELECT product_option_id FROM oc_product_option WHERE product_id=@pid AND option_id=@opt_id LIMIT 1);
 DELETE FROM oc_product_option_value WHERE product_id=@pid AND option_id=@opt_id;
-INSERT INTO oc_product_option_value (product_option_id, product_id, option_id, option_value_id, quantity, subtract, price, price_prefix, points, points_prefix, weight, weight_prefix) SELECT @poid, @pid, @opt_id, @ov_small, 100, 1, 0.00, '+', 0, '+', 0, '+' FROM DUAL WHERE @poid IS NOT NULL AND ((SELECT 1 FROM DUAL WHERE 1=1) OR 1=1);
+INSERT INTO oc_product_option_value (product_option_id, product_id, option_id, option_value_id, quantity, subtract, price, price_prefix, points, points_prefix, weight, weight_prefix) SELECT @poid, @pid, @opt_id, @ov_small, 100, 1, 990.00, '+', 0, '+', 0, '+' FROM DUAL WHERE @poid IS NOT NULL AND ((SELECT 1 FROM DUAL WHERE 1=1) OR 1=1);
 INSERT INTO oc_product_option_value (product_option_id, product_id, option_id, option_value_id, quantity, subtract, price, price_prefix, points, points_prefix, weight, weight_prefix) SELECT @poid, @pid, @opt_id, @ov_medium, 0, 1, 0.00, '+', 0, '+', 0, '+' FROM DUAL WHERE @poid IS NOT NULL AND ((SELECT 1 FROM DUAL WHERE 0=1));
-INSERT INTO oc_product_option_value (product_option_id, product_id, option_id, option_value_id, quantity, subtract, price, price_prefix, points, points_prefix, weight, weight_prefix) SELECT @poid, @pid, @opt_id, @ov_large, 100, 1, 10.00, '+', 0, '+', 0, '+' FROM DUAL WHERE @poid IS NOT NULL AND ((SELECT 1 FROM DUAL WHERE 1=1) OR 1=1);
-UPDATE oc_product SET price = 10.00, quantity = 200, stock_status_id = (CASE WHEN 200 > 0 THEN 5 ELSE 8 END) WHERE product_id=@pid;
+INSERT INTO oc_product_option_value (product_option_id, product_id, option_id, option_value_id, quantity, subtract, price, price_prefix, points, points_prefix, weight, weight_prefix) SELECT @poid, @pid, @opt_id, @ov_large, 100, 1, 0.00, '+', 0, '+', 0, '+' FROM DUAL WHERE @poid IS NOT NULL AND ((SELECT 1 FROM DUAL WHERE 1=1) OR 1=1);
+UPDATE oc_product SET price = 20.00, quantity = 400, stock_status_id = (CASE WHEN 400 > 0 THEN 5 ELSE 8 END) WHERE product_id=@pid;
 
 -- Attach options for product model=p220417
 SET @pid := (SELECT product_id FROM oc_product WHERE model='p220417' OR sku='p220417' LIMIT 1);
@@ -4174,16 +4174,6 @@ UPDATE oc_product SET price = 10.00, quantity = 200, stock_status_id = (CASE WHE
 
 -- Attach options for product model=p220419
 SET @pid := (SELECT product_id FROM oc_product WHERE model='p220419' OR sku='p220419' LIMIT 1);
-INSERT INTO oc_product_option (product_id, option_id, required) SELECT @pid, @opt_id, 1 FROM DUAL WHERE @pid IS NOT NULL AND NOT EXISTS (SELECT 1 FROM oc_product_option WHERE product_id=@pid AND option_id=@opt_id);
-SET @poid := (SELECT product_option_id FROM oc_product_option WHERE product_id=@pid AND option_id=@opt_id LIMIT 1);
-DELETE FROM oc_product_option_value WHERE product_id=@pid AND option_id=@opt_id;
-INSERT INTO oc_product_option_value (product_option_id, product_id, option_id, option_value_id, quantity, subtract, price, price_prefix, points, points_prefix, weight, weight_prefix) SELECT @poid, @pid, @opt_id, @ov_small, 100, 1, 0.00, '+', 0, '+', 0, '+' FROM DUAL WHERE @poid IS NOT NULL AND ((SELECT 1 FROM DUAL WHERE 1=1) OR 1=1);
-INSERT INTO oc_product_option_value (product_option_id, product_id, option_id, option_value_id, quantity, subtract, price, price_prefix, points, points_prefix, weight, weight_prefix) SELECT @poid, @pid, @opt_id, @ov_medium, 0, 1, 0.00, '+', 0, '+', 0, '+' FROM DUAL WHERE @poid IS NOT NULL AND ((SELECT 1 FROM DUAL WHERE 0=1));
-INSERT INTO oc_product_option_value (product_option_id, product_id, option_id, option_value_id, quantity, subtract, price, price_prefix, points, points_prefix, weight, weight_prefix) SELECT @poid, @pid, @opt_id, @ov_large, 100, 1, 10.00, '+', 0, '+', 0, '+' FROM DUAL WHERE @poid IS NOT NULL AND ((SELECT 1 FROM DUAL WHERE 1=1) OR 1=1);
-UPDATE oc_product SET price = 10.00, quantity = 200, stock_status_id = (CASE WHEN 200 > 0 THEN 5 ELSE 8 END) WHERE product_id=@pid;
-
--- Attach options for product model=p220420
-SET @pid := (SELECT product_id FROM oc_product WHERE model='p220420' OR sku='p220420' LIMIT 1);
 INSERT INTO oc_product_option (product_id, option_id, required) SELECT @pid, @opt_id, 1 FROM DUAL WHERE @pid IS NOT NULL AND NOT EXISTS (SELECT 1 FROM oc_product_option WHERE product_id=@pid AND option_id=@opt_id);
 SET @poid := (SELECT product_option_id FROM oc_product_option WHERE product_id=@pid AND option_id=@opt_id LIMIT 1);
 DELETE FROM oc_product_option_value WHERE product_id=@pid AND option_id=@opt_id;
