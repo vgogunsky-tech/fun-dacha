@@ -1,0 +1,27 @@
+category_id,library_folder,name_ukr
+100,pomidori,Томати
+101,pomidori,Томати високорослі
+102,pomidori,Томати середньорослі
+103,pomidori,Томати низькорослі
+110,ogirki,Огірки
+120,kapusta,Капуста
+121,kapusta,Капуста білокачанна
+122,kapusta,Капуста цвітна
+123,kapusta,Капуста червонокачанна
+124,kapusta,Різновиди капусти
+150,baklazhan,Баклажани
+170,morkva,Морква
+180,buryak,Буряк
+190,kavun,Кавуни
+200,dinya,Дині
+210,garbuz,Гарбузи
+220,kabachok,Кабачки
+270,goroh,Бобові культури
+280,kvaso,Квасоля
+281,kvaso,Квасоля спаржева
+282,kvaso,Квасоля зернова
+290,kukurudza,Кукурудза
+330,kviti,Квіти
+331,kviti-aystra,Квіти однорічні
+332,kviti,Квіти багаторічні
+340,goroh,Бобові
