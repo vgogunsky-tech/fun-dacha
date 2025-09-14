@@ -24,7 +24,7 @@
         {% endif %}
       {% endwith %}
 
-      <form action="{{ url_for('product_create') }}" method="post" enctype="multipart/form-data">
+      <form action="{{ url_for('product_create') }}" method="post" enctype="multipart/form-data" id="productForm">
         <div class="grid">
           <div>
             <label>Назва (укр) *</label>
@@ -85,8 +85,19 @@
             <input type="file" name="image" accept="image/*" required />
           </div>
         </div>
-        <button type="submit">Створити</button>
+        <button type="submit" id="submitBtn">Створити</button>
+        <div id="loadingMsg" style="display: none; margin-top: 10px; color: #666;">
+          Створюємо товар... Будь ласка, зачекайте.
+        </div>
       </form>
+
+      <script>
+        document.getElementById('productForm').addEventListener('submit', function() {
+          document.getElementById('submitBtn').disabled = true;
+          document.getElementById('submitBtn').textContent = 'Створюємо...';
+          document.getElementById('loadingMsg').style.display = 'block';
+        });
+      </script>
     </main>
   </body>
 </html>

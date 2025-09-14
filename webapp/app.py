@@ -8,6 +8,7 @@ import logging
 import shutil
 import base64
 import json
+import threading
 from urllib import request as urlrequest
 from urllib import parse as urlparse
 from urllib.error import HTTPError, URLError
@@ -236,6 +237,19 @@ def commit_and_push(paths: List[str], message: str) -> None:
         pass
 
 
+def commit_and_push_async(paths: List[str], message: str) -> None:
+    """Run commit_and_push in a background thread to avoid blocking the UI."""
+    def _run_commit():
+        try:
+            commit_and_push(paths, message)
+        except Exception as e:
+            _log_git(f"[git] async commit_and_push exception: {e}")
+    
+    thread = threading.Thread(target=_run_commit, daemon=True)
+    thread.start()
+    _log_git("[git] started async commit_and_push")
+
+
 # -------------------- GitHub API fallback --------------------
 
 def _github_api_headers(token: str) -> Dict[str, str]:
@@ -311,7 +325,7 @@ def api_inventory_post(pid: int):
         save_inventory_json_for_product(pid, inv)
         # Commit
         try:
-            commit_and_push([INVENTORY_CSV], f"Update inventory for product {pid} via webapp")
+            commit_and_push_async([INVENTORY_CSV], f"Update inventory for product {pid} via webapp")
         except Exception:
             pass
         return jsonify({"ok": True}), 200
@@ -1367,8 +1381,8 @@ def product_save():
 
     written_paths = write_products_csv(rows, fields)
     changed_paths.extend(written_paths)
-    commit_and_push(changed_paths, f"Update product {product_id} via webapp")
-    flash(("Saved and validated." if advanced else "Saved.") + " Files: " + ', '.join(os.path.relpath(p, BASE_DIR) for p in written_paths))
+    commit_and_push_async(changed_paths, f"Update product {product_id} via webapp")
+    flash(("Saved and validated." if advanced else "Saved.") + " Files: " + ', '.join(os.path.relpath(p, BASE_DIR) for p in written_paths) + " (changes are being saved to git in the background)")
 
     # Redirect
     return_to = (form.get("return_to") or "").strip()
@@ -1464,8 +1478,8 @@ def product_create():
 
     rows.append(new_row)
     write_products_csv(rows, fields)
-    commit_and_push([DATA_DIR], f"Create product {new_id} via webapp")
-    flash(f"Product created with ID {new_id}.")
+    commit_and_push_async([DATA_DIR], f"Create product {new_id} via webapp")
+    flash(f"Product created with ID {new_id}. Changes are being saved to git in the background.")
     return redirect(url_for('product', category_id=int(float(cat_id)), index=0))
 
 
@@ -1529,8 +1543,8 @@ def categories_create():
     rows.append(new_row)
 
     write_csv(CATEGORIES_CSV, rows, fields)
-    commit_and_push([CATEGORIES_CSV, os.path.join(CATEGORY_IMAGES_DIR, primary_image) if primary_image else CATEGORIES_CSV], f"Create category {cid_int} via webapp")
-    flash("Category created.")
+    commit_and_push_async([CATEGORIES_CSV, os.path.join(CATEGORY_IMAGES_DIR, primary_image) if primary_image else CATEGORIES_CSV], f"Create category {cid_int} via webapp")
+    flash("Category created. Changes are being saved to git in the background.")
     return redirect(return_to if return_to.startswith("/") else url_for("index"))
 
 # -------------------- Category edit --------------------
@@ -1615,8 +1629,8 @@ def category_update(cid: int):
         # If image updated or removed, include potential image path
         if target.get("primary_image"):
             changed_paths.append(os.path.join(CATEGORY_IMAGES_DIR, target.get("primary_image")))
-        commit_and_push(changed_paths, f"Update category {cid} via webapp")
-        flash("Category updated.")
+        commit_and_push_async(changed_paths, f"Update category {cid} via webapp")
+        flash("Category updated. Changes are being saved to git in the background.")
     else:
         flash("No changes.")
 
@@ -1674,8 +1688,8 @@ def bulk_update_category():
             try:
                 # Use a more specific path to avoid hanging
                 csv_path = os.path.join(DATA_DIR, "list.csv")
-                commit_and_push([csv_path], f"Bulk update category for {updated_count} products to {category_id}")
-                flash(f"Successfully updated category for {updated_count} products.")
+                commit_and_push_async([csv_path], f"Bulk update category for {updated_count} products to {category_id}")
+                flash(f"Successfully updated category for {updated_count} products. Changes are being saved to git in the background.")
             except Exception as git_error:
                 # If git operation fails, still show success but warn about git
                 flash(f"Products updated successfully, but git commit failed: {str(git_error)}")
