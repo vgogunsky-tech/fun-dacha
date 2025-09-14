@@ -30,7 +30,7 @@
           {% for c in categories %}
             <div class="card">
               <div class="icons">
-                <a class="icon" title="Редагувати" href="{{ url_for('category_edit', cid=c.id) }}">✎</a>
+                <a class="icon" title="Редагувати" href="{{ url_for('category_edit', category_id=c.id) }}">✎</a>
                 <a class="icon" title="Додати товар" href="{{ url_for('product_new', category_id=c.id) }}">＋</a>
               </div>
               <a class="card" href="{{ url_for('category', category_id=c.id) }}">
