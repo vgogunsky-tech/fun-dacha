@@ -25,6 +25,9 @@
       {% endwith %}
 
       <form action="{{ url_for('product_create') }}" method="post" enctype="multipart/form-data" id="productForm">
+        {% if request.args.get('return_to') %}
+          <input type="hidden" name="return_to" value="{{ request.args.get('return_to') }}" />
+        {% endif %}
         <div class="grid">
           <div>
             <label>Назва (укр) *</label>

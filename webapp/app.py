@@ -1117,8 +1117,46 @@ def index():
 
 @app.route("/category/<int:category_id>")
 def category(category_id: int):
-    # Redirect to first unvalidated product in this category
-    return redirect(url_for("product", category_id=category_id, index=0))
+    """Show all products in a category as a grid"""
+    ensure_product_columns()
+    
+    # Load categories to get category name
+    categories = load_categories()
+    category_name = "Unknown Category"
+    for cat in categories:
+        if str(cat.get('id', '')) == str(category_id):
+            category_name = cat.get('name', 'Unknown Category')
+            break
+    
+    # Load all products in this category
+    rows, fields, _ = read_products_csv()
+    category_products = []
+    
+    for row in rows:
+        if str(row.get('category_id', '')) == str(category_id):
+            category_products.append(row)
+    
+    # Sort products by ID
+    category_products.sort(key=lambda x: int(float(x.get('id', 0))))
+    
+    # Count validated/unvalidated
+    validated_count = sum(1 for p in category_products if p.get('validated') == '1')
+    unvalidated_count = len(category_products) - validated_count
+    
+    return render_template('category_grid.html', 
+                         category_id=category_id,
+                         category_name=category_name,
+                         products=category_products,
+                         validated_count=validated_count,
+                         unvalidated_count=unvalidated_count)
+
+
+@app.route("/categories")
+def categories():
+    """Categories management page"""
+    ensure_product_columns()
+    cats = load_categories()
+    return render_template("categories.html", categories=cats)
 
 
 @app.get("/products")
@@ -1640,7 +1678,13 @@ def product_create():
     write_products_csv(rows, fields)
     commit_and_push_async([DATA_DIR], f"Create product {new_id} via webapp")
     flash(f"Product created with ID {new_id}. Changes are being saved to git in the background.")
-    return redirect(url_for('product', category_id=int(float(cat_id)), index=0))
+    
+    # Redirect to previous page if available, otherwise to category grid
+    return_to = request.form.get('return_to')
+    if return_to:
+        return redirect(return_to)
+    else:
+        return redirect(url_for('category', category_id=int(float(cat_id))))
 
 
 # -------------------- Category creation --------------------

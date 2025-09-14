@@ -1,0 +1,274 @@
+<!doctype html>
+<html lang="uk">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ category_name }} - Товари</title>
+    <link rel="stylesheet" href="https://unpkg.com/mvp.css">
+    <style>
+      .container { max-width: 1400px; margin: 0 auto; }
+      .nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+      .actions { display: flex; gap: 12px; align-items: center; }
+      .products-grid { 
+        display: grid; 
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); 
+        gap: 20px; 
+        margin-top: 20px; 
+      }
+      .product-card { 
+        border: 1px solid #ddd; 
+        border-radius: 8px; 
+        overflow: hidden; 
+        background: white;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        transition: transform 0.2s, box-shadow 0.2s;
+        cursor: pointer;
+      }
+      .product-card:hover { 
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+      }
+      .product-image { 
+        width: 100%; 
+        height: 200px; 
+        object-fit: cover; 
+        background: #f8f9fa;
+      }
+      .product-info { 
+        padding: 15px; 
+      }
+      .product-title { 
+        font-weight: bold; 
+        margin-bottom: 8px; 
+        color: #333;
+        font-size: 16px;
+        line-height: 1.3;
+      }
+      .product-meta { 
+        font-size: 14px; 
+        color: #666; 
+        margin-bottom: 5px;
+      }
+      .product-id { 
+        font-size: 12px; 
+        color: #999; 
+        font-family: monospace;
+      }
+      .status-badge {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 11px;
+        font-weight: bold;
+        text-transform: uppercase;
+        margin-top: 8px;
+      }
+      .status-validated {
+        background: #d4edda;
+        color: #155724;
+      }
+      .status-unvalidated {
+        background: #f8d7da;
+        color: #721c24;
+      }
+      .status-pending {
+        background: #fff3cd;
+        color: #856404;
+      }
+      .category-header {
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        border-left: 4px solid #1976d2;
+      }
+      .category-title {
+        font-size: 24px;
+        font-weight: bold;
+        color: #333;
+        margin: 0 0 10px 0;
+      }
+      .category-stats {
+        color: #666;
+        font-size: 14px;
+      }
+      .no-products {
+        text-align: center;
+        padding: 40px;
+        color: #666;
+        font-size: 16px;
+      }
+      .search-container {
+        margin-bottom: 20px;
+      }
+      .search-input {
+        width: 100%;
+        padding: 10px 15px;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        font-size: 16px;
+      }
+      .filter-buttons {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+      }
+      .filter-btn {
+        padding: 8px 16px;
+        border: 1px solid #ddd;
+        background: white;
+        border-radius: 20px;
+        cursor: pointer;
+        transition: all 0.2s;
+        font-size: 14px;
+      }
+      .filter-btn:hover {
+        background: #f8f9fa;
+        border-color: #1976d2;
+      }
+      .filter-btn.active {
+        background: #1976d2;
+        color: white;
+        border-color: #1976d2;
+      }
+    </style>
+  </head>
+  <body>
+    <header class="container nav">
+      <div>
+        <a href="{{ url_for('index') }}">← До категорій</a>
+      </div>
+      <div class="actions">
+        <a href="{{ url_for('product_new') }}?return_to={{ request.url | urlencode }}" class="button" style="background: #28a745; color: white; text-decoration: none;">
+          ➕ Додати товар
+        </a>
+        <a href="{{ url_for('categories') }}" class="button" style="background: #6c757d; color: white; text-decoration: none;">
+          ✏️ Редагувати категорії
+        </a>
+      </div>
+    </header>
+
+    <main class="container">
+      {% with messages = get_flashed_messages() %}
+        {% if messages %}
+          <aside>
+            {% for m in messages %}<p>{{ m }}</p>{% endfor %}
+          </aside>
+        {% endif %}
+      {% endwith %}
+
+      <div class="category-header">
+        <h1 class="category-title">{{ category_name }}</h1>
+        <div class="category-stats">
+          Всього товарів: {{ products|length }} | 
+          Перевірено: {{ validated_count }} | 
+          Не перевірено: {{ unvalidated_count }}
+        </div>
+      </div>
+
+      {% if products %}
+        <div class="search-container">
+          <input type="text" id="search-input" class="search-input" placeholder="Пошук товарів..." />
+        </div>
+
+        <div class="filter-buttons">
+          <button class="filter-btn active" data-filter="all">Всі товари</button>
+          <button class="filter-btn" data-filter="validated">Перевірені</button>
+          <button class="filter-btn" data-filter="unvalidated">Не перевірені</button>
+        </div>
+
+        <div class="products-grid" id="products-grid">
+          {% for product in products %}
+            <div class="product-card" 
+                 data-title="{{ (product['Название (укр)'] or product['Название (рус)'] or 'Без назви')|lower }}"
+                 data-status="{{ 'validated' if product.get('validated') == '1' else 'unvalidated' }}"
+                 onclick="window.location.href='{{ url_for('product', category_id=category_id, index=loop.index0) }}'">
+              {% if product.get('primary_image') %}
+                <img src="{{ url_for('serve_product_image', filename=product['primary_image']) }}" 
+                     alt="{{ product['Название (укр)'] or 'Product' }}" 
+                     class="product-image" />
+              {% else %}
+                <div class="product-image" style="display: flex; align-items: center; justify-content: center; color: #999;">
+                  Немає зображення
+                </div>
+              {% endif %}
+              <div class="product-info">
+                <div class="product-title">
+                  {{ product['Название (укр)'] or product['Название (рус)'] or 'Без назви' }}
+                </div>
+                <div class="product-meta">
+                  {% if product.get('year') %}
+                    Рік: {{ product['year'] }}
+                  {% endif %}
+                  {% if product.get('availability') %}
+                    | Наявність: {{ product['availability'] }}
+                  {% endif %}
+                </div>
+                <div class="product-id">ID: {{ product['id'] }}</div>
+                <div class="status-badge {{ 'status-validated' if product.get('validated') == '1' else 'status-unvalidated' }}">
+                  {{ 'Перевірено' if product.get('validated') == '1' else 'Не перевірено' }}
+                </div>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="no-products">
+          <h3>Немає товарів в цій категорії</h3>
+          <p>Додайте перший товар, натиснувши кнопку "Додати товар"</p>
+        </div>
+      {% endif %}
+    </main>
+
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        const searchInput = document.getElementById('search-input');
+        const filterButtons = document.querySelectorAll('.filter-btn');
+        const productCards = document.querySelectorAll('.product-card');
+        
+        // Search functionality
+        if (searchInput) {
+          searchInput.addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            filterProducts(searchTerm, getActiveFilter());
+          });
+        }
+        
+        // Filter functionality
+        filterButtons.forEach(btn => {
+          btn.addEventListener('click', function() {
+            // Update active button
+            filterButtons.forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            
+            // Filter products
+            const searchTerm = searchInput ? searchInput.value.toLowerCase() : '';
+            filterProducts(searchTerm, this.dataset.filter);
+          });
+        });
+        
+        function getActiveFilter() {
+          const activeBtn = document.querySelector('.filter-btn.active');
+          return activeBtn ? activeBtn.dataset.filter : 'all';
+        }
+        
+        function filterProducts(searchTerm, statusFilter) {
+          productCards.forEach(card => {
+            const title = card.dataset.title;
+            const status = card.dataset.status;
+            
+            const matchesSearch = !searchTerm || title.includes(searchTerm);
+            const matchesStatus = statusFilter === 'all' || status === statusFilter;
+            
+            if (matchesSearch && matchesStatus) {
+              card.style.display = 'block';
+            } else {
+              card.style.display = 'none';
+            }
+          });
+        }
+      });
+    </script>
+  </body>
+</html>
