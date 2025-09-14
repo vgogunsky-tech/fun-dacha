@@ -1084,6 +1084,11 @@ def get_category_display_name(category_name: str):
 
 # -------------------- UI Routes --------------------
 
+@app.route("/library")
+def library():
+    """Image library page"""
+    return render_template("library.html")
+
 @app.route("/")
 def index():
     ensure_product_columns()

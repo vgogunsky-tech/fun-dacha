@@ -175,9 +175,9 @@
                 {% endif %}
                 <div style="display: flex; gap: 10px; margin: 10px 0;">
                   <input type="file" name="image" accept="image/*" style="flex: 1;" />
-                  <button type="button" id="open-image-library" class="button" style="background: #1976d2; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer;">
+                  <a href="{{ url_for('library') }}?return_to={{ request.url | urlencode }}" class="button" style="background: #1976d2; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; text-decoration: none; display: inline-block;">
                     📚 Бібліотека зображень
-                  </button>
+                  </a>
                 </div>
                 <input type="hidden" name="selected_library_image" id="selected-library-image" value="" />
               </div>
@@ -355,74 +355,64 @@
     {% include 'image_library.html' %}
 
     <script>
-      // Image Library Integration
+      // Handle selected image from library
       document.addEventListener('DOMContentLoaded', function() {
-        const openLibraryBtn = document.getElementById('open-image-library');
         const selectedLibraryImage = document.getElementById('selected-library-image');
         const fileInput = document.querySelector('input[name="image"]');
         
-        if (openLibraryBtn && window.imageLibrary) {
-          openLibraryBtn.addEventListener('click', function() {
-            // Load categories first
-            fetch('/api/images/categories')
-              .then(response => response.json())
-              .then(categories => {
-                // Update the image library with categories
-                const tabsContainer = document.querySelector('.category-tabs');
-                if (tabsContainer) {
-                  tabsContainer.innerHTML = categories.map(cat => 
-                    `<button class="category-tab" data-category="${cat.name}" 
-                             style="padding: 8px 16px; border: 1px solid #ddd; background: #f9f9f9; cursor: pointer; border-radius: 4px; transition: all 0.2s;">
-                       ${cat.display_name}
-                       <span class="image-count" style="margin-left: 8px; color: #666; font-size: 0.9em;">(${cat.count})</span>
-                     </button>`
-                  ).join('');
-                  
-                  // Re-initialize category tab listeners
-                  tabsContainer.querySelectorAll('.category-tab').forEach(tab => {
-                    tab.addEventListener('click', () => {
-                      const category = tab.dataset.category;
-                      window.imageLibrary.selectCategory(category);
-                    });
-                  });
-                }
-                
-                // Open the library
-                window.imageLibrary.open(function(selectedImage) {
-                  // Handle selected image
-                  selectedLibraryImage.value = JSON.stringify(selectedImage);
-                  
-                  // Update the file input to show the selected image
-                  const imagePreview = document.querySelector('.image img');
-                  if (imagePreview) {
-                    imagePreview.src = selectedImage.url;
-                    imagePreview.style.display = 'block';
-                  } else {
-                    // Create a new image preview if none exists
-                    const imageContainer = document.querySelector('.image');
-                    const newImg = document.createElement('img');
-                    newImg.src = selectedImage.url;
-                    newImg.alt = 'Selected image';
-                    newImg.style.maxWidth = '320px';
-                    newImg.style.width = '100%';
-                    newImg.style.borderRadius = '8px';
-                    newImg.style.border = '1px solid #ddd';
-                    imageContainer.appendChild(newImg);
-                  }
-                  
-                  // Clear the file input since we're using library image
-                  if (fileInput) {
-                    fileInput.value = '';
-                  }
-                  
-                  console.log('Selected image:', selectedImage);
-                });
-              })
-              .catch(error => {
-                console.error('Error loading categories:', error);
-                alert('Помилка завантаження категорій зображень');
-              });
-          });
+        // Check if we have a selected image from the library
+        const urlParams = new URLSearchParams(window.location.search);
+        const selectedImageData = urlParams.get('selected_image');
+        
+        if (selectedImageData) {
+          try {
+            const selectedImage = JSON.parse(decodeURIComponent(selectedImageData));
+            
+            // Set the hidden input value
+            selectedLibraryImage.value = JSON.stringify(selectedImage);
+            
+            // Update the image preview
+            const imagePreview = document.querySelector('.image img');
+            if (imagePreview) {
+              imagePreview.src = selectedImage.url;
+              imagePreview.style.display = 'block';
+            } else {
+              // Create a new image preview if none exists
+              const imageContainer = document.querySelector('.image');
+              const newImg = document.createElement('img');
+              newImg.src = selectedImage.url;
+              newImg.alt = 'Selected image';
+              newImg.style.maxWidth = '320px';
+              newImg.style.width = '100%';
+              newImg.style.borderRadius = '8px';
+              newImg.style.border = '1px solid #ddd';
+              imageContainer.appendChild(newImg);
+            }
+            
+            // Clear the file input since we're using library image
+            if (fileInput) {
+              fileInput.value = '';
+            }
+            
+            // Show a success message
+            const flashContainer = document.querySelector('aside');
+            if (flashContainer) {
+              const successMsg = document.createElement('p');
+              successMsg.textContent = `Зображення "${selectedImage.filename}" вибрано з бібліотеки`;
+              successMsg.style.color = '#1976d2';
+              successMsg.style.fontWeight = 'bold';
+              flashContainer.appendChild(successMsg);
+            }
+            
+            // Clean up the URL
+            const newUrl = new URL(window.location);
+            newUrl.searchParams.delete('selected_image');
+            window.history.replaceState({}, '', newUrl);
+            
+            console.log('Selected image from library:', selectedImage);
+          } catch (error) {
+            console.error('Error parsing selected image data:', error);
+          }
         }
       });
     </script>

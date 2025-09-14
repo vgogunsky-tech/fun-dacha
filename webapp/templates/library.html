@@ -1,0 +1,493 @@
+<!doctype html>
+<html lang="uk">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Бібліотека зображень</title>
+    <link rel="stylesheet" href="https://unpkg.com/mvp.css">
+    <style>
+      .container { max-width: 1400px; margin: 0 auto; }
+      .nav { display: flex; justify-content: space-between; align-items: center; }
+      .category-tabs { 
+        display: flex; 
+        flex-wrap: wrap; 
+        gap: 8px; 
+        margin-bottom: 20px; 
+        border-bottom: 2px solid #eee; 
+        padding-bottom: 10px; 
+      }
+      .category-tab { 
+        padding: 8px 16px; 
+        border: 1px solid #ddd; 
+        background: #f9f9f9; 
+        cursor: pointer; 
+        border-radius: 4px; 
+        transition: all 0.2s;
+        text-decoration: none;
+        color: #333;
+      }
+      .category-tab:hover { 
+        background: #e9e9e9; 
+        border-color: #1976d2; 
+      }
+      .category-tab.active { 
+        background: #1976d2 !important; 
+        color: white !important; 
+        border-color: #1976d2 !important; 
+      }
+      .search-container { 
+        margin-bottom: 20px; 
+      }
+      .search-input { 
+        width: 100%; 
+        padding: 8px 12px; 
+        border: 1px solid #ddd; 
+        border-radius: 4px; 
+        font-size: 14px; 
+      }
+      .images-grid { 
+        display: grid; 
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); 
+        gap: 15px; 
+        margin-bottom: 30px; 
+      }
+      .image-item { 
+        position: relative; 
+        cursor: pointer; 
+        border: 2px solid transparent; 
+        border-radius: 8px; 
+        overflow: hidden; 
+        transition: all 0.2s;
+        background: white;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      }
+      .image-item:hover { 
+        border-color: #1976d2; 
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+      }
+      .image-item.selected { 
+        border-color: #1976d2; 
+        background: #e3f2fd; 
+      }
+      .image-item img { 
+        width: 100%; 
+        height: 150px; 
+        object-fit: cover; 
+        display: block; 
+      }
+      .image-item .image-name { 
+        padding: 10px; 
+        font-size: 12px; 
+        background: white; 
+        border-top: 1px solid #eee; 
+        word-break: break-all; 
+        line-height: 1.3;
+        color: #555;
+      }
+      .selected-preview { 
+        position: fixed; 
+        bottom: 20px; 
+        right: 20px; 
+        background: white; 
+        border: 2px solid #1976d2; 
+        border-radius: 8px; 
+        padding: 15px; 
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        z-index: 1000;
+        max-width: 300px;
+      }
+      .selected-preview.hidden { 
+        display: none; 
+      }
+      .selected-preview h4 { 
+        margin: 0 0 10px 0; 
+        color: #1976d2; 
+      }
+      .selected-preview .preview-content { 
+        display: flex; 
+        align-items: center; 
+        gap: 15px; 
+      }
+      .selected-preview img { 
+        max-width: 80px; 
+        max-height: 80px; 
+        object-fit: cover; 
+        border-radius: 4px; 
+      }
+      .selected-preview .preview-info { 
+        flex: 1; 
+      }
+      .selected-preview .preview-filename { 
+        font-weight: bold; 
+        margin-bottom: 5px; 
+        font-size: 14px;
+      }
+      .selected-preview .preview-category { 
+        color: #666; 
+        font-size: 12px; 
+      }
+      .action-buttons { 
+        margin-top: 10px; 
+        display: flex; 
+        gap: 10px; 
+      }
+      .action-buttons button { 
+        padding: 8px 16px; 
+        border: none; 
+        border-radius: 4px; 
+        cursor: pointer; 
+        font-size: 14px;
+      }
+      .btn-primary { 
+        background: #1976d2; 
+        color: white; 
+      }
+      .btn-secondary { 
+        background: #6c757d; 
+        color: white; 
+      }
+      .btn-primary:hover { 
+        background: #1565c0; 
+      }
+      .btn-secondary:hover { 
+        background: #5a6268; 
+      }
+      .loading { 
+        text-align: center; 
+        padding: 40px; 
+        color: #666; 
+        font-size: 16px;
+      }
+      .error { 
+        text-align: center; 
+        padding: 40px; 
+        color: #d32f2f; 
+        font-size: 16px;
+      }
+      .stats { 
+        background: #f8f9fa; 
+        padding: 15px; 
+        border-radius: 8px; 
+        margin-bottom: 20px; 
+        display: flex; 
+        justify-content: space-between; 
+        align-items: center; 
+      }
+      .stats .stat-item { 
+        text-align: center; 
+      }
+      .stats .stat-number { 
+        font-size: 24px; 
+        font-weight: bold; 
+        color: #1976d2; 
+      }
+      .stats .stat-label { 
+        font-size: 12px; 
+        color: #666; 
+        margin-top: 4px; 
+      }
+    </style>
+  </head>
+  <body>
+    <header class="container nav">
+      <div>
+        <a href="{{ url_for('index') }}">← До категорій</a>
+        {% if request.args.get('return_to') %}
+          <a href="{{ request.args.get('return_to') }}" style="margin-left: 15px;">← Назад до товару</a>
+        {% endif %}
+      </div>
+      <div>
+        <h1>Бібліотека зображень</h1>
+      </div>
+      <div></div>
+    </header>
+
+    <main class="container">
+      {% with messages = get_flashed_messages() %}
+        {% if messages %}
+          <aside>
+            {% for m in messages %}<p>{{ m }}</p>{% endfor %}
+          </aside>
+        {% endif %}
+      {% endwith %}
+
+      <!-- Stats -->
+      <div class="stats">
+        <div class="stat-item">
+          <div class="stat-number" id="total-categories">-</div>
+          <div class="stat-label">Категорій</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-number" id="total-images">-</div>
+          <div class="stat-label">Зображень</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-number" id="current-category-images">-</div>
+          <div class="stat-label">У поточній категорії</div>
+        </div>
+      </div>
+
+      <!-- Category Tabs -->
+      <div class="category-tabs" id="category-tabs">
+        <div class="loading">Завантаження категорій...</div>
+      </div>
+
+      <!-- Search Box -->
+      <div class="search-container">
+        <input type="text" id="image-search" class="search-input" placeholder="Пошук зображень..." />
+      </div>
+
+      <!-- Images Grid -->
+      <div id="images-grid" class="images-grid">
+        <div class="loading">Оберіть категорію для перегляду зображень</div>
+      </div>
+
+      <!-- Selected Image Preview -->
+      <div id="selected-preview" class="selected-preview hidden">
+        <h4>Вибране зображення</h4>
+        <div class="preview-content">
+          <img id="selected-image" src="" alt="Selected" />
+          <div class="preview-info">
+            <div class="preview-filename" id="selected-filename"></div>
+            <div class="preview-category" id="selected-category"></div>
+          </div>
+        </div>
+        <div class="action-buttons">
+          <button id="use-image" class="btn-primary">Використати</button>
+          <button id="clear-selection" class="btn-secondary">Скасувати</button>
+        </div>
+      </div>
+    </main>
+
+    <script>
+      class ImageLibrary {
+        constructor() {
+          this.categories = [];
+          this.currentCategory = null;
+          this.currentImages = [];
+          this.selectedImage = null;
+          this.searchTerm = '';
+          
+          this.elements = {
+            categoryTabs: document.getElementById('category-tabs'),
+            searchInput: document.getElementById('image-search'),
+            imagesGrid: document.getElementById('images-grid'),
+            selectedPreview: document.getElementById('selected-preview'),
+            selectedImage: document.getElementById('selected-image'),
+            selectedFilename: document.getElementById('selected-filename'),
+            selectedCategory: document.getElementById('selected-category'),
+            useButton: document.getElementById('use-image'),
+            clearButton: document.getElementById('clear-selection'),
+            totalCategories: document.getElementById('total-categories'),
+            totalImages: document.getElementById('total-images'),
+            currentCategoryImages: document.getElementById('current-category-images')
+          };
+          
+          this.init();
+        }
+        
+        async init() {
+          // Event listeners
+          this.elements.searchInput.addEventListener('input', (e) => {
+            this.searchTerm = e.target.value;
+            this.filterImages();
+          });
+          
+          this.elements.useButton.addEventListener('click', () => this.useSelectedImage());
+          this.elements.clearButton.addEventListener('click', () => this.clearSelection());
+          
+          // Load categories and images
+          await this.loadCategories();
+          
+          // Check if there's a predefined category from URL
+          const urlParams = new URLSearchParams(window.location.search);
+          const predefinedCategory = urlParams.get('category');
+          if (predefinedCategory) {
+            this.selectCategory(predefinedCategory);
+          } else if (this.categories.length > 0) {
+            this.selectCategory(this.categories[0].name);
+          }
+        }
+        
+        async loadCategories() {
+          try {
+            const response = await fetch('/api/images/categories');
+            if (!response.ok) throw new Error('Failed to load categories');
+            
+            this.categories = await response.json();
+            this.renderCategoryTabs();
+            this.updateStats();
+          } catch (error) {
+            console.error('Error loading categories:', error);
+            this.elements.categoryTabs.innerHTML = '<div class="error">Помилка завантаження категорій</div>';
+          }
+        }
+        
+        renderCategoryTabs() {
+          this.elements.categoryTabs.innerHTML = this.categories.map(cat => 
+            `<a href="#" class="category-tab" data-category="${cat.name}">
+               ${cat.display_name}
+               <span style="margin-left: 8px; color: #666; font-size: 0.9em;">(${cat.count})</span>
+             </a>`
+          ).join('');
+          
+          // Add click listeners
+          this.elements.categoryTabs.querySelectorAll('.category-tab').forEach(tab => {
+            tab.addEventListener('click', (e) => {
+              e.preventDefault();
+              this.selectCategory(tab.dataset.category);
+            });
+          });
+        }
+        
+        async selectCategory(categoryName) {
+          // Update active tab
+          this.elements.categoryTabs.querySelectorAll('.category-tab').forEach(tab => {
+            tab.classList.remove('active');
+          });
+          const activeTab = this.elements.categoryTabs.querySelector(`[data-category="${categoryName}"]`);
+          if (activeTab) {
+            activeTab.classList.add('active');
+          }
+          
+          this.currentCategory = categoryName;
+          await this.loadImages(categoryName);
+        }
+        
+        async loadImages(category) {
+          this.elements.imagesGrid.innerHTML = '<div class="loading">Завантаження зображень...</div>';
+          
+          try {
+            const response = await fetch(`/api/images/${category}`);
+            if (!response.ok) throw new Error('Failed to load images');
+            
+            this.currentImages = await response.json();
+            this.filterImages();
+            this.updateStats();
+          } catch (error) {
+            console.error('Error loading images:', error);
+            this.elements.imagesGrid.innerHTML = '<div class="error">Помилка завантаження зображень</div>';
+          }
+        }
+        
+        filterImages() {
+          let images = this.currentImages;
+          
+          if (this.searchTerm.trim()) {
+            images = images.filter(img => 
+              img.filename.toLowerCase().includes(this.searchTerm.toLowerCase())
+            );
+          }
+          
+          this.renderImages(images);
+        }
+        
+        renderImages(images) {
+          if (images.length === 0) {
+            this.elements.imagesGrid.innerHTML = '<div class="loading">Немає зображень в цій категорії</div>';
+            return;
+          }
+          
+          this.elements.imagesGrid.innerHTML = images.map(img => `
+            <div class="image-item" data-filename="${img.filename}" data-category="${this.currentCategory}">
+              <img src="/images/${this.currentCategory}/${img.filename}" alt="${img.filename}" loading="lazy">
+              <div class="image-name">${img.filename}</div>
+            </div>
+          `).join('');
+          
+          // Add click listeners
+          this.elements.imagesGrid.querySelectorAll('.image-item').forEach(item => {
+            item.addEventListener('click', () => {
+              this.selectImage(item);
+            });
+          });
+        }
+        
+        selectImage(item) {
+          // Remove previous selection
+          this.elements.imagesGrid.querySelectorAll('.image-item').forEach(i => i.classList.remove('selected'));
+          
+          // Select current item
+          item.classList.add('selected');
+          
+          const filename = item.dataset.filename;
+          const category = item.dataset.category;
+          const img = item.querySelector('img');
+          
+          this.selectedImage = {
+            filename: filename,
+            category: category,
+            url: img.src
+          };
+          
+          // Update preview
+          this.elements.selectedImage.src = img.src;
+          this.elements.selectedFilename.textContent = filename;
+          this.elements.selectedCategory.textContent = `Категорія: ${category}`;
+          this.elements.selectedPreview.classList.remove('hidden');
+        }
+        
+        clearSelection() {
+          this.selectedImage = null;
+          this.elements.imagesGrid.querySelectorAll('.image-item').forEach(i => i.classList.remove('selected'));
+          this.elements.selectedPreview.classList.add('hidden');
+        }
+        
+        useSelectedImage() {
+          if (this.selectedImage) {
+            // Check if we have a return URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const returnTo = urlParams.get('return_to');
+            
+            if (returnTo) {
+              // Redirect back to the product page with selected image data
+              const returnUrl = new URL(returnTo, window.location.origin);
+              returnUrl.searchParams.set('selected_image', JSON.stringify(this.selectedImage));
+              window.location.href = returnUrl.toString();
+            } else {
+              // Handle direct usage (download or copy)
+              this.downloadImage();
+            }
+          }
+        }
+        
+        downloadImage() {
+          if (this.selectedImage) {
+            const link = document.createElement('a');
+            link.href = this.selectedImage.url;
+            link.download = this.selectedImage.filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+          }
+        }
+        
+        updateStats() {
+          this.elements.totalCategories.textContent = this.categories.length;
+          
+          const totalImages = this.categories.reduce((sum, cat) => sum + cat.count, 0);
+          this.elements.totalImages.textContent = totalImages;
+          
+          const currentCategoryData = this.categories.find(cat => cat.name === this.currentCategory);
+          this.elements.currentCategoryImages.textContent = currentCategoryData ? currentCategoryData.count : 0;
+        }
+      }
+      
+      // Initialize when DOM is loaded
+      document.addEventListener('DOMContentLoaded', () => {
+        new ImageLibrary();
+      });
+      
+      // Listen for messages from parent window
+      window.addEventListener('message', (event) => {
+        if (event.data.type === 'selectCategory') {
+          const library = window.imageLibrary;
+          if (library) {
+            library.selectCategory(event.data.category);
+          }
+        }
+      });
+    </script>
+  </body>
+</html>
