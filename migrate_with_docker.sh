@@ -94,23 +94,21 @@ if [ -f ../localization/install.sql ]; then
   docker compose exec -T db sh -lc "mysql -u root -pexample --force opencart" < /tmp/localization_install_filtered.sql
 fi
 
-echo "🌍 Resetting languages (keep en-gb fallback) and enforcing defaults..."
+echo "🌍 Setting up languages (Ukrainian + English)..."
 # Detect oc_language schema (OC3 vs OC4). OC3 has columns image,directory; OC4 does not.
 if docker compose exec -T db mysql -u root -pexample opencart -e "SHOW COLUMNS FROM oc_language LIKE 'image';" | grep -q image; then
   docker compose exec -T db mysql -u root -pexample opencart -e "
   -- OC3-style: image,directory present
-  DELETE FROM oc_language;
-  INSERT INTO oc_language (language_id, name, code, locale, image, directory, sort_order, status) VALUES 
-  (2, 'Українська', 'uk-ua', 'uk_UA.UTF-8,uk_UA,uk-ua,ukrainian', 'ua.png', 'uk-ua', 1, 1),
-  (1, 'English', 'en-gb', 'en_GB.UTF-8,en_GB,en-gb,english', 'gb.png', 'english', 0, 1);
+  INSERT IGNORE INTO oc_language (language_id, name, code, locale, image, directory, sort_order, status) VALUES 
+  (20, 'Українська', 'uk-ua', 'uk_UA.UTF-8,uk_UA,uk-ua,ukrainian', 'ua.png', 'uk-ua', 1, 1),
+  (21, 'English', 'en-gb', 'en_GB.UTF-8,en_GB,en-gb,english', 'gb.png', 'english', 0, 1);
   " | cat
 else
   docker compose exec -T db mysql -u root -pexample opencart -e "
   -- OC4-style: no image,directory columns
-  DELETE FROM oc_language;
-  INSERT INTO oc_language (name, code, locale, sort_order, status) VALUES 
-  ('Українська', 'uk-ua', 'uk_UA.UTF-8,uk_UA,uk-ua,ukrainian', 1, 1),
-  ('English', 'en-gb', 'en_GB.UTF-8,en_GB,en-gb,english', 0, 1);
+  INSERT IGNORE INTO oc_language (language_id, name, code, locale, sort_order, status) VALUES 
+  (20, 'Українська', 'uk-ua', 'uk_UA.UTF-8,uk_UA,uk-ua,ukrainian', 1, 1),
+  (21, 'English', 'en-gb', 'en_GB.UTF-8,en_GB,en-gb,english', 0, 1);
   " | cat
 fi
 
