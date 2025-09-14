@@ -1,0 +1,278 @@
+<!-- Image Library Modal Component -->
+<div id="image-library-modal" class="modal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5);">
+  <div class="modal-content" style="background-color: #fefefe; margin: 2% auto; padding: 20px; border: 1px solid #888; width: 90%; max-width: 1200px; max-height: 90vh; overflow-y: auto; border-radius: 8px;">
+    <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #ddd; padding-bottom: 10px;">
+      <h2>Бібліотека зображень</h2>
+      <span class="close" style="color: #aaa; font-size: 28px; font-weight: bold; cursor: pointer;">&times;</span>
+    </div>
+    
+    <div class="image-library-container">
+      <!-- Category Tabs -->
+      <div class="category-tabs" style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; border-bottom: 2px solid #eee; padding-bottom: 10px;">
+        {% for category in image_categories %}
+        <button class="category-tab" 
+                data-category="{{ category.name }}" 
+                style="padding: 8px 16px; border: 1px solid #ddd; background: #f9f9f9; cursor: pointer; border-radius: 4px; transition: all 0.2s;">
+          {{ category.display_name }}
+          <span class="image-count" style="margin-left: 8px; color: #666; font-size: 0.9em;">({{ category.count }})</span>
+        </button>
+        {% endfor %}
+      </div>
+      
+      <!-- Search Box -->
+      <div class="search-container" style="margin-bottom: 20px;">
+        <input type="text" id="image-search" placeholder="Пошук зображень..." 
+               style="width: 100%; padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;">
+      </div>
+      
+      <!-- Images Grid -->
+      <div id="images-grid" class="images-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; max-height: 500px; overflow-y: auto; border: 1px solid #eee; padding: 15px; border-radius: 4px;">
+        <!-- Images will be loaded here dynamically -->
+      </div>
+      
+      <!-- Selected Image Preview -->
+      <div id="selected-preview" class="selected-preview" style="margin-top: 20px; padding: 15px; border: 2px solid #1976d2; border-radius: 8px; background: #f8f9fa; display: none;">
+        <h4>Вибране зображення:</h4>
+        <div style="display: flex; align-items: center; gap: 15px;">
+          <img id="selected-image" src="" alt="Selected" style="max-width: 100px; max-height: 100px; object-fit: cover; border-radius: 4px;">
+          <div>
+            <div id="selected-filename" style="font-weight: bold; margin-bottom: 5px;"></div>
+            <div id="selected-category" style="color: #666; font-size: 0.9em;"></div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Action Buttons -->
+      <div class="modal-actions" style="margin-top: 20px; display: flex; justify-content: flex-end; gap: 10px;">
+        <button id="cancel-library" class="button" style="background: #6c757d; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer;">Скасувати</button>
+        <button id="use-image" class="button" style="background: #1976d2; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; display: none;">Використати зображення</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+.modal {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.category-tab.active {
+  background: #1976d2 !important;
+  color: white !important;
+  border-color: #1976d2 !important;
+}
+
+.image-item {
+  position: relative;
+  cursor: pointer;
+  border: 2px solid transparent;
+  border-radius: 6px;
+  overflow: hidden;
+  transition: all 0.2s;
+}
+
+.image-item:hover {
+  border-color: #1976d2;
+  transform: scale(1.02);
+}
+
+.image-item.selected {
+  border-color: #1976d2;
+  background: #e3f2fd;
+}
+
+.image-item img {
+  width: 100%;
+  height: 120px;
+  object-fit: cover;
+  display: block;
+}
+
+.image-item .image-name {
+  padding: 8px;
+  font-size: 12px;
+  background: white;
+  border-top: 1px solid #eee;
+  word-break: break-all;
+  line-height: 1.2;
+}
+
+.loading {
+  text-align: center;
+  padding: 40px;
+  color: #666;
+}
+
+.error {
+  text-align: center;
+  padding: 40px;
+  color: #d32f2f;
+}
+</style>
+
+<script>
+class ImageLibrary {
+  constructor() {
+    this.modal = document.getElementById('image-library-modal');
+    this.grid = document.getElementById('images-grid');
+    this.searchInput = document.getElementById('image-search');
+    this.selectedPreview = document.getElementById('selected-preview');
+    this.selectedImage = document.getElementById('selected-image');
+    this.selectedFilename = document.getElementById('selected-filename');
+    this.selectedCategory = document.getElementById('selected-category');
+    this.useButton = document.getElementById('use-image');
+    this.cancelButton = document.getElementById('cancel-library');
+    this.closeButton = document.querySelector('.close');
+    
+    this.currentCategory = null;
+    this.currentImages = [];
+    this.selectedImageData = null;
+    this.callback = null;
+    
+    this.init();
+  }
+  
+  init() {
+    // Event listeners
+    this.closeButton.addEventListener('click', () => this.close());
+    this.cancelButton.addEventListener('click', () => this.close());
+    this.useButton.addEventListener('click', () => this.useSelectedImage());
+    
+    // Close modal when clicking outside
+    this.modal.addEventListener('click', (e) => {
+      if (e.target === this.modal) this.close();
+    });
+    
+    // Category tab clicks
+    document.querySelectorAll('.category-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        const category = tab.dataset.category;
+        this.selectCategory(category);
+      });
+    });
+    
+    // Search functionality
+    this.searchInput.addEventListener('input', (e) => {
+      this.filterImages(e.target.value);
+    });
+    
+    // Select first category by default
+    const firstTab = document.querySelector('.category-tab');
+    if (firstTab) {
+      this.selectCategory(firstTab.dataset.category);
+    }
+  }
+  
+  open(callback) {
+    this.callback = callback;
+    this.modal.style.display = 'block';
+    document.body.style.overflow = 'hidden';
+  }
+  
+  close() {
+    this.modal.style.display = 'none';
+    document.body.style.overflow = 'auto';
+    this.selectedImageData = null;
+    this.selectedPreview.style.display = 'none';
+    this.useButton.style.display = 'none';
+  }
+  
+  selectCategory(categoryName) {
+    // Update active tab
+    document.querySelectorAll('.category-tab').forEach(tab => {
+      tab.classList.remove('active');
+    });
+    document.querySelector(`[data-category="${categoryName}"]`).classList.add('active');
+    
+    this.currentCategory = categoryName;
+    this.loadImages(categoryName);
+  }
+  
+  async loadImages(category) {
+    this.grid.innerHTML = '<div class="loading">Завантаження зображень...</div>';
+    
+    try {
+      const response = await fetch(`/api/images/${category}`);
+      if (!response.ok) throw new Error('Failed to load images');
+      
+      const images = await response.json();
+      this.currentImages = images;
+      this.renderImages(images);
+    } catch (error) {
+      console.error('Error loading images:', error);
+      this.grid.innerHTML = '<div class="error">Помилка завантаження зображень</div>';
+    }
+  }
+  
+  renderImages(images) {
+    if (images.length === 0) {
+      this.grid.innerHTML = '<div class="loading">Немає зображень в цій категорії</div>';
+      return;
+    }
+    
+    this.grid.innerHTML = images.map(img => `
+      <div class="image-item" data-filename="${img.filename}" data-category="${this.currentCategory}">
+        <img src="/images/${this.currentCategory}/${img.filename}" alt="${img.filename}" loading="lazy">
+        <div class="image-name">${img.filename}</div>
+      </div>
+    `).join('');
+    
+    // Add click listeners to image items
+    this.grid.querySelectorAll('.image-item').forEach(item => {
+      item.addEventListener('click', () => {
+        this.selectImage(item);
+      });
+    });
+  }
+  
+  selectImage(item) {
+    // Remove previous selection
+    this.grid.querySelectorAll('.image-item').forEach(i => i.classList.remove('selected'));
+    
+    // Select current item
+    item.classList.add('selected');
+    
+    const filename = item.dataset.filename;
+    const category = item.dataset.category;
+    const img = item.querySelector('img');
+    
+    this.selectedImageData = {
+      filename: filename,
+      category: category,
+      url: img.src
+    };
+    
+    // Update preview
+    this.selectedImage.src = img.src;
+    this.selectedFilename.textContent = filename;
+    this.selectedCategory.textContent = `Категорія: ${category}`;
+    this.selectedPreview.style.display = 'block';
+    this.useButton.style.display = 'inline-block';
+  }
+  
+  filterImages(searchTerm) {
+    if (!searchTerm.trim()) {
+      this.renderImages(this.currentImages);
+      return;
+    }
+    
+    const filtered = this.currentImages.filter(img => 
+      img.filename.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    
+    this.renderImages(filtered);
+  }
+  
+  useSelectedImage() {
+    if (this.selectedImageData && this.callback) {
+      this.callback(this.selectedImageData);
+      this.close();
+    }
+  }
+}
+
+// Initialize image library when DOM is loaded
+document.addEventListener('DOMContentLoaded', () => {
+  window.imageLibrary = new ImageLibrary();
+});
+</script>

@@ -173,7 +173,13 @@
                   <img src="{{ image_url }}" alt="image" />
                   <label><input type="checkbox" name="remove_primary_image" value="1" /> Видалити поточне</label>
                 {% endif %}
-                <input type="file" name="image" accept="image/*" />
+                <div style="display: flex; gap: 10px; margin: 10px 0;">
+                  <input type="file" name="image" accept="image/*" style="flex: 1;" />
+                  <button type="button" id="open-image-library" class="button" style="background: #1976d2; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer;">
+                    📚 Бібліотека зображень
+                  </button>
+                </div>
+                <input type="hidden" name="selected_library_image" id="selected-library-image" value="" />
               </div>
 
               <div style="grid-column: 1 / -1;">
@@ -344,5 +350,81 @@
       </div>
       {% endif %}
     </main>
+
+    <!-- Include Image Library Component -->
+    {% include 'image_library.html' %}
+
+    <script>
+      // Image Library Integration
+      document.addEventListener('DOMContentLoaded', function() {
+        const openLibraryBtn = document.getElementById('open-image-library');
+        const selectedLibraryImage = document.getElementById('selected-library-image');
+        const fileInput = document.querySelector('input[name="image"]');
+        
+        if (openLibraryBtn && window.imageLibrary) {
+          openLibraryBtn.addEventListener('click', function() {
+            // Load categories first
+            fetch('/api/images/categories')
+              .then(response => response.json())
+              .then(categories => {
+                // Update the image library with categories
+                const tabsContainer = document.querySelector('.category-tabs');
+                if (tabsContainer) {
+                  tabsContainer.innerHTML = categories.map(cat => 
+                    `<button class="category-tab" data-category="${cat.name}" 
+                             style="padding: 8px 16px; border: 1px solid #ddd; background: #f9f9f9; cursor: pointer; border-radius: 4px; transition: all 0.2s;">
+                       ${cat.display_name}
+                       <span class="image-count" style="margin-left: 8px; color: #666; font-size: 0.9em;">(${cat.count})</span>
+                     </button>`
+                  ).join('');
+                  
+                  // Re-initialize category tab listeners
+                  tabsContainer.querySelectorAll('.category-tab').forEach(tab => {
+                    tab.addEventListener('click', () => {
+                      const category = tab.dataset.category;
+                      window.imageLibrary.selectCategory(category);
+                    });
+                  });
+                }
+                
+                // Open the library
+                window.imageLibrary.open(function(selectedImage) {
+                  // Handle selected image
+                  selectedLibraryImage.value = JSON.stringify(selectedImage);
+                  
+                  // Update the file input to show the selected image
+                  const imagePreview = document.querySelector('.image img');
+                  if (imagePreview) {
+                    imagePreview.src = selectedImage.url;
+                    imagePreview.style.display = 'block';
+                  } else {
+                    // Create a new image preview if none exists
+                    const imageContainer = document.querySelector('.image');
+                    const newImg = document.createElement('img');
+                    newImg.src = selectedImage.url;
+                    newImg.alt = 'Selected image';
+                    newImg.style.maxWidth = '320px';
+                    newImg.style.width = '100%';
+                    newImg.style.borderRadius = '8px';
+                    newImg.style.border = '1px solid #ddd';
+                    imageContainer.appendChild(newImg);
+                  }
+                  
+                  // Clear the file input since we're using library image
+                  if (fileInput) {
+                    fileInput.value = '';
+                  }
+                  
+                  console.log('Selected image:', selectedImage);
+                });
+              })
+              .catch(error => {
+                console.error('Error loading categories:', error);
+                alert('Помилка завантаження категорій зображень');
+              });
+          });
+        }
+      });
+    </script>
   </body>
 </html>

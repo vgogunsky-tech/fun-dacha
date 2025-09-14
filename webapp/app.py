@@ -969,6 +969,119 @@ def serve_product_image(filename: str):
     return send_from_directory(PRODUCT_IMAGES_DIR, filename)
 
 
+# -------------------- Image Library API Routes --------------------
+
+@app.route("/api/images/<category>")
+def api_images_by_category(category: str):
+    """Get list of images for a specific category"""
+    try:
+        image_dir = os.path.join(DATA_DIR, "imageLibrary", category)
+        if not os.path.exists(image_dir):
+            return jsonify([])
+        
+        images = []
+        for filename in os.listdir(image_dir):
+            if filename.lower().endswith(('.jpg', '.jpeg', '.png', '.webp')):
+                images.append({
+                    'filename': filename,
+                    'category': category
+                })
+        
+        # Sort by filename
+        images.sort(key=lambda x: x['filename'])
+        return jsonify(images)
+    except Exception as e:
+        app.logger.error(f"Error loading images for category {category}: {e}")
+        return jsonify([]), 500
+
+@app.route("/api/images/categories")
+def api_image_categories():
+    """Get list of available image categories with counts"""
+    try:
+        image_library_dir = os.path.join(DATA_DIR, "imageLibrary")
+        if not os.path.exists(image_library_dir):
+            return jsonify([])
+        
+        categories = []
+        for category_name in os.listdir(image_library_dir):
+            category_path = os.path.join(image_library_dir, category_name)
+            if os.path.isdir(category_path):
+                # Count images in this category
+                image_count = 0
+                for filename in os.listdir(category_path):
+                    if filename.lower().endswith(('.jpg', '.jpeg', '.png', '.webp')):
+                        image_count += 1
+                
+                if image_count > 0:
+                    # Get display name from category mapping
+                    display_name = get_category_display_name(category_name)
+                    categories.append({
+                        'name': category_name,
+                        'display_name': display_name,
+                        'count': image_count
+                    })
+        
+        # Sort by display name
+        categories.sort(key=lambda x: x['display_name'])
+        return jsonify(categories)
+    except Exception as e:
+        app.logger.error(f"Error loading image categories: {e}")
+        return jsonify([]), 500
+
+@app.route("/images/<category>/<path:filename>")
+def serve_image_library_image(category: str, filename: str):
+    """Serve images from the image library"""
+    try:
+        image_dir = os.path.join(DATA_DIR, "imageLibrary", category)
+        return send_from_directory(image_dir, filename)
+    except Exception as e:
+        app.logger.error(f"Error serving image {category}/{filename}: {e}")
+        abort(404)
+
+def get_category_display_name(category_name: str):
+    """Get display name for category from mapping"""
+    # Load category mapping if available
+    mapping_file = os.path.join(BASE_DIR, "category_library_mapping.csv")
+    if os.path.exists(mapping_file):
+        try:
+            import csv
+            with open(mapping_file, 'r', encoding='utf-8') as f:
+                reader = csv.DictReader(f)
+                for row in reader:
+                    if row['library_folder'] == category_name:
+                        return row['name_ukr']
+        except Exception:
+            pass
+    
+    # Fallback to category name with some basic translations
+    translations = {
+        'pomidori': 'Томати',
+        'ogirki': 'Огірки',
+        'kapusta': 'Капуста',
+        'baklazhan': 'Баклажани',
+        'morkva': 'Морква',
+        'buryak': 'Буряк',
+        'kavun': 'Кавуни',
+        'dinya': 'Дині',
+        'garbuz': 'Гарбузи',
+        'kabachok': 'Кабачки',
+        'goroh': 'Горох',
+        'kvaso': 'Квасоля',
+        'kukurudza': 'Кукурудза',
+        'kviti': 'Квіти',
+        'redis-redka': 'Редис',
+        'perets': 'Перець',
+        'patis': 'Патисони',
+        'salat': 'Салат',
+        'zelen-pryanoschi': 'Зелені приправи',
+        'trava-gazonna': 'Газонні трави',
+        'tsibulya': 'Цибуля',
+        'krip': 'Кріп',
+        'petrushka': 'Петрушка'
+    }
+    
+    return translations.get(category_name, category_name.title())
+
 # -------------------- UI Routes --------------------
 
 @app.route("/")
@@ -1334,6 +1447,26 @@ def product_save():
         # Update product_id on image/category change
         target["product_id"] = build_sku(target.get("category_id", ""), target.get("id", ""))
         changed_paths.append(dest_path)
+    
+    # Handle selected library image
+    selected_library_image = form.get("selected_library_image", "").strip()
+    if selected_library_image:
+        try:
+            import json
+            image_data = json.loads(selected_library_image)
+            source_path = os.path.join(DATA_DIR, "imageLibrary", image_data["category"], image_data["filename"])
+            if os.path.exists(source_path):
+                dest_name = build_product_image_name(target.get("category_id", ""), target.get("id", ""))
+                os.makedirs(PRODUCT_IMAGES_DIR, exist_ok=True)
+                dest_path = os.path.join(PRODUCT_IMAGES_DIR, dest_name)
+                shutil.copy2(source_path, dest_path)
+                target["primary_image"] = dest_name
+                # Update product_id on image/category change
+                target["product_id"] = build_sku(target.get("category_id", ""), target.get("id", ""))
+                changed_paths.append(dest_path)
+        except Exception as e:
+            app.logger.error(f"Error copying library image: {e}")
+            flash("Помилка копіювання зображення з бібліотеки", "error")
 
     # Handle up to 5 secondary images
     existing_sec = [s.strip() for s in (target.get("images") or "").split(",") if s.strip()]
