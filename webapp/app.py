@@ -1357,10 +1357,19 @@ def product():
     if category_id is None:
         return redirect(url_for("index"))
 
-    products = get_unvalidated_products_by_category(str(category_id))
-    total = len(products)
+    # Get all products in the category (not just unvalidated)
+    rows, fields, _ = read_products_csv()
+    category_products = []
+    for row in rows:
+        if str(row.get('category_id', '')) == str(category_id):
+            category_products.append(row)
+    
+    # Sort products by ID
+    category_products.sort(key=lambda x: int(float(x.get('id', 0))))
+    
+    total = len(category_products)
     if total == 0:
-        flash("No unvalidated products in this category.")
+        flash("No products in this category.")
         return render_template("product.html", category_id=category_id, product=None, index=0, total=0)
 
     if index < 0:
@@ -1368,7 +1377,7 @@ def product():
     if index >= total:
         index = total - 1
 
-    p = products[index]
+    p = category_products[index]
 
     # Build image URL if available
     img_name = (p.get("primary_image") or "").strip()

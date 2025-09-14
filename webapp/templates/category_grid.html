@@ -23,6 +23,9 @@
         box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         transition: transform 0.2s, box-shadow 0.2s;
         cursor: pointer;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
       }
       .product-card:hover { 
         transform: translateY(-2px);
@@ -33,16 +36,14 @@
         height: 200px; 
         object-fit: cover; 
         background: #f8f9fa;
+        flex-shrink: 0;
       }
       .product-info { 
         padding: 15px; 
-      }
-      .product-title { 
-        font-weight: bold; 
-        margin-bottom: 8px; 
-        color: #333;
-        font-size: 16px;
-        line-height: 1.3;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
       }
       .product-meta { 
         font-size: 14px; 
@@ -53,6 +54,15 @@
         font-size: 12px; 
         color: #999; 
         font-family: monospace;
+        margin-bottom: 10px;
+      }
+      .product-title { 
+        font-weight: bold; 
+        margin-top: auto;
+        color: #333;
+        font-size: 16px;
+        line-height: 1.3;
+        margin-bottom: 8px;
       }
       .status-badge {
         display: inline-block;
@@ -61,7 +71,7 @@
         font-size: 11px;
         font-weight: bold;
         text-transform: uppercase;
-        margin-top: 8px;
+        margin-top: auto;
       }
       .status-validated {
         background: #d4edda;
@@ -194,9 +204,6 @@
                 </div>
               {% endif %}
               <div class="product-info">
-                <div class="product-title">
-                  {{ product['Название (укр)'] or product['Название (рус)'] or 'Без назви' }}
-                </div>
                 <div class="product-meta">
                   {% if product.get('year') %}
                     Рік: {{ product['year'] }}
@@ -206,6 +213,9 @@
                   {% endif %}
                 </div>
                 <div class="product-id">ID: {{ product['id'] }}</div>
+                <div class="product-title">
+                  {{ product['Название (укр)'] or product['Название (рус)'] or 'Без назви' }}
+                </div>
                 <div class="status-badge {{ 'status-validated' if product.get('validated') == '1' else 'status-unvalidated' }}">
                   {{ 'Перевірено' if product.get('validated') == '1' else 'Не перевірено' }}
                 </div>
