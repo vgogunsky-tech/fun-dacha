@@ -47,8 +47,8 @@
       }
       .images-grid { 
         display: grid; 
-        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); 
-        gap: 15px; 
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); 
+        gap: 20px; 
         margin-bottom: 30px; 
       }
       .image-item { 
@@ -72,9 +72,12 @@
       }
       .image-item img { 
         width: 100%; 
-        height: 150px; 
-        object-fit: cover; 
+        height: auto; 
+        min-height: 200px;
+        max-height: 400px;
+        object-fit: contain; 
         display: block; 
+        background: #f8f9fa;
       }
       .image-item .image-name { 
         padding: 10px; 
@@ -391,7 +394,7 @@
           
           this.elements.imagesGrid.innerHTML = images.map(img => `
             <div class="image-item" data-filename="${img.filename}" data-category="${this.currentCategory}">
-              <img src="/images/${this.currentCategory}/${img.filename}" alt="${img.filename}" loading="lazy">
+              <img src="/images/${this.currentCategory}/${img.filename}" alt="${img.filename}" loading="lazy" style="width: 100%; height: auto; min-height: 200px; max-height: 400px; object-fit: contain; display: block; background: #f8f9fa;">
               <div class="image-name">${img.filename}</div>
             </div>
           `).join('');

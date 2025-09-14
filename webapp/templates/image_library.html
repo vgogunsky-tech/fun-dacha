@@ -26,7 +26,7 @@
       </div>
       
       <!-- Images Grid -->
-      <div id="images-grid" class="images-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; max-height: 500px; overflow-y: auto; border: 1px solid #eee; padding: 15px; border-radius: 4px;">
+      <div id="images-grid" class="images-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; max-height: 600px; overflow-y: auto; border: 1px solid #eee; padding: 15px; border-radius: 4px;">
         <!-- Images will be loaded here dynamically -->
       </div>
       
@@ -83,9 +83,12 @@
 
 .image-item img {
   width: 100%;
-  height: 120px;
-  object-fit: cover;
+  height: auto;
+  min-height: 150px;
+  max-height: 300px;
+  object-fit: contain;
   display: block;
+  background: #f8f9fa;
 }
 
 .image-item .image-name {
@@ -212,7 +215,7 @@ class ImageLibrary {
     
     this.grid.innerHTML = images.map(img => `
       <div class="image-item" data-filename="${img.filename}" data-category="${this.currentCategory}">
-        <img src="/images/${this.currentCategory}/${img.filename}" alt="${img.filename}" loading="lazy">
+        <img src="/images/${this.currentCategory}/${img.filename}" alt="${img.filename}" loading="lazy" style="width: 100%; height: auto; min-height: 150px; max-height: 300px; object-fit: contain; display: block; background: #f8f9fa;">
         <div class="image-name">${img.filename}</div>
       </div>
     `).join('');
