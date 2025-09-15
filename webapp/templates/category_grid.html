@@ -437,30 +437,30 @@
         
         <div class="gallery-tabs">
           <button class="gallery-tab active" data-category="all">Всі категорії</button>
-          <button class="gallery-tab" data-category="pomidori">Томати (232)</button>
-          <button class="gallery-tab" data-category="ogirki">Огірки (184)</button>
-          <button class="gallery-tab" data-category="kukurudza">Кукурудза (22)</button>
-          <button class="gallery-tab" data-category="kviti">Квіти (354)</button>
-          <button class="gallery-tab" data-category="kviti-odnorichni">Квіти однорічні (108)</button>
-          <button class="gallery-tab" data-category="baklazhani">Баклажани (21)</button>
-          <button class="gallery-tab" data-category="bobovi">Бобові культури (24)</button>
-          <button class="gallery-tab" data-category="buryak">Буряк (50)</button>
-          <button class="gallery-tab" data-category="gazonni-travy">Газонні трави (9)</button>
-          <button class="gallery-tab" data-category="garbuzy">Гарбузи (41)</button>
-          <button class="gallery-tab" data-category="dini">Дині (34)</button>
-          <button class="gallery-tab" data-category="zeleni-prypravy">Зелені приправи (64)</button>
-          <button class="gallery-tab" data-category="kabachky">Кабачки (31)</button>
-          <button class="gallery-tab" data-category="kavuny">Кавуни (51)</button>
-          <button class="gallery-tab" data-category="kapusta">Капуста (85)</button>
-          <button class="gallery-tab" data-category="kvasolya">Квасоля (35)</button>
-          <button class="gallery-tab" data-category="krip">Кріп (14)</button>
-          <button class="gallery-tab" data-category="morkva">Морква (72)</button>
-          <button class="gallery-tab" data-category="patysony">Патисони (2)</button>
-          <button class="gallery-tab" data-category="perets">Перець (73)</button>
-          <button class="gallery-tab" data-category="petrushka">Петрушка (15)</button>
-          <button class="gallery-tab" data-category="redis">Редис (54)</button>
-          <button class="gallery-tab" data-category="salat">Салат (33)</button>
-          <button class="gallery-tab" data-category="tsybulya">Цибуля (32)</button>
+          <button class="gallery-tab" data-category="pomidori">Томати</button>
+          <button class="gallery-tab" data-category="ogirki">Огірки</button>
+          <button class="gallery-tab" data-category="kukurudza">Кукурудза</button>
+          <button class="gallery-tab" data-category="kviti">Квіти</button>
+          <button class="gallery-tab" data-category="kviti-aystra">Квіти айстра</button>
+          <button class="gallery-tab" data-category="baklazhan">Баклажани</button>
+          <button class="gallery-tab" data-category="goroh">Горох</button>
+          <button class="gallery-tab" data-category="buryak">Буряк</button>
+          <button class="gallery-tab" data-category="trava-gazonna">Газонні трави</button>
+          <button class="gallery-tab" data-category="garbuz">Гарбузи</button>
+          <button class="gallery-tab" data-category="dinya">Дині</button>
+          <button class="gallery-tab" data-category="zelen-pryanoschi">Зелені приправи</button>
+          <button class="gallery-tab" data-category="kabachok">Кабачки</button>
+          <button class="gallery-tab" data-category="kavun">Кавуни</button>
+          <button class="gallery-tab" data-category="kapusta">Капуста</button>
+          <button class="gallery-tab" data-category="kvaso">Квасоля</button>
+          <button class="gallery-tab" data-category="krip">Кріп</button>
+          <button class="gallery-tab" data-category="morkva">Морква</button>
+          <button class="gallery-tab" data-category="patis">Патисони</button>
+          <button class="gallery-tab" data-category="perets">Перець</button>
+          <button class="gallery-tab" data-category="petrushka">Петрушка</button>
+          <button class="gallery-tab" data-category="redis-redka">Редис-редька</button>
+          <button class="gallery-tab" data-category="salat">Салат</button>
+          <button class="gallery-tab" data-category="tsibulya">Цибуля</button>
         </div>
         
         <div id="gallery-content">
@@ -599,13 +599,13 @@
         }
         
         function loadAllImages(grid) {
-          // List of all available categories
+          // List of all available categories (matching actual folder names)
           const categories = [
-            'pomidori', 'ogirki', 'kukurudza', 'kviti', 'kviti-odnorichni',
-            'baklazhani', 'bobovi', 'buryak', 'gazonni-travy', 'garbuzy',
-            'dini', 'zeleni-prypravy', 'kabachky', 'kavuny', 'kapusta',
-            'kvasolya', 'krip', 'morkva', 'patysony', 'perets',
-            'petrushka', 'redis', 'salat', 'tsybulya'
+            'pomidori', 'ogirki', 'kukurudza', 'kviti', 'kviti-aystra',
+            'baklazhan', 'goroh', 'buryak', 'trava-gazonna', 'garbuz',
+            'dinya', 'zelen-pryanoschi', 'kabachok', 'kavun', 'kapusta',
+            'kvaso', 'krip', 'morkva', 'patis', 'perets',
+            'petrushka', 'redis-redka', 'salat', 'tsibulya'
           ];
           
           grid.innerHTML = '<p>Завантаження зображень з усіх категорій...</p>';
