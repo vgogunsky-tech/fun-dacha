@@ -1066,20 +1066,46 @@ def api_create_products():
         products = load_products()
         next_id = max([int(p.get('id', 0)) for p in products], default=0) + 1
         
-        # Create new product
+        # Get current timestamp
+        from datetime import datetime
+        current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        
+        # Create new product with all required fields
         new_product = {
             'id': str(next_id),
             'category_id': data.get('category_id'),
             'primary_image': data.get('primary_image'),
-            'Название (укр)': data.get('Название (укр)', ''),
-            'Название (рус)': data.get('Название (рус)', ''),
-            'Описание (укр)': data.get('Описание (укр)', ''),
-            'Описание (рус)': data.get('Описание (рус)', ''),
+            'Название (укр)': data.get('Название (укр)', f'Товар {next_id}'),
+            'Название (рус)': data.get('Название (рус)', f'Товар {next_id}'),
+            'Описание (укр)': data.get('Описание (укр)', f'Опис товару {next_id}'),
+            'Описание (рус)': data.get('Описание (рус)', f'Описание товара {next_id}'),
             'Цена': data.get('Цена', '100.00'),
             'year': data.get('year', '2024'),
             'availability': data.get('availability', 'В наявності'),
             'validated': data.get('validated', '0'),
-            'created_from_gallery': True
+            'created_from_gallery': True,
+            'created_at': current_time,
+            'updated_at': current_time,
+            'status': '1',
+            'sku': f'GAL-{next_id:04d}',
+            'model': f'GAL-{next_id:04d}',
+            'quantity': '100',
+            'minimum': '1',
+            'subtract': '1',
+            'stock_status_id': '7',
+            'shipping': '1',
+            'points': '0',
+            'weight': '0.00',
+            'weight_class_id': '1',
+            'length': '0.00',
+            'width': '0.00',
+            'height': '0.00',
+            'length_class_id': '1',
+            'sort_order': '0',
+            'viewed': '0',
+            'date_available': current_time,
+            'date_added': current_time,
+            'date_modified': current_time
         }
         
         # Add to products list

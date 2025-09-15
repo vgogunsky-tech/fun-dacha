@@ -689,9 +689,27 @@
           galleryCreate.disabled = true;
           galleryCreate.textContent = 'Створення товарів...';
           
-          // Create products
-          const promises = imageList.map((imagePath, index) => {
+          // Create products one by one to avoid conflicts
+          let createdCount = 0;
+          let errors = [];
+          
+          function createNextProduct(index) {
+            if (index >= imageList.length) {
+              // All products processed
+              if (createdCount > 0) {
+                alert(`Успішно створено ${createdCount} товарів!`);
+                closeGallery();
+                // Reload the page to show new products
+                window.location.reload();
+              } else {
+                alert('Не вдалося створити жодного товару. Перевірте консоль для деталей.');
+              }
+              return;
+            }
+            
+            const imagePath = imageList[index];
             const [category, filename] = imagePath.split('/');
+            
             const productData = {
               category_id: categoryId,
               primary_image: filename,
@@ -705,35 +723,45 @@
               'validated': '0'
             };
             
-            return fetch('/api/products', {
+            console.log(`Creating product ${index + 1}/${imageList.length}:`, productData);
+            
+            fetch('/api/products', {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
               },
               body: JSON.stringify(productData)
-            });
-          });
-          
-          Promise.all(promises)
-            .then(responses => {
-              const results = responses.map(r => r.json());
-              return Promise.all(results);
+            })
+            .then(response => {
+              console.log(`Response for product ${index + 1}:`, response.status);
+              return response.json();
             })
             .then(data => {
-              console.log('Products created:', data);
-              alert(`Успішно створено ${data.length} товарів!`);
-              closeGallery();
-              // Reload the page to show new products
-              window.location.reload();
+              console.log(`Product ${index + 1} created:`, data);
+              if (data.success) {
+                createdCount++;
+              } else {
+                errors.push(`Product ${index + 1}: ${data.error || 'Unknown error'}`);
+              }
+              // Create next product
+              createNextProduct(index + 1);
             })
             .catch(error => {
-              console.error('Error creating products:', error);
-              alert('Помилка створення товарів: ' + error.message);
-            })
-            .finally(() => {
-              galleryCreate.disabled = false;
-              galleryCreate.textContent = 'Створити товари';
+              console.error(`Error creating product ${index + 1}:`, error);
+              errors.push(`Product ${index + 1}: ${error.message}`);
+              // Continue with next product
+              createNextProduct(index + 1);
             });
+          }
+          
+          // Start creating products
+          createNextProduct(0);
+          
+          // Reset button state after a delay
+          setTimeout(() => {
+            galleryCreate.disabled = false;
+            galleryCreate.textContent = 'Створити товари';
+          }, 5000);
         }
         
         // Search functionality
