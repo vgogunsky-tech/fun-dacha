@@ -11,7 +11,7 @@
       .actions { display: flex; gap: 15px; align-items: center; }
       .products-grid { 
         display: grid; 
-        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); 
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); 
         gap: 20px; 
         margin-top: 20px; 
       }
@@ -33,7 +33,7 @@
       }
       .product-image { 
         width: 100%; 
-        height: 280px; 
+        height: 350px; 
         object-fit: contain; 
         background: #f8f9fa;
         flex-shrink: 0;
@@ -395,7 +395,7 @@
                      alt="{{ product['Название (укр)'] or 'Product' }}" 
                      class="product-image" />
               {% else %}
-                <div class="product-image" style="display: flex; align-items: center; justify-content: center; color: #999; height: 280px;">
+                <div class="product-image" style="display: flex; align-items: center; justify-content: center; color: #999; height: 350px;">
                   Немає зображення
                 </div>
               {% endif %}
