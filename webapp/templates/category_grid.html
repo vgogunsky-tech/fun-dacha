@@ -194,19 +194,24 @@
       
       .gallery-tabs {
         display: flex;
-        gap: 10px;
+        gap: 8px;
         margin-bottom: 20px;
         border-bottom: 1px solid #ddd;
+        flex-wrap: wrap;
+        max-height: 200px;
+        overflow-y: auto;
       }
       
       .gallery-tab {
-        padding: 10px 20px;
+        padding: 8px 12px;
         cursor: pointer;
         border: none;
         background: none;
-        font-size: 16px;
+        font-size: 14px;
         color: #666;
         border-bottom: 2px solid transparent;
+        white-space: nowrap;
+        flex-shrink: 0;
       }
       
       .gallery-tab.active {
@@ -432,11 +437,30 @@
         
         <div class="gallery-tabs">
           <button class="gallery-tab active" data-category="all">Всі категорії</button>
-          <button class="gallery-tab" data-category="pomidori">Помідори</button>
-          <button class="gallery-tab" data-category="ogirki">Огірки</button>
-          <button class="gallery-tab" data-category="kukurudza">Кукурудза</button>
-          <button class="gallery-tab" data-category="kviti">Квіти</button>
-          <button class="gallery-tab" data-category="ovochi">Овочі</button>
+          <button class="gallery-tab" data-category="pomidori">Томати (232)</button>
+          <button class="gallery-tab" data-category="ogirki">Огірки (184)</button>
+          <button class="gallery-tab" data-category="kukurudza">Кукурудза (22)</button>
+          <button class="gallery-tab" data-category="kviti">Квіти (354)</button>
+          <button class="gallery-tab" data-category="kviti-odnorichni">Квіти однорічні (108)</button>
+          <button class="gallery-tab" data-category="baklazhani">Баклажани (21)</button>
+          <button class="gallery-tab" data-category="bobovi">Бобові культури (24)</button>
+          <button class="gallery-tab" data-category="buryak">Буряк (50)</button>
+          <button class="gallery-tab" data-category="gazonni-travy">Газонні трави (9)</button>
+          <button class="gallery-tab" data-category="garbuzy">Гарбузи (41)</button>
+          <button class="gallery-tab" data-category="dini">Дині (34)</button>
+          <button class="gallery-tab" data-category="zeleni-prypravy">Зелені приправи (64)</button>
+          <button class="gallery-tab" data-category="kabachky">Кабачки (31)</button>
+          <button class="gallery-tab" data-category="kavuny">Кавуни (51)</button>
+          <button class="gallery-tab" data-category="kapusta">Капуста (85)</button>
+          <button class="gallery-tab" data-category="kvasolya">Квасоля (35)</button>
+          <button class="gallery-tab" data-category="krip">Кріп (14)</button>
+          <button class="gallery-tab" data-category="morkva">Морква (72)</button>
+          <button class="gallery-tab" data-category="patysony">Патисони (2)</button>
+          <button class="gallery-tab" data-category="perets">Перець (73)</button>
+          <button class="gallery-tab" data-category="petrushka">Петрушка (15)</button>
+          <button class="gallery-tab" data-category="redis">Редис (54)</button>
+          <button class="gallery-tab" data-category="salat">Салат (33)</button>
+          <button class="gallery-tab" data-category="tsybulya">Цибуля (32)</button>
         </div>
         
         <div id="gallery-content">
@@ -544,25 +568,76 @@
           
           // Load images via API
           console.log(`Loading images for category: ${category}`);
-          fetch(`/api/images/${category}`)
-            .then(response => {
-              console.log('Response status:', response.status);
-              return response.json();
-            })
-            .then(data => {
-              console.log('Received data:', data);
+          
+          if (category === 'all') {
+            // Load images from all categories
+            loadAllImages(grid);
+          } else {
+            // Load images from specific category
+            fetch(`/api/images/${category}`)
+              .then(response => {
+                console.log('Response status:', response.status);
+                return response.json();
+              })
+              .then(data => {
+                console.log('Received data:', data);
+                grid.innerHTML = '';
+                if (data.images && data.images.length > 0) {
+                  data.images.forEach(image => {
+                    const imageItem = createImageItem(image.filename, image.category);
+                    grid.appendChild(imageItem);
+                  });
+                } else {
+                  grid.innerHTML = '<p>Немає зображень в цій категорії</p>';
+                }
+              })
+              .catch(error => {
+                console.error('Error loading images:', error);
+                grid.innerHTML = '<p>Помилка завантаження зображень</p>';
+              });
+          }
+        }
+        
+        function loadAllImages(grid) {
+          // List of all available categories
+          const categories = [
+            'pomidori', 'ogirki', 'kukurudza', 'kviti', 'kviti-odnorichni',
+            'baklazhani', 'bobovi', 'buryak', 'gazonni-travy', 'garbuzy',
+            'dini', 'zeleni-prypravy', 'kabachky', 'kavuny', 'kapusta',
+            'kvasolya', 'krip', 'morkva', 'patysony', 'perets',
+            'petrushka', 'redis', 'salat', 'tsybulya'
+          ];
+          
+          grid.innerHTML = '<p>Завантаження зображень з усіх категорій...</p>';
+          
+          // Load images from all categories
+          const promises = categories.map(cat => 
+            fetch(`/api/images/${cat}`)
+              .then(response => response.json())
+              .then(data => data.images || [])
+              .catch(error => {
+                console.error(`Error loading images for ${cat}:`, error);
+                return [];
+              })
+          );
+          
+          Promise.all(promises)
+            .then(allImages => {
+              const flatImages = allImages.flat();
+              console.log('Loaded all images:', flatImages);
+              
               grid.innerHTML = '';
-              if (data.images && data.images.length > 0) {
-                data.images.forEach(image => {
+              if (flatImages.length > 0) {
+                flatImages.forEach(image => {
                   const imageItem = createImageItem(image.filename, image.category);
                   grid.appendChild(imageItem);
                 });
               } else {
-                grid.innerHTML = '<p>Немає зображень в цій категорії</p>';
+                grid.innerHTML = '<p>Немає зображень в жодній категорії</p>';
               }
             })
             .catch(error => {
-              console.error('Error loading images:', error);
+              console.error('Error loading all images:', error);
               grid.innerHTML = '<p>Помилка завантаження зображень</p>';
             });
         }
