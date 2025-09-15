@@ -1149,6 +1149,33 @@ def api_create_products():
             'seo': f'gal-tovar-{next_id}'
         }
         
+        # Copy image from gallery to products folder
+        if data.get('primary_image'):
+            try:
+                # Source image path in gallery
+                source_category = data.get('source_category', '')
+                source_image = data.get('primary_image')
+                source_path = os.path.join(DATA_DIR, "imageLibrary", source_category, source_image)
+                
+                # Destination image path in products folder
+                dest_image = f"p{next_id:06d}.jpg"
+                dest_path = os.path.join(DATA_DIR, "images", "products", dest_image)
+                
+                # Ensure destination directory exists
+                os.makedirs(os.path.dirname(dest_path), exist_ok=True)
+                
+                # Copy the image
+                if os.path.exists(source_path):
+                    import shutil
+                    shutil.copy2(source_path, dest_path)
+                    # Update the product's primary_image to the new filename
+                    new_product['primary_image'] = dest_image
+                    app.logger.info(f"Copied image from {source_path} to {dest_path}")
+                else:
+                    app.logger.warning(f"Source image not found: {source_path}")
+            except Exception as e:
+                app.logger.error(f"Error copying image: {e}")
+        
         # Add to products list
         products.append(new_product)
         
