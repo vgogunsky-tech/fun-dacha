@@ -742,6 +742,42 @@ def load_products() -> List[Dict[str, str]]:
     return rows
 
 
+def save_products(products: List[Dict[str, str]]) -> None:
+    """Save products list to CSV files"""
+    rows, fields, _ = read_products_csv()
+    
+    # Ensure all required fields exist in the CSV
+    required_fields = [
+        'id', 'Название (укр)', 'Название (рус)', 'Описание (укр)', 'Описание (рус)', 
+        'primary_image', 'category_id', 'subcategory_id', 'product_id', 'validated', 
+        'year', 'availability', 'images', 'tags', 'price', 'weight', 'length', 'width', 
+        'height', 'model', 'seo', 'created_at', 'updated_at', 'status', 'sku', 'quantity', 
+        'minimum', 'subtract', 'stock_status_id', 'shipping', 'points', 'weight_class_id', 
+        'length_class_id', 'sort_order', 'viewed', 'date_available', 'date_added', 
+        'date_modified', 'created_from_gallery'
+    ]
+    
+    # Add missing fields to the CSV structure
+    for field in required_fields:
+        if field not in fields:
+            fields.append(field)
+            # Add empty values for existing rows
+            for row in rows:
+                if field not in row:
+                    row[field] = ""
+    
+    # Update the rows with the new products
+    # First, remove existing products that are in the new list
+    existing_ids = {p.get('id', '') for p in products}
+    rows = [r for r in rows if r.get('id', '') not in existing_ids]
+    
+    # Add new products
+    rows.extend(products)
+    
+    # Write to CSV
+    write_products_csv(rows, fields)
+
+
 def load_tag_ua_map(category_id: int) -> Dict[str, str]:
     """Load mapping of tag key -> UA display name for a given category.
 
@@ -1079,11 +1115,11 @@ def api_create_products():
             'Название (рус)': data.get('Название (рус)', f'Товар {next_id}'),
             'Описание (укр)': data.get('Описание (укр)', f'Опис товару {next_id}'),
             'Описание (рус)': data.get('Описание (рус)', f'Описание товара {next_id}'),
-            'Цена': data.get('Цена', '100.00'),
+            'price': data.get('Цена', '100.00'),
             'year': data.get('year', '2024'),
             'availability': data.get('availability', 'В наявності'),
             'validated': data.get('validated', '0'),
-            'created_from_gallery': True,
+            'created_from_gallery': 'True',
             'created_at': current_time,
             'updated_at': current_time,
             'status': '1',
@@ -1105,7 +1141,12 @@ def api_create_products():
             'viewed': '0',
             'date_available': current_time,
             'date_added': current_time,
-            'date_modified': current_time
+            'date_modified': current_time,
+            'subcategory_id': '',
+            'product_id': f'GAL-{next_id:04d}',
+            'images': '',
+            'tags': '',
+            'seo': f'gal-tovar-{next_id}'
         }
         
         # Add to products list
