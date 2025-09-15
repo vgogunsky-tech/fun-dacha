@@ -543,14 +543,23 @@
           document.getElementById(`gallery-${category}`).classList.add('active');
           
           // Load images via API
+          console.log(`Loading images for category: ${category}`);
           fetch(`/api/images/${category}`)
-            .then(response => response.json())
+            .then(response => {
+              console.log('Response status:', response.status);
+              return response.json();
+            })
             .then(data => {
+              console.log('Received data:', data);
               grid.innerHTML = '';
-              data.images.forEach(image => {
-                const imageItem = createImageItem(image, category);
-                grid.appendChild(imageItem);
-              });
+              if (data.images && data.images.length > 0) {
+                data.images.forEach(image => {
+                  const imageItem = createImageItem(image.filename, image.category);
+                  grid.appendChild(imageItem);
+                });
+              } else {
+                grid.innerHTML = '<p>Немає зображень в цій категорії</p>';
+              }
             })
             .catch(error => {
               console.error('Error loading images:', error);

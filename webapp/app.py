@@ -1015,10 +1015,10 @@ def api_images_by_category(category: str):
         
         # Sort by filename
         images.sort(key=lambda x: x['filename'])
-        return jsonify(images)
+        return jsonify({"images": images})
     except Exception as e:
         app.logger.error(f"Error loading images for category {category}: {e}")
-        return jsonify([]), 500
+        return jsonify({"images": []}), 500
 
 @app.route("/api/images/categories")
 def api_image_categories():
