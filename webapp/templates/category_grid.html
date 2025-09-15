@@ -33,7 +33,7 @@
       }
       .product-image { 
         width: 100%; 
-        height: 600px; 
+        height: 280px; 
         object-fit: contain; 
         background: #f8f9fa;
         flex-shrink: 0;
@@ -229,7 +229,7 @@
       
       .images-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
         gap: 15px;
         margin-bottom: 20px;
       }
@@ -255,8 +255,8 @@
       
       .image-item img {
         width: 100%;
-        height: 120px;
-        object-fit: cover;
+        height: 600px;
+        object-fit: contain;
       }
       
       .image-checkbox {
@@ -395,7 +395,7 @@
                      alt="{{ product['Название (укр)'] or 'Product' }}" 
                      class="product-image" />
               {% else %}
-                <div class="product-image" style="display: flex; align-items: center; justify-content: center; color: #999; height: 600px;">
+                <div class="product-image" style="display: flex; align-items: center; justify-content: center; color: #999; height: 280px;">
                   Немає зображення
                 </div>
               {% endif %}
