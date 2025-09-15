@@ -9,6 +9,7 @@ import shutil
 import base64
 import json
 import threading
+from datetime import datetime
 from urllib import request as urlrequest
 from urllib import parse as urlparse
 from urllib.error import HTTPError, URLError
@@ -248,6 +249,31 @@ def commit_and_push_async(paths: List[str], message: str) -> None:
     thread = threading.Thread(target=_run_commit, daemon=True)
     thread.start()
     _log_git("[git] started async commit_and_push")
+
+def push_to_develop_async() -> None:
+    """Push current changes to develop branch in background."""
+    def _run_push():
+        try:
+            # Change to workspace directory
+            os.chdir('/workspace')
+            
+            # Add all changes
+            subprocess.run(['git', 'add', '.'], check=True, capture_output=True, text=True)
+            
+            # Commit changes
+            commit_message = f"Auto-commit: Products created from gallery at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
+            subprocess.run(['git', 'commit', '-m', commit_message], check=True, capture_output=True, text=True)
+            
+            # Push to develop
+            subprocess.run(['git', 'push', 'origin', 'develop'], check=True, capture_output=True, text=True)
+            
+            _log_git("[git] Successfully pushed gallery products to develop")
+        except Exception as e:
+            _log_git(f"[git] Error pushing to develop: {e}")
+    
+    thread = threading.Thread(target=_run_push, daemon=True)
+    thread.start()
+    _log_git("[git] started async push to develop")
 
 
 # -------------------- GitHub API fallback --------------------
@@ -1027,6 +1053,53 @@ def api_image_categories():
     except Exception as e:
         app.logger.error(f"Error loading image categories: {e}")
         return jsonify([]), 500
+
+@app.route("/api/products", methods=["POST"])
+def api_create_products():
+    """Create products from gallery images"""
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({"error": "No data provided"}), 400
+        
+        # Load existing products to get next ID
+        products = load_products()
+        next_id = max([int(p.get('id', 0)) for p in products], default=0) + 1
+        
+        # Create new product
+        new_product = {
+            'id': str(next_id),
+            'category_id': data.get('category_id'),
+            'primary_image': data.get('primary_image'),
+            'Название (укр)': data.get('Название (укр)', ''),
+            'Название (рус)': data.get('Название (рус)', ''),
+            'Описание (укр)': data.get('Описание (укр)', ''),
+            'Описание (рус)': data.get('Описание (рус)', ''),
+            'Цена': data.get('Цена', '100.00'),
+            'year': data.get('year', '2024'),
+            'availability': data.get('availability', 'В наявності'),
+            'validated': data.get('validated', '0'),
+            'created_from_gallery': True
+        }
+        
+        # Add to products list
+        products.append(new_product)
+        
+        # Save products
+        save_products(products)
+        
+        # Push changes to develop in background
+        push_to_develop_async()
+        
+        return jsonify({
+            "success": True,
+            "product_id": next_id,
+            "message": "Product created successfully"
+        })
+        
+    except Exception as e:
+        app.logger.error(f"Error creating product: {e}")
+        return jsonify({"error": str(e)}), 500
 
 @app.route("/images/<category>/<path:filename>")
 def serve_image_library_image(category: str, filename: str):

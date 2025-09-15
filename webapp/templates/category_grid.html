@@ -142,6 +142,194 @@
         color: white;
         border-color: #1976d2;
       }
+      
+      /* Gallery Modal Styles */
+      .gallery-modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0,0,0,0.8);
+      }
+      
+      .gallery-modal-content {
+        background-color: white;
+        margin: 2% auto;
+        padding: 20px;
+        border-radius: 8px;
+        width: 90%;
+        max-width: 1200px;
+        max-height: 90vh;
+        overflow-y: auto;
+      }
+      
+      .gallery-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        padding-bottom: 15px;
+        border-bottom: 1px solid #ddd;
+      }
+      
+      .gallery-title {
+        font-size: 24px;
+        font-weight: bold;
+        color: #333;
+      }
+      
+      .gallery-close {
+        font-size: 28px;
+        font-weight: bold;
+        cursor: pointer;
+        color: #aaa;
+      }
+      
+      .gallery-close:hover {
+        color: #000;
+      }
+      
+      .gallery-tabs {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 20px;
+        border-bottom: 1px solid #ddd;
+      }
+      
+      .gallery-tab {
+        padding: 10px 20px;
+        cursor: pointer;
+        border: none;
+        background: none;
+        font-size: 16px;
+        color: #666;
+        border-bottom: 2px solid transparent;
+      }
+      
+      .gallery-tab.active {
+        color: #1976d2;
+        border-bottom-color: #1976d2;
+      }
+      
+      .gallery-tab-content {
+        display: none;
+      }
+      
+      .gallery-tab-content.active {
+        display: block;
+      }
+      
+      .images-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 15px;
+        margin-bottom: 20px;
+      }
+      
+      .image-item {
+        position: relative;
+        border: 2px solid #ddd;
+        border-radius: 8px;
+        overflow: hidden;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+      
+      .image-item:hover {
+        border-color: #1976d2;
+        transform: scale(1.02);
+      }
+      
+      .image-item.selected {
+        border-color: #28a745;
+        background: #d4edda;
+      }
+      
+      .image-item img {
+        width: 100%;
+        height: 120px;
+        object-fit: cover;
+      }
+      
+      .image-checkbox {
+        position: absolute;
+        top: 5px;
+        right: 5px;
+        width: 20px;
+        height: 20px;
+        background: rgba(255,255,255,0.9);
+        border: 2px solid #ddd;
+        border-radius: 3px;
+        cursor: pointer;
+      }
+      
+      .image-item.selected .image-checkbox {
+        background: #28a745;
+        border-color: #28a745;
+      }
+      
+      .image-item.selected .image-checkbox::after {
+        content: '✓';
+        color: white;
+        font-size: 14px;
+        font-weight: bold;
+        position: absolute;
+        top: -2px;
+        left: 3px;
+      }
+      
+      .gallery-actions {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-top: 20px;
+        border-top: 1px solid #ddd;
+      }
+      
+      .selected-count {
+        font-size: 16px;
+        color: #666;
+      }
+      
+      .gallery-buttons {
+        display: flex;
+        gap: 10px;
+      }
+      
+      .gallery-btn {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 16px;
+        transition: all 0.2s;
+      }
+      
+      .gallery-btn.primary {
+        background: #28a745;
+        color: white;
+      }
+      
+      .gallery-btn.primary:hover {
+        background: #218838;
+      }
+      
+      .gallery-btn.secondary {
+        background: #6c757d;
+        color: white;
+      }
+      
+      .gallery-btn.secondary:hover {
+        background: #5a6268;
+      }
+      
+      .gallery-btn:disabled {
+        background: #ccc;
+        cursor: not-allowed;
+      }
     </style>
   </head>
   <body>
@@ -153,6 +341,9 @@
         <a href="{{ url_for('product_new') }}?return_to={{ request.url | urlencode }}" class="button" style="background: #28a745; color: white; text-decoration: none; padding: 12px 20px; font-size: 16px;">
           ➕ Додати товар
         </a>
+        <button id="create-from-gallery-btn" class="button" style="background: #17a2b8; color: white; text-decoration: none; padding: 12px 20px; font-size: 16px; border: none; cursor: pointer;">
+          🖼️ Створити з галереї
+        </button>
         <a href="{{ url_for('category_edit', category_id=category_id) }}" class="button" style="background: #6c757d; color: white; text-decoration: none; padding: 12px 20px; font-size: 16px;">
           ✏️ Редагувати категорію
         </a>
@@ -231,11 +422,235 @@
       {% endif %}
     </main>
 
+    <!-- Gallery Modal -->
+    <div id="gallery-modal" class="gallery-modal">
+      <div class="gallery-modal-content">
+        <div class="gallery-header">
+          <h2 class="gallery-title">Виберіть зображення для створення товарів</h2>
+          <span class="gallery-close">&times;</span>
+        </div>
+        
+        <div class="gallery-tabs">
+          <button class="gallery-tab active" data-category="all">Всі категорії</button>
+          <button class="gallery-tab" data-category="pomidori">Помідори</button>
+          <button class="gallery-tab" data-category="ogirki">Огірки</button>
+          <button class="gallery-tab" data-category="kukurudza">Кукурудза</button>
+          <button class="gallery-tab" data-category="kviti">Квіти</button>
+          <button class="gallery-tab" data-category="ovochi">Овочі</button>
+        </div>
+        
+        <div id="gallery-content">
+          <div class="gallery-tab-content active" id="gallery-all">
+            <div class="images-grid" id="images-grid-all">
+              <!-- Images will be loaded here -->
+            </div>
+          </div>
+        </div>
+        
+        <div class="gallery-actions">
+          <div class="selected-count">
+            Вибрано: <span id="selected-count">0</span> зображень
+          </div>
+          <div class="gallery-buttons">
+            <button class="gallery-btn secondary" id="gallery-cancel">Скасувати</button>
+            <button class="gallery-btn primary" id="gallery-create" disabled>Створити товари</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <script>
       document.addEventListener('DOMContentLoaded', function() {
         const searchInput = document.getElementById('search-input');
         const filterButtons = document.querySelectorAll('.filter-btn');
         const productCards = document.querySelectorAll('.product-card');
+        
+        // Gallery functionality
+        const galleryModal = document.getElementById('gallery-modal');
+        const createFromGalleryBtn = document.getElementById('create-from-gallery-btn');
+        const galleryClose = document.querySelector('.gallery-close');
+        const galleryCancel = document.getElementById('gallery-cancel');
+        const galleryCreate = document.getElementById('gallery-create');
+        const galleryTabs = document.querySelectorAll('.gallery-tab');
+        const selectedCount = document.getElementById('selected-count');
+        
+        let selectedImages = new Set();
+        let currentCategory = 'all';
+        
+        // Open gallery modal
+        createFromGalleryBtn.addEventListener('click', function() {
+          galleryModal.style.display = 'block';
+          loadGalleryImages('all');
+        });
+        
+        // Close gallery modal
+        galleryClose.addEventListener('click', closeGallery);
+        galleryCancel.addEventListener('click', closeGallery);
+        
+        // Close modal when clicking outside
+        galleryModal.addEventListener('click', function(e) {
+          if (e.target === galleryModal) {
+            closeGallery();
+          }
+        });
+        
+        // Gallery tab switching
+        galleryTabs.forEach(tab => {
+          tab.addEventListener('click', function() {
+            // Update active tab
+            galleryTabs.forEach(t => t.classList.remove('active'));
+            this.classList.add('active');
+            
+            // Load images for selected category
+            currentCategory = this.dataset.category;
+            loadGalleryImages(currentCategory);
+          });
+        });
+        
+        // Create products from selected images
+        galleryCreate.addEventListener('click', function() {
+          if (selectedImages.size === 0) return;
+          
+          const imageList = Array.from(selectedImages);
+          createProductsFromImages(imageList);
+        });
+        
+        function closeGallery() {
+          galleryModal.style.display = 'none';
+          selectedImages.clear();
+          updateSelectedCount();
+        }
+        
+        function loadGalleryImages(category) {
+          const gridId = category === 'all' ? 'images-grid-all' : `images-grid-${category}`;
+          let grid = document.getElementById(gridId);
+          
+          if (!grid) {
+            // Create new grid if it doesn't exist
+            const tabContent = document.getElementById('gallery-content');
+            const newTabContent = document.createElement('div');
+            newTabContent.className = 'gallery-tab-content';
+            newTabContent.id = `gallery-${category}`;
+            newTabContent.innerHTML = `<div class="images-grid" id="${gridId}"></div>`;
+            tabContent.appendChild(newTabContent);
+            grid = document.getElementById(gridId);
+          }
+          
+          // Show the correct tab content
+          document.querySelectorAll('.gallery-tab-content').forEach(content => {
+            content.classList.remove('active');
+          });
+          document.getElementById(`gallery-${category}`).classList.add('active');
+          
+          // Load images via API
+          fetch(`/api/images/${category}`)
+            .then(response => response.json())
+            .then(data => {
+              grid.innerHTML = '';
+              data.images.forEach(image => {
+                const imageItem = createImageItem(image, category);
+                grid.appendChild(imageItem);
+              });
+            })
+            .catch(error => {
+              console.error('Error loading images:', error);
+              grid.innerHTML = '<p>Помилка завантаження зображень</p>';
+            });
+        }
+        
+        function createImageItem(image, category) {
+          const item = document.createElement('div');
+          item.className = 'image-item';
+          item.dataset.image = image;
+          item.dataset.category = category;
+          
+          item.innerHTML = `
+            <img src="/images/${category}/${image}" alt="${image}" />
+            <div class="image-checkbox"></div>
+          `;
+          
+          item.addEventListener('click', function() {
+            toggleImageSelection(this);
+          });
+          
+          return item;
+        }
+        
+        function toggleImageSelection(item) {
+          const image = item.dataset.image;
+          const category = item.dataset.category;
+          const key = `${category}/${image}`;
+          
+          if (selectedImages.has(key)) {
+            selectedImages.delete(key);
+            item.classList.remove('selected');
+          } else {
+            selectedImages.add(key);
+            item.classList.add('selected');
+          }
+          
+          updateSelectedCount();
+        }
+        
+        function updateSelectedCount() {
+          selectedCount.textContent = selectedImages.size;
+          galleryCreate.disabled = selectedImages.size === 0;
+        }
+        
+        function createProductsFromImages(imageList) {
+          const categoryId = {{ category_id }};
+          const categoryName = '{{ category_name }}';
+          
+          // Show loading state
+          galleryCreate.disabled = true;
+          galleryCreate.textContent = 'Створення товарів...';
+          
+          // Create products
+          const promises = imageList.map((imagePath, index) => {
+            const [category, filename] = imagePath.split('/');
+            const productData = {
+              category_id: categoryId,
+              primary_image: filename,
+              'Название (укр)': `${categoryName} ${index + 1}`,
+              'Название (рус)': `${categoryName} ${index + 1}`,
+              'Описание (укр)': `Опис товару ${categoryName} ${index + 1}`,
+              'Описание (рус)': `Описание товара ${categoryName} ${index + 1}`,
+              'Цена': '100.00',
+              'year': '2024',
+              'availability': 'В наявності',
+              'validated': '0'
+            };
+            
+            return fetch('/api/products', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify(productData)
+            });
+          });
+          
+          Promise.all(promises)
+            .then(responses => {
+              const results = responses.map(r => r.json());
+              return Promise.all(results);
+            })
+            .then(data => {
+              console.log('Products created:', data);
+              alert(`Успішно створено ${data.length} товарів!`);
+              closeGallery();
+              // Reload the page to show new products
+              window.location.reload();
+            })
+            .catch(error => {
+              console.error('Error creating products:', error);
+              alert('Помилка створення товарів: ' + error.message);
+            })
+            .finally(() => {
+              galleryCreate.disabled = false;
+              galleryCreate.textContent = 'Створити товари';
+            });
+        }
         
         // Search functionality
         if (searchInput) {
