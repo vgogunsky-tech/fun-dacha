@@ -1150,20 +1150,22 @@ def api_create_products():
         }
         
         # Copy image from gallery to products folder
+        dest_path = None
         if data.get('primary_image'):
             try:
                 # Source image path in gallery
                 source_category = data.get('source_category', '')
                 source_image = data.get('primary_image')
                 source_path = os.path.join(DATA_DIR, "imageLibrary", source_category, source_image)
-                
-                # Destination image path in products folder
-                dest_image = f"p{next_id:06d}.jpg"
+
+                # Destination image path in products folder using standard naming
+                category_for_name = str(data.get('category_id') or '')
+                dest_image = build_product_image_name(category_for_name, str(next_id))
                 dest_path = os.path.join(DATA_DIR, "images", "products", dest_image)
-                
+
                 # Ensure destination directory exists
                 os.makedirs(os.path.dirname(dest_path), exist_ok=True)
-                
+
                 # Copy the image
                 if os.path.exists(source_path):
                     import shutil
@@ -1181,9 +1183,15 @@ def api_create_products():
         
         # Save products
         save_products(products)
-        
-        # Push changes to develop in background
-        push_to_develop_async()
+
+        # Commit CSV and image reliably (with GitHub API fallback if configured)
+        try:
+            paths_to_commit = [PRODUCTS_CSV_PRIMARY]
+            if dest_path and os.path.exists(dest_path):
+                paths_to_commit.append(dest_path)
+            commit_and_push_async(paths_to_commit, f"Create product {next_id} from gallery")
+        except Exception:
+            pass
         
         return jsonify({
             "success": True,
