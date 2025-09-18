@@ -27,6 +27,22 @@
         flex-direction: column;
         height: 100%;
       }
+      .product-actions {
+        display: flex;
+        justify-content: flex-end;
+        padding: 10px 12px;
+        gap: 8px;
+        border-top: 1px solid #eee;
+      }
+      .btn-danger {
+        background: #dc3545;
+        color: #fff;
+        border: none;
+        padding: 6px 10px;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+      .btn-danger:hover { background: #c82333; }
       .product-card:hover { 
         transform: translateY(-2px);
         box-shadow: 0 4px 8px rgba(0,0,0,0.15);
@@ -303,6 +319,11 @@
         display: flex;
         gap: 10px;
       }
+      .bulk-select-buttons {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
       
       .gallery-btn {
         padding: 10px 20px;
@@ -416,6 +437,9 @@
                   {{ 'Перевірено' if product.get('validated') == '1' else 'Не перевірено' }}
                 </div>
               </div>
+              <div class="product-actions">
+                <button class="btn-danger btn-delete" data-pid="{{ product['id'] }}">🗑️ Видалити</button>
+              </div>
             </div>
           {% endfor %}
         </div>
@@ -476,6 +500,10 @@
             Вибрано: <span id="selected-count">0</span> зображень
           </div>
           <div class="gallery-buttons">
+            <div class="bulk-select-buttons">
+              <button class="gallery-btn secondary" id="select-all">Вибрати всі</button>
+              <button class="gallery-btn secondary" id="deselect-all">Скасувати всі</button>
+            </div>
             <button class="gallery-btn secondary" id="gallery-cancel">Скасувати</button>
             <button class="gallery-btn primary" id="gallery-create" disabled>Створити товари</button>
           </div>
@@ -502,6 +530,8 @@
         let galleryTabs = document.querySelectorAll('.gallery-tab');
         const galleryTabsContainer = document.querySelector('.gallery-tabs');
         const selectedCount = document.getElementById('selected-count');
+        const selectAllBtn = document.getElementById('select-all');
+        const deselectAllBtn = document.getElementById('deselect-all');
         
         let selectedImages = new Set();
         let currentCategory = 'all';
@@ -572,6 +602,27 @@
           const imageList = Array.from(selectedImages);
           createProductsFromImages(imageList);
         });
+
+        // Select/Deselect all in current grid
+        function updateGridSelection(select) {
+          const activeGrid = document.querySelector('.gallery-tab-content.active .images-grid');
+          if (!activeGrid) return;
+          activeGrid.querySelectorAll('.image-item').forEach(item => {
+            const image = item.dataset.image || item.dataset.filename;
+            const category = item.dataset.category || currentCategory;
+            const key = `${category}/${image}`;
+            if (select) {
+              selectedImages.add(key);
+              item.classList.add('selected');
+            } else {
+              selectedImages.delete(key);
+              item.classList.remove('selected');
+            }
+          });
+          updateSelectedCount();
+        }
+        if (selectAllBtn) selectAllBtn.addEventListener('click', () => updateGridSelection(true));
+        if (deselectAllBtn) deselectAllBtn.addEventListener('click', () => updateGridSelection(false));
         
         function closeGallery() {
           galleryModal.style.display = 'none';
@@ -846,9 +897,34 @@
 
         // Navigate on product card click
         productCards.forEach(card => {
-          card.addEventListener('click', function() {
+          card.addEventListener('click', function(e) {
+            // Stop navigation if delete button clicked
+            if ((e.target && e.target.classList && e.target.classList.contains('btn-delete'))) return;
             const href = this.getAttribute('data-href');
             if (href) window.location.href = href;
+          });
+        });
+
+        // Delete product handler
+        document.querySelectorAll('.btn-delete').forEach(btn => {
+          btn.addEventListener('click', async function(e) {
+            e.stopPropagation();
+            const pid = this.getAttribute('data-pid');
+            if (!pid) return;
+            if (!confirm('Видалити товар #' + pid + ' назавжди?')) return;
+            try {
+              const resp = await fetch('/api/product/' + pid + '/delete', { method: 'POST' });
+              const data = await resp.json().catch(() => ({}));
+              if (resp.ok && data.ok) {
+                // Remove card from DOM
+                const card = this.closest('.product-card');
+                if (card) card.remove();
+              } else {
+                alert('Не вдалося видалити товар.');
+              }
+            } catch (err) {
+              alert('Помилка видалення товару.');
+            }
           });
         });
       });

@@ -600,6 +600,54 @@ def write_products_csv(rows: List[Dict[str, str]], fields: List[str]) -> List[st
     return paths
 
 
+@app.post("/api/product/<int:pid>/delete")
+def api_product_delete(pid: int):
+    """Delete a product by numeric id from list.csv and remove its images."""
+    try:
+        rows, fields, _ = read_products_csv()
+        kept: List[Dict[str, str]] = []
+        deleted: Optional[Dict[str, str]] = None
+        for r in rows:
+            try:
+                rid = int(float((r.get("id") or "0").strip() or 0))
+            except Exception:
+                rid = 0
+            if rid == pid:
+                deleted = r
+                continue
+            kept.append(r)
+
+        if deleted is None:
+            return jsonify({"ok": False, "error": "not_found"}), 404
+
+        # Remove primary and secondary images from disk (best-effort)
+        names: List[str] = []
+        pimg = (deleted.get("primary_image") or "").strip()
+        if pimg:
+            names.append(pimg)
+        sec_list = [s.strip() for s in (deleted.get("images") or "").split(",") if s.strip()]
+        names.extend(sec_list)
+        removed_paths: List[str] = []
+        for name in names:
+            path = os.path.join(PRODUCT_IMAGES_DIR, name)
+            try:
+                if os.path.isfile(path):
+                    os.remove(path)
+                    removed_paths.append(path)
+            except Exception:
+                pass
+
+        written_paths = write_products_csv(kept, fields)
+        changed_paths = written_paths + removed_paths
+        try:
+            commit_and_push_async(changed_paths, f"Delete product {pid} via webapp")
+        except Exception:
+            pass
+        return jsonify({"ok": True}), 200
+    except Exception as e:
+        return jsonify({"ok": False, "error": "failed"}), 500
+
+
 # -------------------- Inventory CSV helpers --------------------
 
 INVENTORY_FIELDS = [
