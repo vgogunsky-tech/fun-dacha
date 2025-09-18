@@ -1258,6 +1258,25 @@ def get_category_display_name(category_name: str):
     
     return translations.get(category_name, category_name.title())
 
+def get_library_folder_for_category_id(category_id: int) -> Optional[str]:
+    """Map numeric category_id to image library folder name using category_library_mapping.csv."""
+    mapping_file = os.path.join(BASE_DIR, "category_library_mapping.csv")
+    try:
+        if os.path.exists(mapping_file):
+            with open(mapping_file, 'r', encoding='utf-8') as f:
+                reader = csv.DictReader(f)
+                for row in reader:
+                    try:
+                        cid = int(float((row.get('category_id') or '').strip() or 0))
+                    except Exception:
+                        continue
+                    if cid == category_id:
+                        folder = (row.get('library_folder') or '').strip()
+                        return folder or None
+    except Exception:
+        pass
+    return None
+
 # -------------------- UI Routes --------------------
 
 @app.route("/library")
@@ -1319,12 +1338,16 @@ def category(category_id: int):
     validated_count = sum(1 for p in category_products if p.get('validated') == '1')
     unvalidated_count = len(category_products) - validated_count
     
+    # Map to image library folder for preselection
+    library_folder = get_library_folder_for_category_id(category_id) or ''
+
     return render_template('category_grid.html', 
                          category_id=category_id,
                          category_name=category_name,
                          products=category_products,
                          validated_count=validated_count,
-                         unvalidated_count=unvalidated_count)
+                         unvalidated_count=unvalidated_count,
+                         library_folder=library_folder)
 
 
 @app.route("/categories")

@@ -389,7 +389,7 @@
             <div class="product-card" 
                  data-title="{{ (product['Название (укр)'] or product['Название (рус)'] or 'Без назви')|lower }}"
                  data-status="{{ 'validated' if product.get('validated') == '1' else 'unvalidated' }}"
-                 onclick="window.location.href='{{ url_for('product', category_id=category_id, index=loop.index0) }}'">
+                 data-href="{{ url_for('product', category_id=category_id, index=loop.index0) }}">
               {% if product.get('primary_image') %}
                 <img src="{{ url_for('serve_product_image', filename=product['primary_image']) }}" 
                      alt="{{ product['Название (укр)'] or 'Product' }}" 
@@ -483,6 +483,10 @@
       </div>
     </div>
 
+    <!-- Page context and mapped image library folder for this category -->
+    <meta id="mapped-folder" data-folder="{{ library_folder }}">
+    <meta id="page-context" data-category-id="{{ category_id }}" data-category-name="{{ category_name }}">
+
     <script>
       document.addEventListener('DOMContentLoaded', function() {
         const searchInput = document.getElementById('search-input');
@@ -495,16 +499,57 @@
         const galleryClose = document.querySelector('.gallery-close');
         const galleryCancel = document.getElementById('gallery-cancel');
         const galleryCreate = document.getElementById('gallery-create');
-        const galleryTabs = document.querySelectorAll('.gallery-tab');
+        let galleryTabs = document.querySelectorAll('.gallery-tab');
+        const galleryTabsContainer = document.querySelector('.gallery-tabs');
         const selectedCount = document.getElementById('selected-count');
         
         let selectedImages = new Set();
         let currentCategory = 'all';
+        let fetchedCategories = [];
         
-        // Open gallery modal
-        createFromGalleryBtn.addEventListener('click', function() {
+        // Load gallery categories dynamically to match backend
+        function attachGalleryTabHandlers() {
+          galleryTabs.forEach(tab => {
+            tab.addEventListener('click', function() {
+              galleryTabs.forEach(t => t.classList.remove('active'));
+              this.classList.add('active');
+              currentCategory = this.dataset.category;
+              loadGalleryImages(currentCategory);
+            });
+          });
+        }
+
+        async function loadGalleryCategories() {
+          try {
+            const resp = await fetch('/api/images/categories');
+            const cats = await resp.json();
+            fetchedCategories = Array.isArray(cats) ? cats : [];
+            let html = '<button class="gallery-tab active" data-category="all">Всі категорії</button>';
+            html += cats.map(c => `<button class="gallery-tab" data-category="${c.name}">${c.display_name}</button>`).join('');
+            galleryTabsContainer.innerHTML = html;
+            galleryTabs = document.querySelectorAll('.gallery-tab');
+            attachGalleryTabHandlers();
+          } catch (e) {
+            // keep existing static tabs as fallback
+          }
+        }
+
+        loadGalleryCategories();
+
+        // Open gallery modal preselecting mapped folder
+        createFromGalleryBtn.addEventListener('click', async function() {
           galleryModal.style.display = 'block';
-          loadGalleryImages('all');
+          await loadGalleryCategories();
+          const mappedEl = document.getElementById('mapped-folder');
+          const mappedFolder = (mappedEl && mappedEl.dataset.folder) ? mappedEl.dataset.folder : '';
+          const initialCategory = mappedFolder || 'all';
+          // Activate matching tab if exists
+          const initialTab = document.querySelector(`.gallery-tab[data-category="${initialCategory}"]`);
+          if (initialTab) {
+            galleryTabs.forEach(t => t.classList.remove('active'));
+            initialTab.classList.add('active');
+          }
+          loadGalleryImages(initialCategory);
         });
         
         // Close gallery modal
@@ -518,18 +563,7 @@
           }
         });
         
-        // Gallery tab switching
-        galleryTabs.forEach(tab => {
-          tab.addEventListener('click', function() {
-            // Update active tab
-            galleryTabs.forEach(t => t.classList.remove('active'));
-            this.classList.add('active');
-            
-            // Load images for selected category
-            currentCategory = this.dataset.category;
-            loadGalleryImages(currentCategory);
-          });
-        });
+        // Gallery tab switching (handlers attached dynamically)
         
         // Create products from selected images
         galleryCreate.addEventListener('click', function() {
@@ -582,8 +616,9 @@
               .then(data => {
                 console.log('Received data:', data);
                 grid.innerHTML = '';
-                if (data.images && data.images.length > 0) {
-                  data.images.forEach(image => {
+                const images = Array.isArray(data) ? data : (data.images || []);
+                if (images.length > 0) {
+                  images.forEach(image => {
                     const imageItem = createImageItem(image.filename, image.category);
                     grid.appendChild(imageItem);
                   });
@@ -611,10 +646,11 @@
           grid.innerHTML = '<p>Завантаження зображень з усіх категорій...</p>';
           
           // Load images from all categories
-          const promises = categories.map(cat => 
+          const catList = fetchedCategories.length ? fetchedCategories.map(c => c.name) : categories;
+          const promises = catList.map(cat => 
             fetch(`/api/images/${cat}`)
               .then(response => response.json())
-              .then(data => data.images || [])
+              .then(data => Array.isArray(data) ? data : (data.images || []))
               .catch(error => {
                 console.error(`Error loading images for ${cat}:`, error);
                 return [];
@@ -682,8 +718,9 @@
         }
         
         function createProductsFromImages(imageList) {
-          const categoryId = {{ category_id }};
-          const categoryName = '{{ category_name }}';
+          const pageCtx = document.getElementById('page-context');
+          const categoryId = Number(pageCtx ? pageCtx.dataset.categoryId : 0);
+          const categoryName = pageCtx ? pageCtx.dataset.categoryName : '';
           
           // Show loading state
           galleryCreate.disabled = true;
@@ -806,6 +843,14 @@
             }
           });
         }
+
+        // Navigate on product card click
+        productCards.forEach(card => {
+          card.addEventListener('click', function() {
+            const href = this.getAttribute('data-href');
+            if (href) window.location.href = href;
+          });
+        });
       });
     </script>
   </body>
