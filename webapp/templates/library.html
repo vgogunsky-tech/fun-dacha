@@ -479,7 +479,7 @@
       
       // Initialize when DOM is loaded
       document.addEventListener('DOMContentLoaded', () => {
-        new ImageLibrary();
+        window.imageLibrary = new ImageLibrary();
       });
       
       // Listen for messages from parent window
