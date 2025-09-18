@@ -1252,6 +1252,154 @@ def api_create_products():
         app.logger.error(f"Error creating product: {e}")
         return jsonify({"error": str(e)}), 500
 
+@app.route("/api/products/bulk", methods=["POST"])
+def api_create_products_bulk():
+    """Create many products from gallery images in one transaction-like operation.
+
+    Expects JSON: {
+      "category_id": int,
+      "items": [ {"category": "kviti", "filename": "page01_img001.jpg"}, ... ]
+    }
+    """
+    try:
+        payload = request.get_json(silent=True) or {}
+        category_id = payload.get("category_id")
+        items = payload.get("items") or []
+        if not category_id or not isinstance(items, list) or not items:
+            return jsonify({"ok": False, "error": "bad_request"}), 400
+
+        # Normalize category id
+        try:
+            category_id_int = int(float(category_id))
+        except Exception:
+            return jsonify({"ok": False, "error": "bad_category"}), 400
+
+        # Load existing products and fields
+        rows, fields, _ = read_products_csv()
+
+        # Ensure required columns
+        required_fields = [
+            'id', 'Название (укр)', 'Название (рус)', 'Описание (укр)', 'Описание (рус)',
+            'primary_image', 'category_id', 'subcategory_id', 'product_id', 'validated',
+            'year', 'availability', 'images', 'tags', 'price', 'weight', 'length', 'width',
+            'height', 'model', 'seo', 'created_at', 'updated_at', 'status', 'sku', 'quantity',
+            'minimum', 'subtract', 'stock_status_id', 'shipping', 'points', 'weight_class_id',
+            'length_class_id', 'sort_order', 'viewed', 'date_available', 'date_added',
+            'date_modified', 'created_from_gallery'
+        ]
+        for field in required_fields:
+            if field not in fields:
+                fields.append(field)
+                for r in rows:
+                    if field not in r:
+                        r[field] = ""
+
+        # Compute next id
+        max_id = 0
+        for r in rows:
+            try:
+                max_id = max(max_id, int(float((r.get('id') or '0').strip() or 0)))
+            except Exception:
+                pass
+        next_id = max_id + 1
+
+        # Current timestamp
+        current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+        # Prepare destination dir
+        os.makedirs(PRODUCT_IMAGES_DIR, exist_ok=True)
+
+        created_ids: List[int] = []
+        copied_paths: List[str] = []
+        new_rows: List[Dict[str, str]] = []
+
+        for idx, it in enumerate(items):
+            try:
+                src_cat = (it.get('category') or '').strip()
+                src_file = (it.get('filename') or '').strip()
+                if not (src_cat and src_file):
+                    continue
+                source_path = os.path.join(DATA_DIR, 'imageLibrary', src_cat, src_file)
+                if not os.path.exists(source_path):
+                    # Skip if missing; do not create product without image
+                    continue
+
+                # Compute deterministic filename and copy
+                dest_image = build_product_image_name(str(category_id_int), str(next_id))
+                dest_path = os.path.join(PRODUCT_IMAGES_DIR, dest_image)
+                shutil.copy2(source_path, dest_path)
+                copied_paths.append(dest_path)
+
+                # Build SKU/model
+                sku = build_sku(str(category_id_int), str(next_id))
+
+                # Create row
+                new_row: Dict[str, str] = {
+                    'id': str(next_id),
+                    'Название (укр)': f'Tовар {next_id}',
+                    'Название (рус)': f'Товар {next_id}',
+                    'Описание (укр)': f'Опис товару {next_id}',
+                    'Описание (рус)': f'Описание товара {next_id}',
+                    'primary_image': dest_image,
+                    'images': '',
+                    'category_id': str(category_id_int),
+                    'subcategory_id': '',
+                    'product_id': sku,
+                    'validated': '0',
+                    'year': '2024',
+                    'availability': 'В наявності',
+                    'tags': '',
+                    'price': '100.00',
+                    'weight': '0.00',
+                    'length': '0.00',
+                    'width': '0.00',
+                    'height': '0.00',
+                    'model': sku,
+                    'seo': f'gal-tovar-{next_id}',
+                    'created_at': current_time,
+                    'updated_at': current_time,
+                    'status': '1',
+                    'sku': sku,
+                    'quantity': '100',
+                    'minimum': '1',
+                    'subtract': '1',
+                    'stock_status_id': '7',
+                    'shipping': '1',
+                    'points': '0',
+                    'weight_class_id': '1',
+                    'length_class_id': '1',
+                    'sort_order': '0',
+                    'viewed': '0',
+                    'date_available': current_time,
+                    'date_added': current_time,
+                    'date_modified': current_time,
+                    'created_from_gallery': 'True',
+                }
+                new_rows.append(new_row)
+                created_ids.append(next_id)
+                next_id += 1
+            except Exception:
+                # Skip individual failures without breaking the batch
+                continue
+
+        if not new_rows:
+            return jsonify({"ok": False, "error": "no_items"}), 400
+
+        # Append new rows and persist once
+        rows.extend(new_rows)
+        write_products_csv(rows, fields)
+
+        # Single commit for CSV and all images
+        try:
+            commit_and_push_async([PRODUCTS_CSV_PRIMARY, PRODUCT_IMAGES_DIR], f"Bulk create {len(new_rows)} products from gallery")
+        except Exception:
+            pass
+
+        return jsonify({"ok": True, "created": len(new_rows), "ids": created_ids}), 200
+    except Exception as e:
+        app.logger.error(f"Error in bulk create: {e}")
+        return jsonify({"ok": False, "error": "failed"}), 500
+
 @app.route("/images/<category>/<path:filename>")
 def serve_image_library_image(category: str, filename: str):
     """Serve images from the image library"""

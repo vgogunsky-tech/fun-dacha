@@ -600,8 +600,47 @@
           if (selectedImages.size === 0) return;
           
           const imageList = Array.from(selectedImages);
-          createProductsFromImages(imageList);
+          // If many images selected, use bulk API
+          if (imageList.length >= 5) {
+            createProductsBulk(imageList);
+          } else {
+            createProductsFromImages(imageList);
+          }
         });
+
+        async function createProductsBulk(imageList) {
+          const pageCtx = document.getElementById('page-context');
+          const categoryId = Number(pageCtx ? pageCtx.dataset.categoryId : 0);
+          const payload = {
+            category_id: categoryId,
+            items: imageList.map(path => {
+              const parts = path.split('/');
+              return { category: parts[0], filename: parts[1] };
+            })
+          };
+          try {
+            galleryCreate.disabled = true;
+            galleryCreate.textContent = 'Створення...';
+            const resp = await fetch('/api/products/bulk', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(payload)
+            });
+            const data = await resp.json();
+            if (resp.ok && data.ok) {
+              alert(`Успішно створено ${data.created} товарів.`);
+              closeGallery();
+              window.location.reload();
+            } else {
+              alert('Не вдалося створити товари.');
+            }
+          } catch (e) {
+            alert('Помилка створення товарів.');
+          } finally {
+            galleryCreate.disabled = false;
+            galleryCreate.textContent = 'Створити товари';
+          }
+        }
 
         // Select/Deselect all in current grid
         function updateGridSelection(select) {
