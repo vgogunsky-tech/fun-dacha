@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import argparse
 import csv
 import json
 import os
@@ -10,8 +11,8 @@ from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
 
-DB_PATH = Path("/workspace/opencart-docker/opencart.db")
-DATA_DIR = Path("/workspace/data")
+DEFAULT_DB_PATH = Path(os.getenv("OPENCART_DB", "/workspace/opencart-docker/opencart.db"))
+DEFAULT_DATA_DIR = Path(os.getenv("OPENCART_DATA", "/workspace/data"))
 
 
 def open_db(db_path: Path) -> sqlite3.Connection:
@@ -501,13 +502,21 @@ def upsert_product_attributes_from_tags(
 
 
 def main() -> int:
-    conn = open_db(DB_PATH)
+    parser = argparse.ArgumentParser(description="Populate OpenCart SQLite DB from data CSVs")
+    parser.add_argument("--db", dest="db_path", default=str(DEFAULT_DB_PATH), help="Path to SQLite DB file")
+    parser.add_argument("--data", dest="data_dir", default=str(DEFAULT_DATA_DIR), help="Path to data directory with CSVs")
+    args = parser.parse_args()
+
+    db_path = Path(args.db_path)
+    data_dir = Path(args.data_dir)
+
+    conn = open_db(db_path)
     ua_id, ru_id = get_language_ids(conn)
 
-    categories = read_csv(DATA_DIR / "categories_list.csv")
-    products = read_csv(DATA_DIR / "list.csv")
-    inventory = read_csv(DATA_DIR / "inventory.csv")
-    tags_rows = read_csv(DATA_DIR / "tags.csv")
+    categories = read_csv(data_dir / "categories_list.csv")
+    products = read_csv(data_dir / "list.csv")
+    inventory = read_csv(data_dir / "inventory.csv")
+    tags_rows = read_csv(data_dir / "tags.csv")
 
     # Build quick indexes
     inv_by_product: Dict[str, List[Dict[str, str]]] = {}
