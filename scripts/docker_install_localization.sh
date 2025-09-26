@@ -20,9 +20,9 @@ docker exec "$WEB_CID" sh -lc "mkdir -p /var/www/html/admin/language/uk-ua /var/
 docker cp "$REPO_ROOT/localization/upload/admin/language/uk-ua/." "$WEB_CID:/var/www/html/admin/language/uk-ua/"
 docker cp "$REPO_ROOT/localization/upload/catalog/language/uk-ua/." "$WEB_CID:/var/www/html/catalog/language/uk-ua/"
 
-echo "Applying localization SQL to DB..."
-# Feed install.sql via stdin into mysql inside the db container
-docker compose -f "$COMPOSE_FILE" exec -T db sh -lc 'mysql -u root -pexample opencart' < "$REPO_ROOT/localization/install.sql"
+echo "Applying localization SQL to DB (will ignore non-applicable statements)..."
+# Feed install.sql via stdin; use --force to continue on non-matching schema
+docker compose -f "$COMPOSE_FILE" exec -T db sh -lc 'mysql --force -v -u root -pexample opencart' < "$REPO_ROOT/localization/install.sql"
 
 echo "Localization installed. Verifying active languages:"
 docker compose -f "$COMPOSE_FILE" exec -T db sh -lc "mysql -u root -pexample -e 'SELECT language_id, name, code, status FROM opencart.oc_language ORDER BY language_id;'" | cat
