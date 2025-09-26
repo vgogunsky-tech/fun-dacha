@@ -6,7 +6,7 @@ import os
 import re
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Sequence, Tuple
 
 import pymysql
 
@@ -105,7 +105,28 @@ def clean_db(conn):
     conn.commit()
 
 
-def ensure_category(cur, row) -> None:
+def get_table_columns(cur, table: str) -> List[str]:
+    cur.execute(f"SHOW COLUMNS FROM {table}")
+    return [r[0] for r in cur.fetchall()]
+
+
+def build_upsert_sql(table: str, available_cols: Sequence[str], data: Dict[str, object], pk_cols: Sequence[str]) -> Tuple[str, List[object]]:
+    cols = [c for c in data.keys() if c in available_cols]
+    if not cols:
+        raise ValueError(f"No valid columns to insert for {table}")
+    placeholders = ["%s"] * len(cols)
+    values = [data[c] for c in cols]
+    # Update set excludes pk columns
+    upd_cols = [c for c in cols if c not in pk_cols]
+    if upd_cols:
+        set_clause = ", ".join([f"{c}=VALUES({c})" for c in upd_cols])
+        sql = f"INSERT INTO {table} ({', '.join(cols)}) VALUES ({', '.join(placeholders)}) ON DUPLICATE KEY UPDATE {set_clause}"
+    else:
+        sql = f"INSERT INTO {table} ({', '.join(cols)}) VALUES ({', '.join(placeholders)})"
+    return sql, values
+
+
+def ensure_category(cur, row, table_cols_cache: Dict[str, List[str]]) -> None:
     now = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
     category_id = int((row.get("id") or "0").strip() or 0)
     parent_id_raw = (row.get("parentId") or "").strip()
@@ -113,48 +134,48 @@ def ensure_category(cur, row) -> None:
     image = (row.get("primary_image") or "").strip()
     image_path = f"catalog/category/{image}" if image else None
     top = 1 if not parent_id else 0
-    cur.execute(
-        """
-        INSERT INTO oc_category(category_id, image, parent_id, `top`, `column`, sort_order, status, date_added, date_modified)
-        VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s)
-        ON DUPLICATE KEY UPDATE
-            image=VALUES(image), parent_id=VALUES(parent_id), `top`=VALUES(`top`), `column`=VALUES(`column`),
-            sort_order=VALUES(sort_order), status=VALUES(status), date_modified=VALUES(date_modified)
-        """,
-        (category_id, image_path, parent_id, top, 1, 0, 1, now, now),
-    )
+    cat_cols = table_cols_cache.setdefault("oc_category", get_table_columns(cur, "oc_category"))
+    data = {
+        "category_id": category_id,
+        "image": image_path,
+        "parent_id": parent_id,
+        "top": top,
+        "column": 1,
+        "sort_order": 0,
+        "status": 1,
+        "date_added": now,
+        "date_modified": now,
+    }
+    sql, vals = build_upsert_sql("oc_category", cat_cols, data, pk_cols=["category_id"])
+    cur.execute(sql, vals)
 
 
-def ensure_category_descriptions(cur, row, ua_id, ru_id) -> None:
+def ensure_category_descriptions(cur, row, ua_id, ru_id, table_cols_cache: Dict[str, List[str]]) -> None:
     category_id = int(row.get("id") or 0)
     name_ua = (row.get("name") or "").strip()
     desc_ua = (row.get("description (ukr)") or "").strip()
     tag = (row.get("tag") or "").strip()
+    desc_cols = table_cols_cache.setdefault("oc_category_description", get_table_columns(cur, "oc_category_description"))
     # UA
-    cur.execute(
-        """
-        INSERT INTO oc_category_description(category_id, language_id, name, description, meta_title, meta_description, meta_keyword)
-        VALUES (%s, %s, %s, %s, %s, %s, %s)
-        ON DUPLICATE KEY UPDATE
-            name=VALUES(name), description=VALUES(description), meta_title=VALUES(meta_title),
-            meta_description=VALUES(meta_description), meta_keyword=VALUES(meta_keyword)
-        """,
-        (category_id, ua_id, name_ua, desc_ua, name_ua or tag, (desc_ua or "")[:255], tag),
-    )
+    ua_data = {
+        "category_id": category_id,
+        "language_id": ua_id,
+        "name": name_ua,
+        "description": desc_ua,
+        "meta_title": name_ua or tag,
+        "meta_description": (desc_ua or "")[:255],
+        "meta_keyword": tag,
+    }
+    sql, vals = build_upsert_sql("oc_category_description", desc_cols, ua_data, pk_cols=["category_id", "language_id"])
+    cur.execute(sql, vals)
     # RU duplicate
-    cur.execute(
-        """
-        INSERT INTO oc_category_description(category_id, language_id, name, description, meta_title, meta_description, meta_keyword)
-        VALUES (%s, %s, %s, %s, %s, %s, %s)
-        ON DUPLICATE KEY UPDATE
-            name=VALUES(name), description=VALUES(description), meta_title=VALUES(meta_title),
-            meta_description=VALUES(meta_description), meta_keyword=VALUES(meta_keyword)
-        """,
-        (category_id, ru_id, name_ua, desc_ua, name_ua or tag, (desc_ua or "")[:255], tag),
-    )
+    ru_data = ua_data.copy()
+    ru_data["language_id"] = ru_id
+    sql, vals = build_upsert_sql("oc_category_description", desc_cols, ru_data, pk_cols=["category_id", "language_id"])
+    cur.execute(sql, vals)
 
 
-def upsert_product(cur, prod) -> int:
+def upsert_product(cur, prod, table_cols_cache: Dict[str, List[str]]) -> int:
     now = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
     model = (prod.get("model") or prod.get("model ") or prod.get("model\ufeff") or "").strip()
     sku = (prod.get("sku") or prod.get("product_id") or "").strip()
@@ -181,68 +202,69 @@ def upsert_product(cur, prod) -> int:
     date_modified = (prod.get("date_modified") or prod.get("updated_at") or date_added)
     image_path = f"catalog/product/{primary_image}" if primary_image else None
 
-    cur.execute(
-        """
-        INSERT INTO oc_product(
-            model, sku, upc, ean, jan, isbn, mpn, location, quantity, stock_status_id,
-            image, manufacturer_id, shipping, price, points, tax_class_id, date_available,
-            weight, weight_class_id, length, width, height, length_class_id, subtract,
-            minimum, sort_order, status, viewed, date_added, date_modified
-        ) VALUES (%s, %s, '', '', '', '', '', '', %s, %s, %s, 0, %s, %s, 0, 0, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-        """,
-        (
-            model or sku or seo or "",
-            sku or seo or "",
-            quantity,
-            stock_status_id,
-            image_path,
-            shipping,
-            base_price,
-            date_available,
-            weight,
-            weight_class_id,
-            length,
-            width,
-            height,
-            length_class_id,
-            subtract,
-            minimum,
-            sort_order,
-            status,
-            viewed,
-            date_added,
-            date_modified,
-        ),
-    )
-    return cur.lastrowid
+    prod_cols = table_cols_cache.setdefault("oc_product", get_table_columns(cur, "oc_product"))
+    data = {
+        "model": model or sku or seo or "",
+        "sku": sku or seo or "",
+        "upc": "",
+        "ean": "",
+        "jan": "",
+        "isbn": "",
+        "mpn": "",
+        "location": "",
+        "quantity": quantity,
+        "stock_status_id": stock_status_id,
+        "image": image_path,
+        "manufacturer_id": 0,
+        "shipping": shipping,
+        "price": base_price,
+        "points": 0,
+        "tax_class_id": 0,
+        "date_available": date_available,
+        "weight": weight,
+        "weight_class_id": weight_class_id,
+        "length": length,
+        "width": width,
+        "height": height,
+        "length_class_id": length_class_id,
+        "subtract": subtract,
+        "minimum": minimum,
+        "sort_order": sort_order,
+        "status": status,
+        "viewed": viewed,
+        "date_added": date_added,
+        "date_modified": date_modified,
+    }
+    sql, vals = build_upsert_sql("oc_product", prod_cols, data, pk_cols=["product_id"])  # product_id is AUTO_INCREMENT
+    cur.execute(sql, vals)
+    return int(cur.lastrowid or 0)
 
 
-def upsert_product_descriptions(cur, product_id: int, prod: Dict[str, str], ua_id: int, ru_id: int) -> None:
+def upsert_product_descriptions(cur, product_id: int, prod: Dict[str, str], ua_id: int, ru_id: int, table_cols_cache: Dict[str, List[str]]) -> None:
     name_ua = (prod.get("Название (укр)") or "").strip()
     name_ru = (prod.get("Название (рус)") or name_ua).strip()
     desc_ua = (prod.get("Описание (укр)") or "").strip()
     desc_ru = (prod.get("Описание (рус)") or desc_ua).strip()
     tags = (prod.get("tags") or "").strip()
-    cur.execute(
-        """
-        INSERT INTO oc_product_description(product_id, language_id, name, description, tag, meta_title, meta_description, meta_keyword)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-        ON DUPLICATE KEY UPDATE
-            name=VALUES(name), description=VALUES(description), tag=VALUES(tag),
-            meta_title=VALUES(meta_title), meta_description=VALUES(meta_description), meta_keyword=VALUES(meta_keyword)
-        """,
-        (product_id, ua_id, name_ua, desc_ua, tags, name_ua or "", (desc_ua or "")[:255], tags),
-    )
-    cur.execute(
-        """
-        INSERT INTO oc_product_description(product_id, language_id, name, description, tag, meta_title, meta_description, meta_keyword)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-        ON DUPLICATE KEY UPDATE
-            name=VALUES(name), description=VALUES(description), tag=VALUES(tag),
-            meta_title=VALUES(meta_title), meta_description=VALUES(meta_description), meta_keyword=VALUES(meta_keyword)
-        """,
-        (product_id, ru_id, name_ru, desc_ru, tags, name_ru or "", (desc_ru or "")[:255], tags),
-    )
+    pd_cols = table_cols_cache.setdefault("oc_product_description", get_table_columns(cur, "oc_product_description"))
+    # UA
+    ua_data = {
+        "product_id": product_id,
+        "language_id": ua_id,
+        "name": name_ua,
+        "description": desc_ua,
+        "tag": tags,
+        "meta_title": name_ua or "",
+        "meta_description": (desc_ua or "")[:255],
+        "meta_keyword": tags,
+    }
+    sql, vals = build_upsert_sql("oc_product_description", pd_cols, ua_data, pk_cols=["product_id", "language_id"])
+    cur.execute(sql, vals)
+    # RU
+    ru_data = ua_data.copy()
+    ru_data.update({"language_id": ru_id, "name": name_ru, "description": desc_ru, "meta_title": name_ru or ""})
+    sql, vals = build_upsert_sql("oc_product_description", pd_cols, ru_data, pk_cols=["product_id", "language_id"])
+    cur.execute(sql, vals)
 
 
 def upsert_product_categories(cur, product_id: int, prod: Dict[str, str]) -> None:
@@ -405,10 +427,12 @@ def main() -> int:
         if key:
             tags_index[key] = r
 
+    table_cols_cache: Dict[str, List[str]] = {}
+
     # Categories
     for c in categories:
-        ensure_category(cur, c)
-        ensure_category_descriptions(cur, c, ua_id, ru_id)
+        ensure_category(cur, c, table_cols_cache)
+        ensure_category_descriptions(cur, c, ua_id, ru_id, table_cols_cache)
     conn.commit()
 
     # Attributes from tags
@@ -423,9 +447,9 @@ def main() -> int:
     product_id_map: Dict[str, int] = {}
     for p in products:
         product_sku = (p.get("sku") or p.get("product_id") or "").strip()
-        db_product_id = upsert_product(cur, p)
+        db_product_id = upsert_product(cur, p, table_cols_cache)
         product_id_map[product_sku] = db_product_id
-        upsert_product_descriptions(cur, db_product_id, p, ua_id, ru_id)
+        upsert_product_descriptions(cur, db_product_id, p, ua_id, ru_id, table_cols_cache)
         upsert_product_categories(cur, db_product_id, p)
         upsert_product_images(cur, db_product_id, p)
         upsert_product_attributes_from_tags(cur, db_product_id, (p.get("tags") or ""), ua_id, ru_id, key_to_attr_id, tags_index)
