@@ -249,12 +249,40 @@ def upsert_product(cur, prod, table_cols_cache: Dict[str, List[str]]) -> int:
     return int(cur.lastrowid or 0)
 
 
-def upsert_product_descriptions(cur, product_id: int, prod: Dict[str, str], ua_id: int, ru_id: int, table_cols_cache: Dict[str, List[str]], language_ids: Optional[List[int]] = None) -> None:
+def upsert_product_descriptions(
+    cur,
+    product_id: int,
+    prod: Dict[str, str],
+    ua_id: int,
+    ru_id: int,
+    table_cols_cache: Dict[str, List[str]],
+    language_ids: Optional[List[int]] = None,
+    tags_index: Optional[Dict[str, Dict[str, str]]] = None,
+) -> None:
     name_ua = (prod.get("Название (укр)") or "").strip()
     name_ru = (prod.get("Название (рус)") or name_ua).strip()
     desc_ua = (prod.get("Описание (укр)") or "").strip()
     desc_ru = (prod.get("Описание (рус)") or desc_ua).strip()
     tags = (prod.get("tags") or "").strip()
+    tag_keys = [t.strip() for t in tags.split(",") if t.strip()]
+    # Build localized tag strings using tags_index
+    def localize_tags(lang: str) -> str:
+        if not tags_index:
+            return ",".join(tag_keys)
+        names: List[str] = []
+        for k in tag_keys:
+            row = tags_index.get(k)
+            if not row:
+                names.append(k)
+            else:
+                if lang == "ru":
+                    names.append((row.get("ru") or row.get("ua") or k).strip())
+                else:
+                    names.append((row.get("ua") or k).strip())
+        return ",".join([n for n in names if n])
+
+    ua_tags = localize_tags("ua")
+    ru_tags = localize_tags("ru")
     pd_cols = table_cols_cache.setdefault("oc_product_description", get_table_columns(cur, "oc_product_description"))
     langs = language_ids or unique_lang_ids(ua_id, ru_id)
     for lang_id in langs:
@@ -264,7 +292,7 @@ def upsert_product_descriptions(cur, product_id: int, prod: Dict[str, str], ua_i
             "language_id": lang_id,
             "name": name_ru if is_ru else name_ua,
             "description": desc_ru if is_ru else desc_ua,
-            "tag": tags,
+            "tag": (ru_tags if is_ru else ua_tags) or tags,
             "meta_title": (name_ru if is_ru else name_ua) or "",
             "meta_description": ((desc_ru if is_ru else desc_ua) or "")[:255],
             "meta_keyword": tags,
@@ -538,7 +566,7 @@ def main() -> int:
         product_sku = (p.get("sku") or p.get("product_id") or "").strip()
         db_product_id = upsert_product(cur, p, table_cols_cache)
         product_id_map[product_sku] = db_product_id
-        upsert_product_descriptions(cur, db_product_id, p, ua_id, ru_id, table_cols_cache, language_ids=get_active_language_ids(cur))
+        upsert_product_descriptions(cur, db_product_id, p, ua_id, ru_id, table_cols_cache, language_ids=get_active_language_ids(cur), tags_index=tags_index)
         upsert_product_categories(cur, db_product_id, p)
         ensure_product_to_store(cur, db_product_id, 0)
         images = (p.get("images") or "").strip()
