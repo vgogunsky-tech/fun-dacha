@@ -82,6 +82,15 @@ def unique_lang_ids(ua_id: int, ru_id: int) -> List[int]:
     return list(dict.fromkeys([ua_id, ru_id]))
 
 
+def get_active_language_ids(cur) -> List[int]:
+    cur.execute("SELECT language_id FROM oc_language WHERE status = 1 ORDER BY sort_order, name")
+    rows = cur.fetchall()
+    if not rows:
+        cur.execute("SELECT language_id FROM oc_language")
+        rows = cur.fetchall()
+    return [int(r[0]) for r in rows]
+
+
 def clean_db(conn):
     cur = conn.cursor()
     cur.execute("SET FOREIGN_KEY_CHECKS=0")
@@ -154,13 +163,14 @@ def ensure_category(cur, row, table_cols_cache: Dict[str, List[str]]) -> None:
     cur.execute(sql, vals)
 
 
-def ensure_category_descriptions(cur, row, ua_id, ru_id, table_cols_cache: Dict[str, List[str]]) -> None:
+def ensure_category_descriptions(cur, row, ua_id, ru_id, table_cols_cache: Dict[str, List[str]], language_ids: Optional[List[int]] = None) -> None:
     category_id = int(row.get("id") or 0)
     name_ua = (row.get("name") or "").strip()
     desc_ua = (row.get("description (ukr)") or "").strip()
     tag = (row.get("tag") or "").strip()
     desc_cols = table_cols_cache.setdefault("oc_category_description", get_table_columns(cur, "oc_category_description"))
-    for lang_id in unique_lang_ids(ua_id, ru_id):
+    langs = language_ids or unique_lang_ids(ua_id, ru_id)
+    for lang_id in langs:
         data = {
             "category_id": category_id,
             "language_id": lang_id,
@@ -239,14 +249,15 @@ def upsert_product(cur, prod, table_cols_cache: Dict[str, List[str]]) -> int:
     return int(cur.lastrowid or 0)
 
 
-def upsert_product_descriptions(cur, product_id: int, prod: Dict[str, str], ua_id: int, ru_id: int, table_cols_cache: Dict[str, List[str]]) -> None:
+def upsert_product_descriptions(cur, product_id: int, prod: Dict[str, str], ua_id: int, ru_id: int, table_cols_cache: Dict[str, List[str]], language_ids: Optional[List[int]] = None) -> None:
     name_ua = (prod.get("Название (укр)") or "").strip()
     name_ru = (prod.get("Название (рус)") or name_ua).strip()
     desc_ua = (prod.get("Описание (укр)") or "").strip()
     desc_ru = (prod.get("Описание (рус)") or desc_ua).strip()
     tags = (prod.get("tags") or "").strip()
     pd_cols = table_cols_cache.setdefault("oc_product_description", get_table_columns(cur, "oc_product_description"))
-    for lang_id in unique_lang_ids(ua_id, ru_id):
+    langs = language_ids or unique_lang_ids(ua_id, ru_id)
+    for lang_id in langs:
         is_ru = (lang_id == ru_id and ru_id != ua_id)
         data = {
             "product_id": product_id,
@@ -325,9 +336,10 @@ def upsert_option_value(cur, option_id: int, ua_id: int, ru_id: int, title_ua: s
     return option_value_id
 
 
-def build_attributes_from_tags(cur, ua_id: int, ru_id: int, tags_rows: List[Dict[str, str]]):
+def build_attributes_from_tags(cur, ua_id: int, ru_id: int, tags_rows: List[Dict[str, str]], language_ids: Optional[List[int]] = None):
     group_to_id: Dict[str, int] = {}
     key_to_attr_id: Dict[str, int] = {}
+    langs = language_ids or unique_lang_ids(ua_id, ru_id)
     # groups
     for r in tags_rows:
         group = (r.get("group") or "").strip()
@@ -335,7 +347,7 @@ def build_attributes_from_tags(cur, ua_id: int, ru_id: int, tags_rows: List[Dict
             continue
         cur.execute("INSERT INTO oc_attribute_group(sort_order) VALUES(0)")
         group_id = cur.lastrowid
-        for lang_id in unique_lang_ids(ua_id, ru_id):
+        for lang_id in langs:
             cur.execute("INSERT INTO oc_attribute_group_description(attribute_group_id, language_id, name) VALUES(%s, %s, %s)", (group_id, lang_id, group))
         group_to_id[group] = group_id
     # attributes
@@ -349,17 +361,18 @@ def build_attributes_from_tags(cur, ua_id: int, ru_id: int, tags_rows: List[Dict
         group_id = group_to_id[group]
         cur.execute("INSERT INTO oc_attribute(attribute_group_id, sort_order) VALUES(%s, 0)", (group_id,))
         attribute_id = cur.lastrowid
-        for lang_id in unique_lang_ids(ua_id, ru_id):
+        for lang_id in langs:
             name = ru if (lang_id == ru_id and ru_id != ua_id) else ua
             cur.execute("INSERT INTO oc_attribute_description(attribute_id, language_id, name) VALUES(%s, %s, %s)", (attribute_id, lang_id, name))
         key_to_attr_id[key] = attribute_id
     return key_to_attr_id
 
 
-def upsert_product_attributes_from_tags(cur, product_id: int, tags_str: str, ua_id: int, ru_id: int, key_to_attr_id: Dict[str, int], tags_index: Dict[str, Dict[str, str]]):
+def upsert_product_attributes_from_tags(cur, product_id: int, tags_str: str, ua_id: int, ru_id: int, key_to_attr_id: Dict[str, int], tags_index: Dict[str, Dict[str, str]], language_ids: Optional[List[int]] = None):
     if not tags_str:
         return
     keys = [t.strip() for t in tags_str.split(",") if t.strip()]
+    langs = language_ids or unique_lang_ids(ua_id, ru_id)
     for key in keys:
         attribute_id = key_to_attr_id.get(key)
         if not attribute_id:
@@ -367,7 +380,7 @@ def upsert_product_attributes_from_tags(cur, product_id: int, tags_str: str, ua_
         tag_row = tags_index.get(key)
         ua_val = (tag_row.get("ua") if tag_row else key) or key
         ru_val = (tag_row.get("ru") if tag_row else ua_val) or ua_val
-        for lang_id in unique_lang_ids(ua_id, ru_id):
+        for lang_id in langs:
             text = ru_val if (lang_id == ru_id and ru_id != ua_id) else ua_val
             cur.execute(
                 """
@@ -377,6 +390,59 @@ def upsert_product_attributes_from_tags(cur, product_id: int, tags_str: str, ua_
                 """,
                 (product_id, attribute_id, lang_id, text),
             )
+
+
+def ensure_category_to_store(cur, category_id: int, store_id: int = 0) -> None:
+    try:
+        cur.execute("INSERT IGNORE INTO oc_category_to_store(category_id, store_id) VALUES(%s, %s)", (category_id, store_id))
+    except Exception:
+        pass
+
+
+def ensure_product_to_store(cur, product_id: int, store_id: int = 0) -> None:
+    try:
+        cur.execute("INSERT IGNORE INTO oc_product_to_store(product_id, store_id) VALUES(%s, %s)", (product_id, store_id))
+    except Exception:
+        pass
+
+
+def upsert_category_paths(cur, categories_rows: List[Dict[str, str]]) -> None:
+    # Build parent relationships
+    id_to_parent: Dict[int, int] = {}
+    for r in categories_rows:
+        try:
+            cid = int((r.get("id") or "0").strip() or 0)
+            pid_raw = (r.get("parentId") or "").strip()
+            pid = int(pid_raw) if pid_raw else 0
+            id_to_parent[cid] = pid
+        except Exception:
+            continue
+    # For each category, accumulate path from root
+    for cid in id_to_parent.keys():
+        path: List[int] = []
+        current = cid
+        guard = 0
+        while current and current in id_to_parent and guard < 50:
+            path.append(current)
+            parent = id_to_parent.get(current, 0)
+            if parent == 0 or parent == current:
+                break
+            current = parent
+            guard += 1
+        # Include root self path if not already
+        if not path:
+            path = [cid]
+        # Reverse to have root->...->self
+        path_reversed = list(reversed(path))
+        # Insert with level
+        for level, path_id in enumerate(path_reversed):
+            try:
+                cur.execute(
+                    "INSERT IGNORE INTO oc_category_path(category_id, path_id, level) VALUES(%s, %s, %s)",
+                    (cid, path_id, level),
+                )
+            except Exception:
+                pass
 
 
 def main() -> int:
@@ -436,9 +502,18 @@ def main() -> int:
     log("Inserting categories and descriptions...")
     for c in categories:
         ensure_category(cur, c, table_cols_cache)
-        ensure_category_descriptions(cur, c, ua_id, ru_id, table_cols_cache)
+        ensure_category_descriptions(cur, c, ua_id, ru_id, table_cols_cache, language_ids=get_active_language_ids(cur))
+        # Map to default store and build category_path for breadcrumbs
+        try:
+            cid = int((c.get("id") or "0").strip() or 0)
+            ensure_category_to_store(cur, cid, 0)
+        except Exception:
+            pass
     conn.commit()
-    log(f"Categories upserted: {len(categories)}")
+    # category_path rebuild
+    upsert_category_paths(cur, categories)
+    conn.commit()
+    log(f"Categories upserted: {len(categories)}; category paths and store mapping ensured")
 
     # Attributes from tags
     unique_groups = len({(r.get('group') or '').strip() for r in tags_rows if (r.get('group') or '').strip()})
@@ -463,8 +538,9 @@ def main() -> int:
         product_sku = (p.get("sku") or p.get("product_id") or "").strip()
         db_product_id = upsert_product(cur, p, table_cols_cache)
         product_id_map[product_sku] = db_product_id
-        upsert_product_descriptions(cur, db_product_id, p, ua_id, ru_id, table_cols_cache)
+        upsert_product_descriptions(cur, db_product_id, p, ua_id, ru_id, table_cols_cache, language_ids=get_active_language_ids(cur))
         upsert_product_categories(cur, db_product_id, p)
+        ensure_product_to_store(cur, db_product_id, 0)
         images = (p.get("images") or "").strip()
         if images:
             img_added += len([_ for _ in images.split(",") if _.strip()])
