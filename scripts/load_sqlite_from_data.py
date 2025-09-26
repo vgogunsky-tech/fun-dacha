@@ -505,12 +505,41 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Populate OpenCart SQLite DB from data CSVs")
     parser.add_argument("--db", dest="db_path", default=str(DEFAULT_DB_PATH), help="Path to SQLite DB file")
     parser.add_argument("--data", dest="data_dir", default=str(DEFAULT_DATA_DIR), help="Path to data directory with CSVs")
+    parser.add_argument("--clean", dest="clean", action="store_true", help="Clean relevant oc_* tables before import")
+    parser.add_argument("--no-clean", dest="no_clean", action="store_true", help="Do not clean tables before import")
     args = parser.parse_args()
 
     db_path = Path(args.db_path)
     data_dir = Path(args.data_dir)
 
     conn = open_db(db_path)
+    # Optional cleanup (default: clean unless --no-clean specified)
+    do_clean = True
+    if args.no_clean:
+        do_clean = False
+    if args.clean:
+        do_clean = True
+
+    if do_clean:
+        with conn:
+            conn.execute("DELETE FROM oc_product_option_value")
+            conn.execute("DELETE FROM oc_product_option")
+            conn.execute("DELETE FROM oc_option_value_description")
+            conn.execute("DELETE FROM oc_option_value")
+            conn.execute("DELETE FROM oc_option_description")
+            conn.execute("DELETE FROM oc_option")
+            conn.execute("DELETE FROM oc_product_attribute")
+            conn.execute("DELETE FROM oc_attribute_description")
+            conn.execute("DELETE FROM oc_attribute")
+            conn.execute("DELETE FROM oc_attribute_group_description")
+            conn.execute("DELETE FROM oc_attribute_group")
+            conn.execute("DELETE FROM oc_product_image")
+            conn.execute("DELETE FROM oc_product_to_category")
+            conn.execute("DELETE FROM oc_product_description")
+            conn.execute("DELETE FROM oc_product")
+            conn.execute("DELETE FROM oc_category_description")
+            conn.execute("DELETE FROM oc_category")
+
     ua_id, ru_id = get_language_ids(conn)
 
     categories = read_csv(data_dir / "categories_list.csv")
