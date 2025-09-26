@@ -95,6 +95,10 @@ def clean_db(conn):
     cur = conn.cursor()
     cur.execute("SET FOREIGN_KEY_CHECKS=0")
     tables = [
+        # Brand/manufacturer related (children first)
+        "oc_manufacturer_to_store",
+        "oc_manufacturer_description",
+        "oc_manufacturer",
         "oc_product_option_value",
         "oc_product_option",
         "oc_option_value_description",
@@ -113,8 +117,14 @@ def clean_db(conn):
         "oc_category_description",
         "oc_category",
     ]
+    # Only truncate if the table exists
     for t in tables:
-        cur.execute(f"TRUNCATE {t}")
+        try:
+            cur.execute(f"SHOW TABLES LIKE %s", (t,))
+            if cur.fetchone():
+                cur.execute(f"TRUNCATE {t}")
+        except Exception:
+            pass
     cur.execute("SET FOREIGN_KEY_CHECKS=1")
     conn.commit()
 
@@ -641,6 +651,18 @@ def main() -> int:
     ]:
         cur.execute(f"SELECT COUNT(*) FROM {t}")
         stats[t] = int(cur.fetchone()[0])
+    # Final brand cleanup on existing schema: reset manufacturer_id and remove manufacturer SEO URLs if any
+    try:
+        cur.execute("UPDATE oc_product SET manufacturer_id = 0")
+    except Exception:
+        pass
+    try:
+        cur.execute("SHOW TABLES LIKE 'oc_seo_url'")
+        if cur.fetchone():
+            cur.execute("DELETE FROM oc_seo_url WHERE query LIKE 'manufacturer_id=%'")
+            stats["oc_seo_url_removed"] = cur.rowcount
+    except Exception:
+        pass
     print(json.dumps(stats, ensure_ascii=False))
     log("Migration complete.")
 
