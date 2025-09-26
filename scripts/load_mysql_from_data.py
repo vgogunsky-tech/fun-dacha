@@ -483,6 +483,103 @@ def upsert_category_paths(cur, categories_rows: List[Dict[str, str]]) -> None:
                 pass
 
 
+def table_exists(cur, name: str) -> bool:
+    try:
+        cur.execute("SHOW TABLES LIKE %s", (name,))
+        return cur.fetchone() is not None
+    except Exception:
+        return False
+
+
+def get_layout_id_by_name(cur, name: str) -> Optional[int]:
+    try:
+        cur.execute("SELECT layout_id FROM oc_layout WHERE name = %s LIMIT 1", (name,))
+        row = cur.fetchone()
+        return int(row[0]) if row else None
+    except Exception:
+        return None
+
+
+def reset_banners(cur) -> None:
+    # Remove legacy banners/modules if present
+    try:
+        if table_exists(cur, 'oc_layout_module'):
+            cur.execute("DELETE FROM oc_layout_module WHERE code LIKE 'banner.%'")
+        if table_exists(cur, 'oc_module'):
+            cur.execute("DELETE FROM oc_module WHERE code = 'banner'")
+        if table_exists(cur, 'oc_banner_image'):
+            cur.execute("TRUNCATE oc_banner_image")
+        if table_exists(cur, 'oc_banner_image_description'):
+            cur.execute("TRUNCATE oc_banner_image_description")
+        if table_exists(cur, 'oc_banner'):
+            cur.execute("TRUNCATE oc_banner")
+    except Exception:
+        pass
+
+
+def create_categories_banner(cur, categories: List[Dict[str, str]], language_ids: List[int]) -> Optional[int]:
+    if not table_exists(cur, 'oc_banner'):
+        return None
+    # Create banner group
+    cur.execute("INSERT INTO oc_banner(name, status) VALUES(%s, 1)", ("Categories",))
+    banner_id = int(cur.lastrowid)
+
+    # Determine if oc_banner_image has language_id in schema
+    has_lang = False
+    try:
+        cur.execute("SHOW COLUMNS FROM oc_banner_image LIKE 'language_id'")
+        has_lang = cur.fetchone() is not None
+    except Exception:
+        has_lang = False
+
+    # Insert one banner image per category using its image and link
+    for sort, c in enumerate(categories):
+        try:
+            cid = int((c.get('id') or '0').strip() or 0)
+        except Exception:
+            continue
+        if cid <= 0:
+            continue
+        title = (c.get('name') or f'Category {cid}').strip()
+        img = (c.get('primary_image') or '').strip()
+        image_path = f"catalog/category/{img}" if img else ''
+        link = f"index.php?route=product/category&path={cid}"
+        if not image_path:
+            continue
+        if has_lang:
+            for lang_id in language_ids:
+                cur.execute(
+                    "INSERT INTO oc_banner_image(banner_id, language_id, title, link, image, sort_order) VALUES(%s, %s, %s, %s, %s, %s)",
+                    (banner_id, lang_id, title, link, image_path, sort),
+                )
+        else:
+            # Schema without language_id
+            cur.execute(
+                "INSERT INTO oc_banner_image(banner_id, title, link, image, sort_order) VALUES(%s, %s, %s, %s, %s)",
+                (banner_id, title, link, image_path, sort),
+            )
+    return banner_id
+
+
+def attach_banner_module_to_layouts(cur, banner_id: int, layouts: List[str], position: str = 'content_top', width: int = 1200, height: int = 400) -> None:
+    if not table_exists(cur, 'oc_module') or not table_exists(cur, 'oc_layout_module'):
+        return
+    # Create module
+    name = f"Category Banner"
+    setting = json.dumps({"name": name, "banner_id": str(banner_id), "width": width, "height": height, "status": "1"})
+    cur.execute("INSERT INTO oc_module(name, code, setting) VALUES(%s, 'banner', %s)", (name, setting))
+    module_id = int(cur.lastrowid)
+    code = f"banner.{module_id}"
+    # Attach to specified layouts
+    for layout_name in layouts:
+        layout_id = get_layout_id_by_name(cur, layout_name)
+        if layout_id:
+            cur.execute(
+                "INSERT INTO oc_layout_module(layout_id, code, position, sort_order) VALUES(%s, %s, %s, 0)",
+                (layout_id, code, position),
+            )
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Populate OpenCart MySQL DB from data CSVs")
     parser.add_argument("--host", default=os.getenv("MYSQL_HOST", "db"))
@@ -665,6 +762,21 @@ def main() -> int:
         pass
     print(json.dumps(stats, ensure_ascii=False))
     log("Migration complete.")
+
+    # Banners: reset legacy, create category banners and attach to Home/Category
+    try:
+        log("Resetting legacy banners and generating category banners...")
+        reset_banners(cur)
+        langs = get_active_language_ids(cur)
+        banner_id = create_categories_banner(cur, categories, langs)
+        if banner_id:
+            attach_banner_module_to_layouts(cur, banner_id, ["Home", "Category"], position='content_top', width=1200, height=400)
+            conn.commit()
+            log(f"Category banner created and attached (banner_id={banner_id})")
+        else:
+            log("Banner tables not present; skipping banner generation")
+    except Exception as e:
+        log(f"Banner generation skipped due to error: {e}")
 
     cur.close()
     conn.close()
