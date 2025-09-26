@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Dict, List, Optional, Sequence, Tuple
 
 import pymysql
+import time
 
 
 def read_csv(path: Path) -> List[Dict[str, str]]:
@@ -78,7 +79,6 @@ def get_language_ids(cur) -> (int, int):
 
 
 def unique_lang_ids(ua_id: int, ru_id: int) -> List[int]:
-    # Ensure we don't duplicate inserts when UA and RU are the same id
     return list(dict.fromkeys([ua_id, ru_id]))
 
 
@@ -121,7 +121,6 @@ def build_upsert_sql(table: str, available_cols: Sequence[str], data: Dict[str, 
         raise ValueError(f"No valid columns to insert for {table}")
     placeholders = ["%s"] * len(cols)
     values = [data[c] for c in cols]
-    # Update set excludes pk columns
     upd_cols = [c for c in cols if c not in pk_cols]
     if upd_cols:
         set_clause = ", ".join([f"{c}=VALUES({c})" for c in upd_cols])
@@ -392,6 +391,10 @@ def main() -> int:
     parser.add_argument("--no-clean", dest="no_clean", action="store_true", help="Skip cleaning")
     args = parser.parse_args()
 
+    def log(msg: str) -> None:
+        print(f"[{time.strftime('%H:%M:%S')}] {msg}", flush=True)
+
+    log(f"Connecting to MySQL {args.user}@{args.host}:{args.port}/{args.database}")
     conn = pymysql.connect(host=args.host, port=args.port, user=args.user, password=args.password, database=args.database, charset="utf8mb4")
     cur = conn.cursor()
 
@@ -401,15 +404,19 @@ def main() -> int:
     if args.clean:
         do_clean = True
     if do_clean:
+        log("Cleaning target tables (TRUNCATE)...")
         clean_db(conn)
+        log("Cleanup complete.")
 
     ua_id, ru_id = get_language_ids(cur)
+    log(f"Language IDs resolved -> UA: {ua_id}, RU: {ru_id}")
 
     data_dir = Path(args.data_dir)
     categories = read_csv(data_dir / "categories_list.csv")
     products = read_csv(data_dir / "list.csv")
     inventory = read_csv(data_dir / "inventory.csv")
     tags_rows = read_csv(data_dir / "tags.csv")
+    log(f"Loaded CSVs -> categories: {len(categories)}, products: {len(products)}, inventory rows: {len(inventory)}, tags: {len(tags_rows)}")
 
     inv_by_product: Dict[str, List[Dict[str, str]]] = {}
     for r in inventory:
@@ -426,32 +433,52 @@ def main() -> int:
     table_cols_cache: Dict[str, List[str]] = {}
 
     # Categories
+    log("Inserting categories and descriptions...")
     for c in categories:
         ensure_category(cur, c, table_cols_cache)
         ensure_category_descriptions(cur, c, ua_id, ru_id, table_cols_cache)
     conn.commit()
+    log(f"Categories upserted: {len(categories)}")
 
     # Attributes from tags
+    unique_groups = len({(r.get('group') or '').strip() for r in tags_rows if (r.get('group') or '').strip()})
+    unique_keys = len({(r.get('key') or '').strip() for r in tags_rows if (r.get('key') or '').strip()})
+    log(f"Building attributes from tags (groups={unique_groups}, keys={unique_keys})...")
     key_to_attr_id = build_attributes_from_tags(cur, ua_id, ru_id, tags_rows)
     conn.commit()
+    log(f"Attributes created: {len(key_to_attr_id)} across {unique_groups} groups")
 
     # Option
+    log("Ensuring product option exists for variants...")
     option_id = ensure_option(cur, ua_id, ru_id)
     conn.commit()
+    log(f"Option ready: option_id={option_id}")
 
     # Products and related
+    log("Inserting products, descriptions, categories, and images...")
     product_id_map: Dict[str, int] = {}
+    prod_processed = 0
+    img_added = 0
     for p in products:
         product_sku = (p.get("sku") or p.get("product_id") or "").strip()
         db_product_id = upsert_product(cur, p, table_cols_cache)
         product_id_map[product_sku] = db_product_id
         upsert_product_descriptions(cur, db_product_id, p, ua_id, ru_id, table_cols_cache)
         upsert_product_categories(cur, db_product_id, p)
+        images = (p.get("images") or "").strip()
+        if images:
+            img_added += len([_ for _ in images.split(",") if _.strip()])
         upsert_product_images(cur, db_product_id, p)
-        upsert_product_attributes_from_tags(cur, db_product_id, (p.get("tags") or ""), ua_id, ru_id, key_to_attr_id, tags_index)
+        prod_processed += 1
+        if prod_processed % 200 == 0:
+            log(f"Products processed: {prod_processed}/{len(products)}")
     conn.commit()
+    log(f"Products upserted: {prod_processed}; additional images inserted: {img_added}")
 
     # Options per product
+    log("Linking product options and values with pricing and weights...")
+    pov_inserted = 0
+    products_with_options = 0
     for p in products:
         sku_or_pid = (p.get("product_id") or p.get("sku") or "").strip()
         if not sku_or_pid:
@@ -462,15 +489,13 @@ def main() -> int:
         db_product_id = product_id_map.get(sku_or_pid)
         if not db_product_id:
             continue
-        # pricing
-        variant_prices: List[float] = []  # type: ignore
+        variant_prices: List[float] = []
         for r in rows:
             price = parse_float(r.get("sale_price") or r.get("original_price"))
             variant_prices.append(price)
         base_price = min(variant_prices) if variant_prices else 0.0
         cur.execute("UPDATE oc_product SET price = %s WHERE product_id = %s", (base_price, db_product_id))
 
-        # ensure product_option row
         cur.execute("SELECT product_option_id FROM oc_product_option WHERE product_id = %s AND option_id = %s", (db_product_id, option_id))
         row = cur.fetchone()
         if row and row[0]:
@@ -498,9 +523,13 @@ def main() -> int:
                 """,
                 (product_option_id, db_product_id, option_id, option_value_id, qty, price_value, price_prefix, weight_value),
             )
+            pov_inserted += 1
+        products_with_options += 1
     conn.commit()
+    log(f"Products with options: {products_with_options}; product option values inserted: {pov_inserted}")
 
     # report
+    log("Collecting final stats...")
     stats = {}
     for t in [
         "oc_category", "oc_product", "oc_product_description", "oc_product_image",
@@ -509,6 +538,7 @@ def main() -> int:
         cur.execute(f"SELECT COUNT(*) FROM {t}")
         stats[t] = int(cur.fetchone()[0])
     print(json.dumps(stats, ensure_ascii=False))
+    log("Migration complete.")
 
     cur.close()
     conn.close()
