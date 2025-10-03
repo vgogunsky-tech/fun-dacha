@@ -433,6 +433,7 @@ category,group,key,ua,ru
 290,Usage,juice,Сік,Сок
 290,Yield,high_yield,Високоврожайний,Высокоурожайный
 290,Yield,uniform_ripening,Дружнє дозрівання,Дружное созревание
+330,Color,black,Чорний,Чёрный
 330,Color,brown,Коричневий,Коричневый
 330,Color,orange,Оранжевий,Оранжевый
 330,Color,pink,Рожевий,Розовый
@@ -443,10 +444,14 @@ category,group,key,ua,ru
 330,Growth,compact,Компактний,Компактный
 330,Growth,short,Низькорослий,Низкорослый
 330,Growth,sprawling,Розлогий,Раскидистый
+330,Growth,tall,Високорослий,Высокорослый
 330,Resistance,cold_tolerant,Холодостійкий,Холодостойкий
 330,Resistance,drought_tolerant,Посухостійкий,Засухоустойчивый
+330,Shape,elongated,Подовжений,Удлинённый
 330,Shape,oval,Овальний,Овальный
 330,Texture,firm,Щільний,Плотный
+330,Texture,sweet,Солодкий,Сладкий
 330,Traits,long_storage,Довге зберігання,Долгое хранение
 330,Usage,fresh,Свіже споживання,Свежее потребление
+330,Usage,universal,Універсальний,Универсальный
 330,Yield,uniform_ripening,Дружнє дозрівання,Дружное созревание
