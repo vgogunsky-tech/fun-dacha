@@ -190,6 +190,24 @@ def get_list_row_count(list_csv: str) -> int:
         return 0
 
 
+def get_next_id_starting_from(list_csv: str, baseline: int) -> int:
+    # Finds current max id, then returns max(baseline, max_id+1)
+    max_id = 0
+    try:
+        with open(list_csv, newline='', encoding='utf-8') as f:
+            reader = csv.DictReader(f)
+            for r in reader:
+                try:
+                    cid = int((r.get('id', '') or '0').strip())
+                    if cid > max_id:
+                        max_id = cid
+                except Exception:
+                    pass
+    except Exception:
+        pass
+    return max(baseline, max_id + 1)
+
+
 def product_title_exists(list_csv: str, category_id: int, title_ukr: str) -> bool:
     if not title_ukr:
         return False
@@ -421,7 +439,7 @@ def main() -> None:
     category_index: Dict[int, int] = {}
     next_num = find_last_product_numeric_id(list_csv)
     # Next sequential id equals current number of rows + 1
-    next_row_id = get_list_row_count(list_csv) + 1
+    next_row_id = get_next_id_starting_from(list_csv, baseline=840)
 
     for name, cat_url in home:
         cat_id = mapping.get(name)
