@@ -97,13 +97,18 @@ def extract_product_image(product_url: str) -> Optional[str]:
     try:
         html = get(product_url).text
         soup = BeautifulSoup(html, "html.parser")
-        # Prefer JSON-LD image
+        # Prefer product slider <img> PNG then <source> webp, else JSON-LD or og:image
+        img_node = soup.select_one(".product-preview__slider .lightgallery img.product-preview-slide__img")
+        if img_node and img_node.get("src"):
+            return img_node["src"]
+        src_node = soup.select_one(".product-preview__slider .lightgallery source.product-preview-slide__img")
+        if src_node and src_node.get("srcset"):
+            return src_node["srcset"]
         for script in soup.find_all("script", {"type": "application/ld+json"}):
             txt = script.string or script.text or ""
             m = re.search(r'"image":\s*"(https?:[^\"]+)"', txt)
             if m:
                 return m.group(1)
-        # Fallback og:image
         og = soup.find("meta", {"property": "og:image"})
         if og and og.get("content"):
             return og["content"]

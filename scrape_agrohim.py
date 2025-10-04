@@ -364,16 +364,23 @@ def extract_product(product_url: str) -> Optional[Dict[str, str]]:
     desc_node = soup.select_one(".product-page-about__description-info")
     description = desc_node.get_text(" ", strip=True) if desc_node else ""
 
-    # Main image: prefer JSON-LD image if available
+    # Main image: prefer product preview slider <img> (png) then <source> (webp), then JSON-LD/og
     image_url: Optional[str] = None
-    for script in soup.find_all("script", {"type": "application/ld+json"}):
-        txt = script.string or script.text or ""
-        m = re.search(r'"image":\s*"(https?:[^\"]+)"', txt)
-        if m:
-            image_url = m.group(1)
-            break
+    img_node = soup.select_one(".product-preview__slider .lightgallery img.product-preview-slide__img")
+    if img_node and img_node.get("src"):
+        image_url = img_node["src"]
     if not image_url:
-        # fallback: product-card on page or meta og:image
+        src_node = soup.select_one(".product-preview__slider .lightgallery source.product-preview-slide__img")
+        if src_node and src_node.get("srcset"):
+            image_url = src_node["srcset"]
+    if not image_url:
+        for script in soup.find_all("script", {"type": "application/ld+json"}):
+            txt = script.string or script.text or ""
+            m = re.search(r'"image":\s*"(https?:[^\"]+)"', txt)
+            if m:
+                image_url = m.group(1)
+                break
+    if not image_url:
         og = soup.find("meta", {"property": "og:image"})
         if og and og.get("content"):
             image_url = og["content"]
