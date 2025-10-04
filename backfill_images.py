@@ -40,8 +40,11 @@ def download_as_jpeg(url: str, dest_path: str) -> bool:
         return False
 
 
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+
 def ensure_dirs() -> None:
-    os.makedirs("data/images/products", exist_ok=True)
+    os.makedirs(os.path.join(BASE_DIR, "data", "images", "products"), exist_ok=True)
 
 
 def read_list_rows(path: str) -> Tuple[List[str], List[List[str]]]:
@@ -119,7 +122,7 @@ def backfill_for_category(list_csv: str, category_id: int, cat_url: str) -> Tupl
         return (0, 0)
 
     ensure_dirs()
-    prod_dir = "data/images/products"
+    prod_dir = os.path.join(BASE_DIR, "data", "images", "products")
     added = 0
     checked = 0
 
@@ -165,7 +168,7 @@ def backfill_for_category(list_csv: str, category_id: int, cat_url: str) -> Tupl
 
 
 def main():
-    list_csv = os.path.join("data", "list.csv")
+    list_csv = os.path.join(BASE_DIR, "data", "list.csv")
     # Category 401 (Гербіциди)
     checked, added = backfill_for_category(list_csv, 401, f"{UA_BASE}/gerbicidi")
     print(f"Category 401: checked={checked}, added_images={added}")

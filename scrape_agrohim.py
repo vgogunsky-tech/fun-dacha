@@ -17,6 +17,9 @@ from io import BytesIO
 BASE_URL = "https://agro-him.com.ua"
 UA_BASE = f"{BASE_URL}/ua"
 
+# Resolve paths relative to this script's directory so execution from any CWD works
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36",
     "Accept-Language": "uk-UA,uk;q=0.9,ru;q=0.8,en;q=0.7",
@@ -31,8 +34,8 @@ def get(url: str) -> requests.Response:
 
 
 def ensure_dirs() -> None:
-    os.makedirs("data/images/categories", exist_ok=True)
-    os.makedirs("data/images/products", exist_ok=True)
+    os.makedirs(os.path.join(BASE_DIR, "data", "images", "categories"), exist_ok=True)
+    os.makedirs(os.path.join(BASE_DIR, "data", "images", "products"), exist_ok=True)
 
 
 def read_categories_csv(path: str) -> List[Dict[str, str]]:
@@ -408,8 +411,8 @@ def find_last_product_numeric_id(list_csv: str) -> int:
 
 def main() -> None:
     ensure_dirs()
-    categories_csv = os.path.join("data", "categories_list.csv")
-    list_csv = os.path.join("data", "list.csv")
+    categories_csv = os.path.join(BASE_DIR, "data", "categories_list.csv")
+    list_csv = os.path.join(BASE_DIR, "data", "list.csv")
 
     # 1) Cleanup duplicate category rows and ensure categories present
     try:
@@ -471,7 +474,7 @@ def main() -> None:
         next_num += len(product_urls)
 
         # For category image, take first product image if not present
-        cat_image_path = os.path.join("data", "images", "categories", f"c{cat_id}.jpg")
+        cat_image_path = os.path.join(BASE_DIR, "data", "images", "categories", f"c{cat_id}.jpg")
         category_image_saved = os.path.exists(cat_image_path)
 
         saved_rows = 0
@@ -488,7 +491,7 @@ def main() -> None:
 
             # Download image to data/images/products/<product_id>.jpg
             img_name = f"{product_id}.jpg"
-            img_path = os.path.join("data", "images", "products", img_name)
+            img_path = os.path.join(BASE_DIR, "data", "images", "products", img_name)
             image_url = pdata.get("image_url") or ""
             if image_url:
                 # Convert thumbnail variants to 428x428 if needed
