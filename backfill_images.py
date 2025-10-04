@@ -9,6 +9,33 @@ import requests
 from bs4 import BeautifulSoup
 from PIL import Image
 from io import BytesIO
+def extract_home_categories() -> Dict[str, str]:
+    html = get(f"{UA_BASE}").text
+    soup = BeautifulSoup(html, "html.parser")
+    mapping: Dict[str, str] = {}
+    for a in soup.select("a.catalog-section-card"):
+        href = a.get("href")
+        name_node = a.select_one(".catalog-section-card__name")
+        name = name_node.get_text(strip=True) if name_node else None
+        if href and name:
+            if name not in mapping:
+                mapping[name] = href
+    return mapping
+
+def id_to_category_name(cid: int, categories_csv: str) -> Optional[str]:
+    try:
+        with open(categories_csv, encoding="utf-8") as f:
+            rows = list(csv.DictReader(f))
+        for r in rows:
+            try:
+                rid = int((r.get("id") or "0").strip())
+            except Exception:
+                continue
+            if rid == cid:
+                return (r.get("name") or "").strip()
+    except Exception:
+        return None
+    return None
 
 BASE_URL = "https://agro-him.com.ua"
 UA_BASE = f"{BASE_URL}/ua"
@@ -183,9 +210,39 @@ def backfill_for_category(list_csv: str, category_id: int, cat_url: str) -> Tupl
 
 def main():
     list_csv = os.path.join(BASE_DIR, "data", "list.csv")
-    # Category 401 (Гербіциди)
-    checked, added = backfill_for_category(list_csv, 401, f"{UA_BASE}/gerbicidi")
-    print(f"Category 401: checked={checked}, added_images={added}")
+    categories_csv = os.path.join(BASE_DIR, "data", "categories_list.csv")
+    # Determine category id to backfill (default 401)
+    try:
+        cat_id = int(os.environ.get("BACKFILL_CAT_ID", "401"))
+    except Exception:
+        cat_id = 401
+    name = id_to_category_name(cat_id, categories_csv) or ""
+    home_map = extract_home_categories()
+    cat_url = None
+    if name and name in home_map:
+        cat_url = home_map[name]
+    # Fallback urls for known ids
+    if not cat_url:
+        fallback = {
+            401: f"{UA_BASE}/gerbicidi",
+            402: f"{UA_BASE}/incekticidi",
+            403: f"{UA_BASE}/fungicidi",
+            404: f"{UA_BASE}/protraviteli",
+            405: f"{UA_BASE}/biopreparati",
+            406: f"{UA_BASE}/prilipateli",
+            407: f"{UA_BASE}/udobreniya",
+            408: f"{UA_BASE}/sad",
+            410: f"{UA_BASE}/protiv-bitovix-nacekomix",
+            411: f"{UA_BASE}/rodenticidi",
+            412: f"{UA_BASE}/ulitki",
+            413: f"{UA_BASE}/semena",
+        }
+        cat_url = fallback.get(cat_id)
+    if not cat_url:
+        print(f"No URL for category {cat_id}")
+        return
+    checked, added = backfill_for_category(list_csv, cat_id, cat_url)
+    print(f"Category {cat_id}: checked={checked}, added_images={added}")
 
 
 if __name__ == "__main__":
