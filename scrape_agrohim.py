@@ -10,6 +10,8 @@ import requests
 from bs4 import BeautifulSoup
 from slugify import slugify
 from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
+from PIL import Image
+from io import BytesIO
 
 
 BASE_URL = "https://agro-him.com.ua"
@@ -99,6 +101,43 @@ def dedupe_categories_csv(path: str) -> None:
     write_categories_csv(path, deduped)
 
 
+def extract_home_categories() -> List[Tuple[str, str]]:
+    html = get(f"{UA_BASE}").text
+    soup = BeautifulSoup(html, "html.parser")
+    results: List[Tuple[str, str]] = []
+    for a in soup.select("a.catalog-section-card"):
+        href = a.get("href")
+        name_node = a.select_one(".catalog-section-card__name")
+        name = name_node.get_text(strip=True) if name_node else None
+        if href and name:
+            results.append((name, href))
+    desired = {
+        "Гербіциди",
+        "Інсектициди",
+        "Фунгіциди",
+        "Протруйники",
+        "Біопрепарати",
+        "Прилипачі",
+        "Добрива та стимулятори",
+        "Обробка саду",
+        "Цибуля саджанка",
+        "Проти побутових комах",
+        "Родентициди",
+        "Молюскоциди",
+        "Насіння",
+    }
+    unique: Dict[str, str] = {}
+    for t, u in results:
+        if t in desired and t not in unique:
+            unique[t] = u
+    filtered = [(t, unique[t]) for t in unique]
+    print(f"[info] extracted home categories: {len(filtered)}")
+    for t, u in filtered:
+        print(f"[cat] {t} -> {u}")
+    sys.stdout.flush()
+    return filtered
+
+
 def append_products_csv(path: str, product_rows: List[List[str]]) -> None:
     # Append rows exactly to existing CSV with the same header structure
     # We'll read the header line to compute number of columns and then write rows padded with empties
@@ -155,8 +194,14 @@ def product_title_exists(list_csv: str, category_id: int, title_ukr: str) -> boo
 def download_image(url: str, dest_path: str) -> Optional[str]:
     try:
         r = get(url)
-        with open(dest_path, "wb") as f:
-            f.write(r.content)
+        content = r.content
+        try:
+            img = Image.open(BytesIO(content))
+            rgb = img.convert("RGB")
+            rgb.save(dest_path, format="JPEG", quality=90)
+        except Exception:
+            with open(dest_path, "wb") as f:
+                f.write(content)
         return dest_path
     except Exception:
         return None
