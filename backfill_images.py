@@ -40,7 +40,8 @@ def download_as_jpeg(url: str, dest_path: str) -> bool:
         return False
 
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DEFAULT_BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+BASE_DIR = os.environ.get("FUN_DATAROOT", DEFAULT_BASE_DIR)
 
 
 def ensure_dirs() -> None:
@@ -118,7 +119,8 @@ def backfill_for_category(list_csv: str, category_id: int, cat_url: str) -> Tupl
     ix_cat = col.get("category_id")
     ix_img = col.get("primary_image")
     ix_pid = col.get("product_id")
-    if None in (ix_name, ix_cat, ix_img, ix_pid) or -1 in (ix_name, ix_cat, ix_img, ix_pid):
+    ix_id = col.get("id")
+    if None in (ix_name, ix_cat, ix_img, ix_pid, ix_id) or -1 in (ix_name, ix_cat, ix_img, ix_pid, ix_id):
         return (0, 0)
 
     ensure_dirs()
@@ -130,6 +132,13 @@ def backfill_for_category(list_csv: str, category_id: int, cat_url: str) -> Tupl
     title_to_url = parse_category_product_urls(cat_url)
 
     for row in rows:
+        # Only process new products (id >= 840) and matching category
+        try:
+            rid = int((row[ix_id] or "0").strip())
+        except Exception:
+            rid = 0
+        if rid < 840:
+            continue
         if (row[ix_cat] or "").strip() != str(category_id):
             continue
         checked += 1

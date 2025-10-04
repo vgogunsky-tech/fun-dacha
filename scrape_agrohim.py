@@ -17,8 +17,9 @@ from io import BytesIO
 BASE_URL = "https://agro-him.com.ua"
 UA_BASE = f"{BASE_URL}/ua"
 
-# Resolve paths relative to this script's directory so execution from any CWD works
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+# Resolve paths relative to repo dir; allow absolute override via FUN_DATAROOT
+DEFAULT_BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+BASE_DIR = os.environ.get("FUN_DATAROOT", DEFAULT_BASE_DIR)
 
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36",
