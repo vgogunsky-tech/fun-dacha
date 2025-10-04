@@ -1519,6 +1519,23 @@ def category(category_id: int):
             category_name = cat.get('name', 'Unknown Category')
             break
     
+    # Prepare subcategories for this category (exclude 409 by requirements)
+    children: List[Dict[str, str]] = []
+    for c in categories:
+        if (c.get("parentId") or "").strip() == str(category_id):
+            try:
+                cid = int(float(c.get("id") or 0))
+            except Exception:
+                cid = 0
+            if cid == 409:
+                continue
+            children.append({
+                "id": str(cid),
+                "name": c.get("name") or "",
+                "image": find_category_image(str(cid)),
+            })
+    children.sort(key=lambda x: int(x["id"]))
+
     # Load all products in this category
     rows, fields, _ = read_products_csv()
     category_products = []
@@ -1543,7 +1560,8 @@ def category(category_id: int):
                          products=category_products,
                          validated_count=validated_count,
                          unvalidated_count=unvalidated_count,
-                         library_folder=library_folder)
+                         library_folder=library_folder,
+                         subcategories=children)
 
 
 @app.route("/categories")

@@ -392,6 +392,26 @@
           Перевірено: {{ validated_count }} | 
           Не перевірено: {{ unvalidated_count }}
         </div>
+        {% if subcategories and subcategories|length > 0 %}
+        <div style="margin-top: 16px;">
+          <h3 style="margin: 0 0 10px 0;">Підкатегорії</h3>
+          <div class="products-grid">
+            {% for sc in subcategories %}
+            <a href="{{ url_for('category', category_id=sc['id']) }}" class="product-card" style="text-decoration: none; color: inherit;">
+              {% if sc['image'] %}
+              <img src="{{ url_for('serve_category_image', filename=sc['image']) }}" alt="{{ sc['name'] }}" class="product-image" />
+              {% else %}
+              <div class="product-image" style="display: flex; align-items: center; justify-content: center; color: #999; height: 280px;">Немає зображення</div>
+              {% endif %}
+              <div class="product-info">
+                <div class="product-id">ID: {{ sc['id'] }}</div>
+                <div class="product-title">{{ sc['name'] }}</div>
+              </div>
+            </a>
+            {% endfor %}
+          </div>
+        </div>
+        {% endif %}
       </div>
 
       {% if products %}
