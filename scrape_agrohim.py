@@ -117,6 +117,41 @@ def append_products_csv(path: str, product_rows: List[List[str]]) -> None:
             writer.writerow(row)
 
 
+def read_list_rows(list_csv: str) -> List[Dict[str, str]]:
+    rows: List[Dict[str, str]] = []
+    with open(list_csv, newline='', encoding='utf-8') as f:
+        reader = csv.DictReader(f)
+        for r in reader:
+            rows.append(r)
+    return rows
+
+
+def get_max_suffix_for_category(list_csv: str, category_id: int) -> int:
+    rows = read_list_rows(list_csv)
+    max_suffix = 0
+    prefix = f"p{int(category_id):03d}"
+    for r in rows:
+        pid = (r.get("product_id", "") or "").strip()
+        if pid.startswith(prefix) and len(pid) >= len(prefix) + 3:
+            try:
+                suffix = int(pid[len(prefix):])
+                if suffix > max_suffix:
+                    max_suffix = suffix
+            except Exception:
+                continue
+    return max_suffix
+
+
+def product_title_exists(list_csv: str, category_id: int, title_ukr: str) -> bool:
+    if not title_ukr:
+        return False
+    rows = read_list_rows(list_csv)
+    for r in rows:
+        if (r.get("category_id", "") or "").strip() == str(category_id) and (r.get("Название (укр)", "") or "").strip() == title_ukr.strip():
+            return True
+    return False
+
+
 def download_image(url: str, dest_path: str) -> Optional[str]:
     try:
         r = get(url)
@@ -172,7 +207,6 @@ def add_missing_categories(categories_csv: str) -> Dict[str, int]:
             "description (ukr)": title,
             "primary_image": primary_image,
         })
-        seen_titles.add(title)
     if rows_to_add:
         # Keep original rows then append
         updated = existing + rows_to_add
@@ -338,8 +372,9 @@ def main() -> None:
         if not cat_id:
             # Should not happen; skip
             continue
-        # Limit pages during initial run to avoid excessive time
-        page_limit = int(os.environ.get("AGRO_PAGES", "2"))
+        # Page limit: if AGRO_PAGES env set use it, otherwise crawl all pages
+        page_limit_env = os.environ.get("AGRO_PAGES")
+        page_limit = int(page_limit_env) if page_limit_env else None
         print(f"[info] processing category '{name}' (id={cat_id}) with page_limit={page_limit}")
         sys.stdout.flush()
         product_urls = parse_category_product_cards(cat_url, page_limit=page_limit)
@@ -354,9 +389,9 @@ def main() -> None:
         if not product_urls:
             continue
 
-        # initialize category index if missing
+        # initialize category index from existing data
         if cat_id not in category_index:
-            category_index[cat_id] = 0
+            category_index[cat_id] = get_max_suffix_for_category(list_csv, cat_id)
 
         product_ids = allocate_product_ids(next_num, len(product_urls))
         next_num += len(product_urls)
@@ -369,6 +404,9 @@ def main() -> None:
         for p_url in product_urls:
             pdata = extract_product(p_url)
             if not pdata:
+                continue
+            # Avoid duplicates by title per category
+            if product_title_exists(list_csv, cat_id, pdata.get("title", "")):
                 continue
             category_index[cat_id] += 1
             idx_in_cat = category_index[cat_id]
