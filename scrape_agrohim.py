@@ -181,6 +181,15 @@ def get_max_suffix_for_category(list_csv: str, category_id: int) -> int:
     return max_suffix
 
 
+def get_list_row_count(list_csv: str) -> int:
+    # Returns number of data rows (excluding header)
+    try:
+        with open(list_csv, newline='', encoding='utf-8') as f:
+            return sum(1 for _ in f) - 1
+    except Exception:
+        return 0
+
+
 def product_title_exists(list_csv: str, category_id: int, title_ukr: str) -> bool:
     if not title_ukr:
         return False
@@ -411,6 +420,8 @@ def main() -> None:
     # Track per-category list index to form product_id p{cat}{index}
     category_index: Dict[int, int] = {}
     next_num = find_last_product_numeric_id(list_csv)
+    # Next sequential id equals current number of rows + 1
+    next_row_id = get_list_row_count(list_csv) + 1
 
     for name, cat_url in home:
         cat_id = mapping.get(name)
@@ -478,7 +489,7 @@ def main() -> None:
             # Prepare row matching list.csv header
             # Columns: id,Название (укр),Название (рус),Описание (укр),Описание (рус),primary_image,category_id,subcategory_id,product_id,validated,year,availability,images,tags,price,...
             row = [
-                "",  # id (auto/incremental in existing, we leave empty)
+                str(next_row_id),  # id (position in list.csv)
                 pdata.get("title", ""),  # Название (укр)
                 "",  # Название (рус)
                 pdata.get("description", ""),  # Описание (укр)
@@ -498,6 +509,7 @@ def main() -> None:
             saved_rows += 1
             # write immediately for quicker observable progress
             append_products_csv(list_csv, [row])
+            next_row_id += 1
             print(f"[info] appended product {product_id} ({pdata.get('title','')})")
             sys.stdout.flush()
             # Be polite
