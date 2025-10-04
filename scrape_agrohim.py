@@ -127,57 +127,15 @@ def download_image(url: str, dest_path: str) -> Optional[str]:
         return None
 
 
-def next_category_id(existing: List[Dict[str, str]]) -> int:
-    # Categories for this task start from 401 and parent is 400
-    max_id = 400
-    for r in existing:
-        try:
-            cid = int(r.get("id", "0") or 0)
-        except ValueError:
-            continue
-        if cid > max_id:
-            max_id = cid
-    return max_id + 1
-
-
-def extract_home_categories() -> List[Tuple[str, str]]:
-    # Returns list of (title, url) for main categories on home page
-    html = get(f"{UA_BASE}").text
-    soup = BeautifulSoup(html, "html.parser")
-    results: List[Tuple[str, str]] = []
-    for a in soup.select("a.catalog-section-card"):
-        href = a.get("href")
-        name_node = a.select_one(".catalog-section-card__name")
-        name = name_node.get_text(strip=True) if name_node else None
-        if href and name:
-            results.append((name, href))
-    # Filter to required set under Добрива та захист grouping
-    desired = {
-        "Гербіциди",
-        "Інсектициди",
-        "Фунгіциди",
-        "Протруйники",
-        "Біопрепарати",
-        "Прилипачі",
-        "Добрива та стимулятори",
-        "Обробка саду",
-        "Цибуля саджанка",
-        "Проти побутових комах",
-        "Родентициди",
-        "Молюскоциди",
-        "Насіння",
-    }
-    # Keep first occurrence only for any duplicate titles
-    unique: Dict[str, str] = {}
-    for t, u in results:
-        if t in desired and t not in unique:
-            unique[t] = u
-    filtered = [(t, unique[t]) for t in unique]
-    print(f"[info] extracted home categories: {len(filtered)}")
-    for t, u in filtered:
-        print(f"[cat] {t} -> {u}")
-    sys.stdout.flush()
-    return filtered
+def build_category_id_map(home_cats: List[Tuple[str, str]]) -> Dict[str, int]:
+    # Assign category IDs deterministically starting at 401 according to home order
+    mapping: Dict[str, int] = {}
+    next_id = 401
+    for title, _ in home_cats:
+        if title not in mapping:
+            mapping[title] = next_id
+            next_id += 1
+    return mapping
 
 
 def add_missing_categories(categories_csv: str) -> Dict[str, int]:
@@ -195,15 +153,14 @@ def add_missing_categories(categories_csv: str) -> Dict[str, int]:
             mapping[name] = cid
 
     home_cats = extract_home_categories()
+    # Build deterministic IDs 401..
+    deterministic_map = build_category_id_map(home_cats)
     rows_to_add: List[Dict[str, str]] = []
-    current_id = next_category_id(existing)
-    seen_titles: set = set()
     for title, url in home_cats:
-        if title in existing_names or title in seen_titles:
+        if title in existing_names:
+            # Preserve existing mapping if already present, else set deterministic
             continue
-        # assign new id and set parentId=400
-        cid = current_id
-        current_id += 1
+        cid = deterministic_map[title]
         mapping[title] = cid
         # primary_image filename convention c<ID>.jpg
         primary_image = f"c{cid}.jpg"
@@ -372,6 +329,8 @@ def main() -> None:
 
     # Prepare product rows to append to list.csv
     rows_to_append: List[List[str]] = []
+    # Track per-category list index to form product_id p{cat}{index}
+    category_index: Dict[int, int] = {}
     next_num = find_last_product_numeric_id(list_csv)
 
     for name, cat_url in home:
@@ -395,6 +354,10 @@ def main() -> None:
         if not product_urls:
             continue
 
+        # initialize category index if missing
+        if cat_id not in category_index:
+            category_index[cat_id] = 0
+
         product_ids = allocate_product_ids(next_num, len(product_urls))
         next_num += len(product_urls)
 
@@ -403,11 +366,13 @@ def main() -> None:
         category_image_saved = os.path.exists(cat_image_path)
 
         saved_rows = 0
-        for idx, p_url in enumerate(product_urls):
+        for p_url in product_urls:
             pdata = extract_product(p_url)
             if not pdata:
                 continue
-            product_id = product_ids[idx]
+            category_index[cat_id] += 1
+            idx_in_cat = category_index[cat_id]
+            product_id = f"p{int(cat_id):03d}{idx_in_cat:03d}"
 
             # Download image to data/images/products/<product_id>.jpg
             img_name = f"{product_id}.jpg"
