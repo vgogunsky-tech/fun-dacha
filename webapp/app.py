@@ -895,6 +895,21 @@ def build_secondary_image_name(category_id: str, product_id: str, seq: int) -> s
     return f"p{cat3}{pid3}_{seq}.jpg"
 
 
+def choose_product_image_filename(row: Dict[str, str]) -> Optional[str]:
+    """Prefer product_id.jpg on disk; fallback to primary_image if present."""
+    # Try product_id-based naming
+    product_id = (row.get("product_id") or "").strip()
+    if product_id:
+        candidate = f"{product_id}.jpg"
+        if os.path.isfile(os.path.join(PRODUCT_IMAGES_DIR, candidate)):
+            return candidate
+    # Fallback to primary_image
+    img = (row.get("primary_image") or "").strip()
+    if img and os.path.isfile(os.path.join(PRODUCT_IMAGES_DIR, img)):
+        return img
+    return None
+
+
 def build_sku(category_id: str, product_id: str) -> str:
     try:
         cat_int = int(float(category_id))
@@ -1646,11 +1661,9 @@ def products_list():
         rows.reverse()
 
     # Build image URLs for preview
-    def _image_url(name: str) -> Optional[str]:
-        name = (name or "").strip()
-        if not name:
-            return None
-        if os.path.isfile(os.path.join(PRODUCT_IMAGES_DIR, name)):
+    def _image_url(row: Dict[str, str]) -> Optional[str]:
+        name = choose_product_image_filename(row)
+        if name:
             return url_for("serve_product_image", filename=name)
         return None
 
@@ -1661,7 +1674,7 @@ def products_list():
     rows_with_images: List[Dict[str, str]] = []
     for r in rows:
         augmented = dict(r)
-        augmented["_image_url"] = _image_url(r.get("primary_image") or "")
+        augmented["_image_url"] = _image_url(r)
         # Precompute integer product id tolerant to values like "123.0"
         try:
             augmented["_pid"] = int(float((r.get("id") or "0").strip() or 0))
@@ -1734,10 +1747,10 @@ def product_by_id(pid: int):
         abort(404)
 
     # Image URL
-    img_name = (target.get("primary_image") or "").strip()
     img_url = None
-    if img_name and os.path.isfile(os.path.join(PRODUCT_IMAGES_DIR, img_name)):
-        img_url = url_for("serve_product_image", filename=img_name)
+    chosen = choose_product_image_filename(target)
+    if chosen:
+        img_url = url_for("serve_product_image", filename=chosen)
 
     cats = load_categories()
     parent_to_children: Dict[str, List[Dict[str, str]]] = {}
@@ -1817,11 +1830,10 @@ def product():
     p = category_products[index]
 
     # Build image URL if available
-    img_name = (p.get("primary_image") or "").strip()
     img_url = None
-    if img_name:
-        if os.path.isfile(os.path.join(PRODUCT_IMAGES_DIR, img_name)):
-            img_url = url_for("serve_product_image", filename=img_name)
+    chosen = choose_product_image_filename(p)
+    if chosen:
+        img_url = url_for("serve_product_image", filename=chosen)
 
     # Categories for selects
     cats = load_categories()
