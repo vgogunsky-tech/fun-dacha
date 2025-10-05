@@ -486,7 +486,19 @@ def main() -> None:
         category_image_saved = os.path.exists(cat_image_path)
 
         saved_rows = 0
+        # Enforce per-category timeout (default 30 minutes)
+        try:
+            per_cat_timeout_secs = int(os.environ.get("CATEGORY_TIMEOUT_SECS", "1800"))
+        except Exception:
+            per_cat_timeout_secs = 1800
+        started_at = time.time()
+        deadline = started_at + max(60, per_cat_timeout_secs)
         for p_url in product_urls:
+            # Stop if category timeout exceeded
+            if time.time() > deadline:
+                print(f"[warn] timeout reached for category '{name}' after {per_cat_timeout_secs}s; stopping further products")
+                sys.stdout.flush()
+                break
             pdata = extract_product(p_url)
             if not pdata:
                 continue
