@@ -455,3 +455,31 @@ category,group,key,ua,ru
 330,Usage,fresh,Свіже споживання,Свежее потребление
 330,Usage,universal,Універсальний,Универсальный
 330,Yield,uniform_ripening,Дружнє дозрівання,Дружное созревание
+400,Color,black,Чорний,Чёрный
+400,Color,brown,Коричневий,Коричневый
+400,Color,orange,Оранжевий,Оранжевый
+400,Color,pink,Рожевий,Розовый
+400,Color,red,Червоний,Красный
+400,Color,yellow,Жовтий,Жёлтый
+400,Cultivation,greenhouse,Теплиця/укриття,Теплица/укрытия
+400,Cultivation,open_field,Відкритий ґрунт,Открытый грунт
+400,Growth,compact,Компактний,Компактный
+400,Resistance,alternaria,Альтернаріоз,Альтернариоз
+400,Resistance,cold_tolerant,Холодостійкий,Холодостойкий
+400,Resistance,disease_resistant,Стійкий до хвороб,Устойчив к болезням
+400,Resistance,drought_tolerant,Посухостійкий,Засухоустойчивый
+400,Resistance,fusarium,Фузаріоз,Фузариоз
+400,Resistance,late_blight,Фітофтороз,Фитофтороз
+400,Resistance,septoria,Септоріоз,Септориоз
+400,Shape,elongated,Подовжений,Удлинённый
+400,Texture,firm,Щільний,Плотный
+400,Texture,juicy,Соковитий,Сочный
+400,Texture,keeping,Лежкий,Лёжкий
+400,Traits,long_storage,Довге зберігання,Долгое хранение
+400,Usage,canning,Консервування,Консервирование
+400,Usage,fresh,Свіже споживання,Свежее потребление
+400,Usage,juice,Сік,Сок
+400,Usage,paste,Паста,Паста
+400,Usage,pickling,Засолювання,Засолка
+400,Usage,universal,Універсальний,Универсальный
+400,Yield,uniform_ripening,Дружнє дозрівання,Дружное созревание
