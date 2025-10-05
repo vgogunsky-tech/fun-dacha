@@ -1553,7 +1553,7 @@ def category(category_id: int):
 
     # Load all products in this category
     rows, fields, _ = read_products_csv()
-    category_products = []
+    category_products: List[Dict[str, str]] = []
     
     for row in rows:
         if str(row.get('category_id', '')) == str(category_id):
@@ -1561,6 +1561,18 @@ def category(category_id: int):
     
     # Sort products by ID
     category_products.sort(key=lambda x: int(float(x.get('id', 0))))
+
+    # Prepare image URLs preferring product_id.jpg
+    enriched: List[Dict[str, str]] = []
+    for r in category_products:
+        item = dict(r)
+        chosen = choose_product_image_filename(r)
+        if chosen:
+            item['_image_url'] = url_for('serve_product_image', filename=chosen)
+        else:
+            item['_image_url'] = None
+        enriched.append(item)
+    category_products = enriched
     
     # Count validated/unvalidated
     validated_count = sum(1 for p in category_products if p.get('validated') == '1')

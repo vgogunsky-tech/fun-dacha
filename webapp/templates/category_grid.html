@@ -431,24 +431,13 @@
                  data-title="{{ (product['Название (укр)'] or product['Название (рус)'] or 'Без назви')|lower }}"
                  data-status="{{ 'validated' if product.get('validated') == '1' else 'unvalidated' }}"
                  data-href="{{ url_for('product', category_id=category_id, index=loop.index0) }}">
-              {% if product.get('primary_image') %}
-                <img src="{{ url_for('serve_product_image', filename=product['primary_image']) }}" 
-                     alt="{{ product['Название (укр)'] or 'Product' }}" 
-                     class="product-image" />
+              {% if product.get('_image_url') %}
+              <img src="{{ product['_image_url'] }}" alt="{{ product['Название (укр)'] or 'Product' }}" class="product-image" />
               {% else %}
-                <div class="product-image" style="display: flex; align-items: center; justify-content: center; color: #999; height: 280px;">
-                  Немає зображення
-                </div>
+              <div class="product-image" style="display: flex; align-items: center; justify-content: center; color: #999; height: 280px;">Немає зображення</div>
               {% endif %}
               <div class="product-info">
-                <div class="product-meta">
-                  {% if product.get('year') %}
-                    Рік: {{ product['year'] }}
-                  {% endif %}
-                  {% if product.get('availability') %}
-                    | Наявність: {{ product['availability'] }}
-                  {% endif %}
-                </div>
+                <div class="product-meta">SKU: {{ product['product_id'] }}{% if product.get('year') %} | Рік: {{ product['year'] }}{% endif %}{% if product.get('availability') %} | Наявність: {{ product['availability'] }}{% endif %}</div>
                 <div class="product-id">ID: {{ product['id'] }}</div>
                 <div class="product-title">
                   {{ product['Название (укр)'] or product['Название (рус)'] or 'Без назви' }}
