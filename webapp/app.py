@@ -1551,13 +1551,21 @@ def category(category_id: int):
             })
     children.sort(key=lambda x: int(x["id"]))
 
-    # Load all products in this category
+    # Load all products for this (sub)category
     rows, fields, _ = read_products_csv()
     category_products: List[Dict[str, str]] = []
-    
-    for row in rows:
-        if str(row.get('category_id', '')) == str(category_id):
-            category_products.append(row)
+
+    # If viewing a subcategory (40x) after data normalization,
+    # products live under category_id=400 with subcategory_id=40x
+    is_subcat_40x = (category_id >= 401 and category_id <= 499)
+    if is_subcat_40x:
+        for row in rows:
+            if (row.get('category_id') or '').strip() == '400' and (row.get('subcategory_id') or '').strip() == str(category_id):
+                category_products.append(row)
+    else:
+        for row in rows:
+            if str(row.get('category_id', '')) == str(category_id):
+                category_products.append(row)
     
     # Sort products by ID
     category_products.sort(key=lambda x: int(float(x.get('id', 0))))
