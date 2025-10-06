@@ -195,6 +195,7 @@ def main() -> int:
     catalog = tags_catalog()
 
     for r in products:
+        # Always aggregate tags under base category (e.g., 400), so 401..409 contribute to 400
         cat = base_category(r.get("category_id", ""))
         if not cat:
             continue

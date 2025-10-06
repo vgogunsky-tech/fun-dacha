@@ -120,6 +120,20 @@ def main() -> int:
             r["tags"] = ""
 
     pats = catalog()
+    # Precompute base category mapping for lookups
+    def base_category(cat: str) -> str:
+        cat = (cat or "").strip()
+        try:
+            n = int(float(cat))
+            s = str(n)
+            if len(s) >= 1:
+                s = s[:-1] + "0"
+            return s
+        except Exception:
+            if cat[-1:].isdigit():
+                return cat[:-1] + "0"
+            return cat
+
     for r in rows:
         texts = [
             (r.get("Описание (укр)") or ""),
@@ -147,6 +161,7 @@ def main() -> int:
                 continue
             seen.add(k)
             uniq.append(k)
+        # Store tags on product; in UI they can also be shown by parent category (base_category)
         r["tags"] = ",".join(uniq)
 
     write_products(LIST_CSV, rows, fields)
