@@ -74,13 +74,9 @@
             <input type="text" name="year" />
           </div>
           <div>
-            <label>Наявність</label>
-            <select name="availability">
-              <option value="">—</option>
-              <option value="0">0 — немає в наявності</option>
-              <option value="1">1 — в наявності</option>
-              <option value="2">2 — під замовлення</option>
-            </select>
+            <label>Наявність (шт.)</label>
+            <input type="number" name="availability" step="1" inputmode="numeric" placeholder="0" />
+            <div class="muted">Ціле число; 0 означає немає в наявності.</div>
           </div>
 
           <div>

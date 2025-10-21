@@ -1181,7 +1181,8 @@ def api_create_products():
             'Описание (рус)': data.get('Описание (рус)', f'Описание товара {next_id}'),
             'price': data.get('Цена', '100.00'),
             'year': data.get('year', '2024'),
-            'availability': data.get('availability', 'В наявності'),
+            # availability integer; also reflect in quantity
+            'availability': str(int(float(data.get('availability') or 0))) if str(data.get('availability') or '').strip() != '' else '0',
             'validated': data.get('validated', '0'),
             'created_from_gallery': 'True',
             'created_at': current_time,
@@ -1189,7 +1190,7 @@ def api_create_products():
             'status': '1',
             'sku': f'GAL-{next_id:04d}',
             'model': f'GAL-{next_id:04d}',
-            'quantity': '100',
+            'quantity': (lambda v: str(int(float(v))) if str(v).strip() != '' else '0')(data.get('availability')),
             'minimum': '1',
             'subtract': '1',
             'stock_status_id': '7',
@@ -1362,7 +1363,7 @@ def api_create_products_bulk():
                     'product_id': sku,
                     'validated': '0',
                     'year': '2024',
-                    'availability': 'В наявності',
+                    'availability': '0',
                     'tags': '',
                     'price': '100.00',
                     'weight': '0.00',
@@ -1955,9 +1956,19 @@ def product_save():
         sub_val = form.get("subcategory_id", "").strip()
         target["subcategory_id"] = sub_val
 
-    # Year and availability
+    # Year and availability (integer), sync quantity to availability
     target["year"] = form.get("year", "").strip()
-    target["availability"] = form.get("availability", "").strip()
+    avail_raw = (form.get("availability") or "").strip()
+    if avail_raw != "":
+        try:
+            avail_val = int(float(avail_raw))
+        except Exception:
+            avail_val = 0
+        target["availability"] = str(avail_val)
+        target["quantity"] = str(avail_val)
+    else:
+        target["availability"] = ""
+        target["quantity"] = "0"
 
     changed_paths: List[str] = []
     # Handle primary image remove
@@ -2155,7 +2166,9 @@ def product_create():
         "product_id": sku,
         "validated": "0",
         "year": (form.get("year") or "").strip(),
-        "availability": (form.get("availability") or "").strip(),
+        # availability and quantity as integer text
+        "availability": (lambda v: str(int(float(v))) if (v or "").strip() != "" else "")(form.get("availability")),
+        "quantity": (lambda v: str(int(float(v))) if (v or "").strip() != "" else "0")(form.get("availability")),
     }
 
     rows.append(new_row)

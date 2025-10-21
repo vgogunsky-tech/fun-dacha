@@ -201,7 +201,8 @@ def upsert_product(cur, prod, table_cols_cache: Dict[str, List[str]]) -> int:
     seo = (prod.get("seo") or "").strip()
     primary_image = (prod.get("primary_image") or "").strip()
     base_price = parse_float(prod.get("price"))
-    quantity = parse_int(prod.get("quantity"), default=0)
+    # Quantity now reflects CSV availability when quantity is missing
+    quantity = parse_int(prod.get("quantity") or prod.get("availability"), default=0)
     minimum = parse_int(prod.get("minimum"), default=1)
     subtract = parse_int(prod.get("subtract"), default=1)
     stock_status_id = parse_int(prod.get("stock_status_id"), default=7)
