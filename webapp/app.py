@@ -1556,16 +1556,34 @@ def category(category_id: int):
     rows, fields, _ = read_products_csv()
     category_products: List[Dict[str, str]] = []
 
-    # If viewing a subcategory (40x) after data normalization,
-    # products live under category_id=400 with subcategory_id=40x
-    is_subcat_40x = (category_id >= 401 and category_id <= 499)
-    if is_subcat_40x:
+    # Determine if current category is a subcategory (has parentId)
+    parent_id_norm: Optional[str] = None
+    try:
+        current_cat = next((c for c in categories if (c.get("id") or "").strip() == str(category_id)), None)
+    except Exception:
+        current_cat = None
+    if current_cat:
+        pid_raw = (current_cat.get("parentId") or "").strip()
+        if pid_raw:
+            try:
+                parent_id_norm = str(int(float(pid_raw)))
+            except Exception:
+                parent_id_norm = pid_raw
+
+    is_subcategory = bool(parent_id_norm)
+
+    # If viewing a subcategory, products are stored under parent category with subcategory_id=current id.
+    # Also include direct matches where category_id==current id for backward compatibility.
+    if is_subcategory:
+        parent_id = parent_id_norm or ""
         for row in rows:
-            if (row.get('category_id') or '').strip() == '400' and (row.get('subcategory_id') or '').strip() == str(category_id):
+            cat = (row.get('category_id') or '').strip()
+            sub = (row.get('subcategory_id') or '').strip()
+            if (parent_id and cat == parent_id and sub == str(category_id)) or cat == str(category_id):
                 category_products.append(row)
     else:
         for row in rows:
-            if str(row.get('category_id', '')) == str(category_id):
+            if (row.get('category_id') or '').strip() == str(category_id):
                 category_products.append(row)
     
     # Sort products by ID
@@ -1831,14 +1849,37 @@ def product():
     # Get all products for the selected category, supporting 40x subcategories
     rows, fields, _ = read_products_csv()
     category_products: List[Dict[str, str]] = []
-    is_subcat_40x = (category_id >= 401 and category_id <= 499)
-    if is_subcat_40x:
+
+    # Determine if selected category is a subcategory via categories CSV
+    parent_id_norm: Optional[str] = None
+    try:
+        cats_lookup = load_categories()
+    except Exception:
+        cats_lookup = []
+    try:
+        current_cat = next((c for c in cats_lookup if (c.get("id") or "").strip() == str(category_id)), None)
+    except Exception:
+        current_cat = None
+    if current_cat:
+        pid_raw = (current_cat.get("parentId") or "").strip()
+        if pid_raw:
+            try:
+                parent_id_norm = str(int(float(pid_raw)))
+            except Exception:
+                parent_id_norm = pid_raw
+
+    is_subcategory = bool(parent_id_norm)
+
+    if is_subcategory:
+        parent_id = parent_id_norm or ""
         for row in rows:
-            if (row.get('category_id') or '').strip() == '400' and (row.get('subcategory_id') or '').strip() == str(category_id):
+            cat = (row.get('category_id') or '').strip()
+            sub = (row.get('subcategory_id') or '').strip()
+            if (parent_id and cat == parent_id and sub == str(category_id)) or cat == str(category_id):
                 category_products.append(row)
     else:
         for row in rows:
-            if str(row.get('category_id', '')) == str(category_id):
+            if (row.get('category_id') or '').strip() == str(category_id):
                 category_products.append(row)
     
     # Sort products by ID
