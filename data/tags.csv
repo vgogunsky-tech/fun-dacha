@@ -456,14 +456,11 @@ category,group,key,ua,ru
 330,Usage,universal,Універсальний,Универсальный
 330,Yield,uniform_ripening,Дружнє дозрівання,Дружное созревание
 400,Color,black,Чорний,Чёрный
-400,Color,brown,Коричневий,Коричневый
 400,Color,orange,Оранжевий,Оранжевый
-400,Color,pink,Рожевий,Розовый
 400,Color,red,Червоний,Красный
 400,Color,yellow,Жовтий,Жёлтый
 400,Cultivation,greenhouse,Теплиця/укриття,Теплица/укрытия
 400,Cultivation,open_field,Відкритий ґрунт,Открытый грунт
-400,Growth,compact,Компактний,Компактный
 400,Resistance,alternaria,Альтернаріоз,Альтернариоз
 400,Resistance,cold_tolerant,Холодостійкий,Холодостойкий
 400,Resistance,disease_resistant,Стійкий до хвороб,Устойчив к болезням
@@ -477,8 +474,15 @@ category,group,key,ua,ru
 400,Texture,keeping,Лежкий,Лёжкий
 400,Traits,long_storage,Довге зберігання,Долгое хранение
 400,Usage,canning,Консервування,Консервирование
-400,Usage,fresh,Свіже споживання,Свежее потребление
 400,Usage,juice,Сік,Сок
 400,Usage,paste,Паста,Паста
-400,Usage,pickling,Засолювання,Засолка
 400,Usage,universal,Універсальний,Универсальный
+500,Color,black,Чорний,Чёрный
+500,Color,brown,Коричневий,Коричневый
+500,Color,orange,Оранжевий,Оранжевый
+500,Color,pink,Рожевий,Розовый
+500,Color,yellow,Жовтий,Жёлтый
+500,Growth,compact,Компактний,Компактный
+500,Shape,elongated,Подовжений,Удлинённый
+500,Texture,firm,Щільний,Плотный
+500,Usage,salad,Салатний,Салатный
