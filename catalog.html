@@ -382,6 +382,11 @@
 
     const popularColumns = ["id", "name_uk", "availability", "year", "weight", "weight_class", "price"];
 
+    const COLUMN_ALIASES = {
+      name: "name_uk",
+      description: "description_uk",
+    };
+
     const COLUMN_LABELS = {
       id: "ID",
       name_uk: "Назва",
@@ -419,7 +424,9 @@
       date_available: "Дата доступності",
     };
 
-    const getColumnLabel = (key) => COLUMN_LABELS[key] || key;
+    const getCanonicalColumnKey = (key) => COLUMN_ALIASES[key] || key;
+    const isPopularColumn = (key) => popularColumns.includes(getCanonicalColumnKey(key));
+    const getColumnLabel = (key) => COLUMN_LABELS[key] || COLUMN_LABELS[getCanonicalColumnKey(key)] || key;
 
     const TABLE_COLUMNS = ["id", "name_uk", "availability", "year", "weight", "weight_class", "price"].map(
       (key) => ({ key, label: getColumnLabel(key) })
@@ -589,13 +596,13 @@
         const option = document.createElement("option");
         option.value = header;
         option.textContent = getColumnLabel(header);
-        option.selected = popularColumns.includes(header);
+        option.selected = isPopularColumn(header);
         select.appendChild(option);
       });
 
       document.getElementById("preset-columns").addEventListener("click", () => {
         [...select.options].forEach((opt) => {
-          opt.selected = popularColumns.includes(opt.value);
+          opt.selected = isPopularColumn(opt.value);
         });
       });
 
