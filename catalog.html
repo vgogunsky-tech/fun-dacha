@@ -73,6 +73,52 @@
       gap: 1rem;
     }
 
+    .category-summary {
+      display: none;
+      background: var(--card);
+      border-radius: 1rem;
+      padding: 1.5rem;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+      animation: fadeIn 0.3s ease;
+    }
+
+    .category-summary.active {
+      display: block;
+    }
+
+    .summary-note {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    .summary-grid {
+      display: grid;
+      gap: 1rem;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      margin-top: 1rem;
+    }
+
+    .summary-card {
+      border: 1px dashed rgba(15, 23, 42, 0.12);
+      border-radius: 0.85rem;
+      padding: 0.85rem 1rem;
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.08), rgba(56, 189, 248, 0.08));
+    }
+
+    .summary-card strong {
+      display: block;
+      font-size: 1.6rem;
+      line-height: 1.2;
+      margin-bottom: 0.15rem;
+    }
+
+    .summary-card span {
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
     .toolbar-grid {
       display: grid;
       gap: 1rem;
@@ -140,6 +186,10 @@
       gap: 0.75rem;
     }
 
+    .quick-nav-wrapper.hidden {
+      display: none;
+    }
+
     .quick-nav {
       display: flex;
       flex-wrap: wrap;
@@ -157,8 +207,36 @@
       text-align: left;
       flex: 1 1 clamp(140px, 22%, 220px);
       min-width: 140px;
+      padding-right: 3rem;
       line-height: 1.3;
       box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+    }
+
+    .quick-nav button .nav-label {
+      display: block;
+      font-weight: 600;
+    }
+
+    .quick-nav button .nav-count {
+      position: absolute;
+      right: 0.9rem;
+      top: 50%;
+      transform: translateY(-50%);
+      background: var(--accent-soft);
+      color: var(--accent);
+      border-radius: 999px;
+      padding: 0.1rem 0.7rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    .quick-nav button.is-empty {
+      opacity: 0.65;
+    }
+
+    .quick-nav button.is-empty .nav-count {
+      background: rgba(148, 163, 184, 0.25);
+      color: rgba(51, 65, 85, 0.95);
     }
 
     .category-section {
@@ -175,6 +253,30 @@
     .category-header p {
       margin: 0;
       color: var(--muted);
+    }
+
+    .category-title {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+
+    .category-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+    }
+
+    .category-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      padding: 0.2rem 0.65rem;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-size: 0.85rem;
+      font-weight: 600;
     }
 
     .subcategory {
@@ -312,6 +414,17 @@
       }
     }
 
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(6px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
     @media (max-width: 720px) {
       header {
         position: static;
@@ -323,6 +436,15 @@
 
       .toolbar-actions {
         flex-direction: column;
+      }
+
+      .summary-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .category-meta {
+        flex-direction: column;
+        align-items: flex-start;
       }
     }
   </style>
@@ -356,6 +478,8 @@
         </div>
       </div>
     </section>
+
+    <section id="category-summary" class="category-summary" aria-live="polite"></section>
 
     <section class="quick-nav-wrapper">
       <div class="section-title">
@@ -462,6 +586,7 @@
 
         populateColumnSelect();
         renderQuickNav();
+        renderCategorySummary();
         renderCatalog();
         showStatus(
           `Завантажено ${state.categories.length} категорій та ${state.products.length} товарів.`
@@ -589,6 +714,17 @@
       return byCategory;
     }
 
+    function getCategoryProductCount(categoryId) {
+      const key = (categoryId || "").trim();
+      const grouped = state.groupedProducts.get(key);
+      if (!grouped) return 0;
+      let total = grouped.noSubcategory.length;
+      grouped.subcategories.forEach((products) => {
+        total += products.length;
+      });
+      return total;
+    }
+
     function populateColumnSelect() {
       const select = document.getElementById("column-select");
       select.innerHTML = "";
@@ -628,19 +764,77 @@
       });
     }
 
+    function renderCategorySummary() {
+      const summary = document.getElementById("category-summary");
+      if (!summary) return;
+      const totalCategories = state.categoryTree.length;
+      const totalSubcategories = state.categories.filter(
+        (cat) => (cat.parent_id || cat.parentId || "").trim()
+      ).length;
+      const categoriesWithProducts = state.categoryTree.filter((cat) =>
+        getCategoryProductCount(cat.id)
+      ).length;
+      const totalProducts = state.products.length;
+
+      if (!totalCategories && !totalProducts) {
+        summary.innerHTML = '<p class="summary-note">Категорії відсутні.</p>';
+        summary.classList.remove("active");
+        return;
+      }
+
+      const message = totalCategories
+        ? `Після останнього оновлення залишилося ${totalCategories} основних категорій.`
+        : "Категорії відсутні, але товари залишилися.";
+      const cards = [
+        { label: "Категорій зараз", value: totalCategories },
+        { label: "Підкатегорій", value: totalSubcategories },
+        { label: "Категорій з товарами", value: categoriesWithProducts },
+        { label: "Усього товарів", value: totalProducts },
+      ];
+
+      summary.innerHTML = `
+        <p class="summary-note">${message}</p>
+        <div class="summary-grid">
+          ${cards
+            .map(
+              (card) => `
+            <div class="summary-card" role="group" aria-label="${card.label}">
+              <strong>${card.value}</strong>
+              <span>${card.label}</span>
+            </div>`
+            )
+            .join("")}
+        </div>
+      `;
+      summary.classList.add("active");
+    }
+
     function renderQuickNav() {
       const nav = document.getElementById("category-nav");
+      const wrapper = document.querySelector(".quick-nav-wrapper");
       nav.innerHTML = "";
 
       if (!state.categoryTree.length) {
         nav.textContent = "Категорії не знайдені";
+        wrapper?.classList.remove("hidden");
         return;
       }
+
+      wrapper?.classList.remove("hidden");
 
       state.categoryTree.forEach((cat) => {
         const btn = document.createElement("button");
         btn.type = "button";
-        btn.textContent = cat.name || `Категорія ${cat.id}`;
+        const productCount = getCategoryProductCount(cat.id);
+        btn.innerHTML = `
+          <span class="nav-label">${cat.name || `Категорія ${cat.id}`}</span>
+          <span class="nav-count">${productCount}</span>
+        `;
+        btn.classList.toggle("is-empty", !productCount);
+        btn.setAttribute(
+          "aria-label",
+          `${cat.name || `Категорія ${cat.id}`}. Товарів: ${productCount}`
+        );
         btn.addEventListener("click", () => {
           const section = document.getElementById(`category-${cat.id}`);
           section?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -654,6 +848,12 @@
       container.innerHTML = "";
 
       state.categoryTree.forEach((category) => {
+        const catId = (category.id || "").trim();
+        const grouped = state.groupedProducts.get(catId);
+        const productCount = getCategoryProductCount(catId);
+        const activeSubcategories = grouped
+          ? Array.from(grouped.subcategories.values()).filter((products) => products.length).length
+          : 0;
         const section = document.createElement("section");
         section.id = `category-${category.id}`;
         section.className = "category-section";
@@ -661,12 +861,21 @@
         const header = document.createElement("div");
         header.className = "category-header";
         header.innerHTML = `
-          <h2>${category.name || "Категорія без назви"}</h2>
+          <div class="category-title">
+            <h2>${category.name || "Категорія без назви"}</h2>
+            <div class="category-meta">
+              <span class="category-pill" aria-label="Кількість товарів у категорії">${productCount} товарів</span>
+              ${
+                activeSubcategories
+                  ? `<span class="category-pill" aria-label="Кількість підкатегорій">${activeSubcategories} підкатегорій</span>`
+                  : ""
+              }
+            </div>
+          </div>
           ${category.description ? `<p>${category.description}</p>` : ""}
         `;
 
         const content = document.createElement("div");
-        const grouped = state.groupedProducts.get((category.id || "").trim());
 
         if (grouped) {
           const renderedSubcategories = new Set();
