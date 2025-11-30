@@ -508,6 +508,14 @@
     const popularColumns = ["id", "name_uk", "availability", "year", "weight", "weight_class", "price"];
 
     const HIDDEN_CATEGORY_IDS = ["260", "300", "310", "320", "404"];
+    const numberFormatter = new Intl.NumberFormat("uk-UA");
+    const currencyFormatter = new Intl.NumberFormat("uk-UA", {
+      style: "currency",
+      currency: "UAH",
+      maximumFractionDigits: 0,
+    });
+    const formatCount = (value) => numberFormatter.format(value || 0);
+    const formatCurrencyUAH = (value) => currencyFormatter.format(Math.round(value || 0));
 
     const COLUMN_ALIASES = {
       name: "name_uk",
@@ -741,6 +749,37 @@
         .filter((node) => !isHiddenCategory(node.id));
     }
 
+    function parseNumeric(value) {
+      if (value === null || value === undefined) return 0;
+      const normalized = String(value).replace(/\s+/g, "").replace(",", ".");
+      const parsed = Number(normalized);
+      return Number.isFinite(parsed) ? parsed : 0;
+    }
+
+    function getProductStats() {
+      const uniqueProducts = new Set();
+      let inventoryValue = 0;
+      let totalUnits = 0;
+
+      state.products.forEach((product) => {
+        const uniqueKey = (product.product_id || product.id || "").trim();
+        if (uniqueKey) {
+          uniqueProducts.add(uniqueKey);
+        }
+        const availability = parseNumeric(product.availability);
+        const price = parseNumeric(product.price);
+        totalUnits += availability;
+        inventoryValue += price * availability;
+      });
+
+      return {
+        uniqueProducts: uniqueProducts.size,
+        totalPositions: state.products.length,
+        totalUnits,
+        inventoryValue,
+      };
+    }
+
     function populateColumnSelect() {
       const select = document.getElementById("column-select");
       select.innerHTML = "";
@@ -798,11 +837,15 @@
         return;
       }
 
+      const stats = getProductStats();
       const cards = [
-        { label: "Категорій зараз", value: totalCategories },
-        { label: "Підкатегорій", value: totalSubcategories },
-        { label: "Категорій з товарами", value: categoriesWithProducts },
-        { label: "Усього товарів", value: totalProducts },
+        { label: "Категорій зараз", value: formatCount(totalCategories) },
+        { label: "Підкатегорій", value: formatCount(totalSubcategories) },
+        { label: "Категорій з товарами", value: formatCount(categoriesWithProducts) },
+        { label: "Позицій у каталозі", value: formatCount(stats.totalPositions) },
+        { label: "Унікальних товарів", value: formatCount(stats.uniqueProducts) },
+        { label: "Усього одиниць", value: formatCount(stats.totalUnits) },
+        { label: "Запаси (грн)", value: formatCurrencyUAH(stats.inventoryValue) },
       ];
 
       summary.innerHTML = `
