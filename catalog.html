@@ -507,6 +507,8 @@
 
     const popularColumns = ["id", "name_uk", "availability", "year", "weight", "weight_class", "price"];
 
+    const HIDDEN_CATEGORY_IDS = ["260", "300", "310", "320", "404"];
+
     const COLUMN_ALIASES = {
       name: "name_uk",
       description: "description_uk",
@@ -578,7 +580,7 @@
 
         state.categories = toObjects(categoryParsed).filter((row) => row.id);
         const tree = buildCategoryTree(state.categories);
-        state.categoryTree = tree.roots;
+        state.categoryTree = filterHiddenCategories(tree.roots);
         state.categoryMap = tree.map;
 
         state.products = toObjects(productParsed).filter((row) => row.id);
@@ -724,6 +726,19 @@
         total += products.length;
       });
       return total;
+    }
+
+    function isHiddenCategory(id) {
+      return HIDDEN_CATEGORY_IDS.includes((id || "").trim());
+    }
+
+    function filterHiddenCategories(nodes = []) {
+      return nodes
+        .map((node) => {
+          node.children = filterHiddenCategories(node.children || []);
+          return node;
+        })
+        .filter((node) => !isHiddenCategory(node.id));
     }
 
     function populateColumnSelect() {
