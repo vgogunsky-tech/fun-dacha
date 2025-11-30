@@ -708,9 +708,6 @@
         th.textContent = column.label;
         headerRow.appendChild(th);
       });
-      const tagsHeader = document.createElement("th");
-      tagsHeader.textContent = getColumnLabel("tags");
-      headerRow.appendChild(tagsHeader);
       thead.appendChild(headerRow);
       table.appendChild(thead);
 
@@ -735,25 +732,6 @@
           row.appendChild(cell);
         });
 
-        const tagsCell = document.createElement("td");
-        const tags = (product.tags || "")
-          .split(",")
-          .map((tag) => tag.trim())
-          .filter(Boolean);
-        if (!tags.length) {
-          tagsCell.textContent = "—";
-        } else {
-          const container = document.createElement("div");
-          container.className = "table-tags";
-          tags.forEach((tag) => {
-            const badge = document.createElement("span");
-            badge.className = "tag";
-            badge.textContent = tag;
-            container.appendChild(badge);
-          });
-          tagsCell.appendChild(container);
-        }
-        row.appendChild(tagsCell);
         tbody.appendChild(row);
       });
 
