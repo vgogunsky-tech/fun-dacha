@@ -185,62 +185,58 @@
       color: var(--muted);
     }
 
-    .product-grid {
-      display: grid;
-      gap: 1rem;
-      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-    }
-
-    .product-card {
+    .table-wrapper {
       border: 1px solid var(--border);
-      border-radius: 1rem;
-      padding: 1rem;
-      background: linear-gradient(180deg, #fff, #f8fafc);
-      min-height: 210px;
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
+      border-radius: 0.75rem;
+      overflow-x: auto;
+      background: #fff;
+      box-shadow: inset 0 1px 1px rgba(15, 23, 42, 0.05);
     }
 
-    .product-card h4 {
-      margin: 0;
-      font-size: 1.05rem;
-    }
-
-    .product-card .subtitle {
-      margin: 0;
-      color: var(--muted);
+    .product-table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 640px;
       font-size: 0.92rem;
     }
 
-    .product-meta {
-      list-style: none;
-      margin: 0;
-      padding: 0;
-      display: grid;
-      gap: 0.3rem;
-      font-size: 0.9rem;
-      color: var(--muted);
+    .product-table th,
+    .product-table td {
+      padding: 0.7rem 0.9rem;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
     }
 
-    .product-meta span {
-      font-weight: 600;
-      color: var(--fg);
-      margin-right: 0.35rem;
+    .product-table th {
+      background: #ecfeff;
+      font-size: 0.85rem;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+      color: #0f172a;
     }
 
-    .tags {
+    .product-table tbody tr:nth-child(even) {
+      background: #f8fafc;
+    }
+
+    .product-table tbody tr:hover {
+      background: #eef2ff;
+    }
+
+    .table-tags {
       display: flex;
       flex-wrap: wrap;
-      gap: 0.35rem;
-      margin-top: 0.25rem;
+      gap: 0.3rem;
     }
 
     .tag {
+      display: inline-flex;
+      align-items: center;
       background: var(--accent-soft);
       color: var(--accent);
       border-radius: 999px;
-      padding: 0.15rem 0.6rem;
+      padding: 0.12rem 0.6rem;
       font-size: 0.75rem;
       font-weight: 600;
     }
@@ -365,14 +361,21 @@
     const popularColumns = [
       "id",
       "Название (укр)",
-      "Название (рус)",
       "Описание (укр)",
-      "price",
       "availability",
-      "tags",
-      "primary_image",
-      "category_id",
-      "subcategory_id",
+      "year",
+      "weight",
+      "price",
+    ];
+
+    const TABLE_COLUMNS = [
+      { key: "id", label: "ID" },
+      { key: "Название (укр)", label: "Назва (укр)" },
+      { key: "Описание (укр)", label: "Опис (укр)" },
+      { key: "availability", label: "Наявність" },
+      { key: "year", label: "Рік" },
+      { key: "weight", label: "Вага" },
+      { key: "price", label: "Ціна" },
     ];
 
     document.addEventListener("DOMContentLoaded", init);
@@ -614,7 +617,9 @@
               <h3>${child.name}</h3>
               ${child.description ? `<p>${child.description}</p>` : ""}
             `;
-            block.appendChild(buildProductGrid(grouped.subcategories.get((child.id || "").trim())));
+            block.appendChild(
+              buildProductTable(grouped.subcategories.get((child.id || "").trim()))
+            );
             content.appendChild(block);
           });
 
@@ -624,7 +629,7 @@
             fallbackBlock.className = "subcategory";
             const fallbackName = state.categoryMap.get(subId)?.name || `Підкатегорія ${subId}`;
             fallbackBlock.innerHTML = `<h3>${fallbackName}</h3>`;
-            fallbackBlock.appendChild(buildProductGrid(products));
+            fallbackBlock.appendChild(buildProductTable(products));
             content.appendChild(fallbackBlock);
           });
 
@@ -632,7 +637,7 @@
             const directBlock = document.createElement("article");
             directBlock.className = "subcategory";
             directBlock.innerHTML = "<h3>Продукти без підкатегорії</h3>";
-            directBlock.appendChild(buildProductGrid(grouped.noSubcategory));
+            directBlock.appendChild(buildProductTable(grouped.noSubcategory));
             content.appendChild(directBlock);
           }
         } else {
@@ -648,72 +653,108 @@
       });
     }
 
-    function buildProductGrid(products = []) {
-      const grid = document.createElement("div");
-      grid.className = "product-grid";
+    function buildProductTable(products = []) {
+      const wrapper = document.createElement("div");
+      wrapper.className = "table-wrapper";
 
       if (!products.length) {
         const empty = document.createElement("p");
         empty.className = "empty-message";
         empty.textContent = "Немає продуктів.";
-        grid.appendChild(empty);
-        return grid;
+        wrapper.appendChild(empty);
+        return wrapper;
       }
 
-      products.forEach((product) => {
-        grid.appendChild(createProductCard(product));
+      const table = document.createElement("table");
+      table.className = "product-table";
+
+      const thead = document.createElement("thead");
+      const headerRow = document.createElement("tr");
+      TABLE_COLUMNS.forEach((column) => {
+        const th = document.createElement("th");
+        th.textContent = column.label;
+        headerRow.appendChild(th);
       });
-      return grid;
+      const tagsHeader = document.createElement("th");
+      tagsHeader.textContent = "Теги";
+      headerRow.appendChild(tagsHeader);
+      thead.appendChild(headerRow);
+      table.appendChild(thead);
+
+      const tbody = document.createElement("tbody");
+      products.forEach((product) => {
+        const row = document.createElement("tr");
+        TABLE_COLUMNS.forEach((column) => {
+          const cell = document.createElement("td");
+          const rawValue =
+            product[column.key] ??
+            (column.key === "Название (укр)" ? product["Название (рус)"] : "");
+          cell.textContent = formatValue(rawValue);
+          row.appendChild(cell);
+        });
+
+        const tagsCell = document.createElement("td");
+        const tags = (product.tags || "")
+          .split(",")
+          .map((tag) => tag.trim())
+          .filter(Boolean);
+        if (!tags.length) {
+          tagsCell.textContent = "—";
+        } else {
+          const container = document.createElement("div");
+          container.className = "table-tags";
+          tags.forEach((tag) => {
+            const badge = document.createElement("span");
+            badge.className = "tag";
+            badge.textContent = tag;
+            container.appendChild(badge);
+          });
+          tagsCell.appendChild(container);
+        }
+        row.appendChild(tagsCell);
+        tbody.appendChild(row);
+      });
+
+      table.appendChild(tbody);
+      wrapper.appendChild(table);
+      return wrapper;
     }
 
-    function createProductCard(product) {
-      const card = document.createElement("article");
-      card.className = "product-card";
-      const nameUk = product["Название (укр)"] || product["Название (рус)"] || "Без назви";
-      const nameRu = product["Название (рус)"];
-      const description = product["Описание (укр)"] || product["Описание (рус)"] || "";
-      const price = product.price || "—";
-      const availability = product.availability || "—";
-      const tags = (product.tags || "")
-        .split(",")
-        .map((tag) => tag.trim())
-        .filter(Boolean);
-
-      const descriptionSafe = description.replace(/\n+/g, " ").trim();
-
-      card.innerHTML = `
-        <div>
-          <h4>${nameUk}</h4>
-          ${nameRu ? `<p class="subtitle">${nameRu}</p>` : ""}
-          ${descriptionSafe ? `<p>${descriptionSafe}</p>` : ""}
-        </div>
-        <ul class="product-meta">
-          <li><span>Ціна:</span>${price}</li>
-          <li><span>Наявність:</span>${availability}</li>
-          ${product.primary_image ? `<li><span>Зображення:</span>${product.primary_image}</li>` : ""}
-          ${product.model ? `<li><span>Модель:</span>${product.model}</li>` : ""}
-        </ul>
-        ${tags.length ? `<div class="tags">${tags
-          .map((tag) => `<span class="tag">${tag}</span>`)
-          .join("")}</div>` : ""}
-      `;
-
-      return card;
+    function formatValue(value) {
+      if (value === null || value === undefined) return "—";
+      const cleaned = String(value).replace(/\s+/g, " ").trim();
+      return cleaned || "—";
     }
 
     function exportCSV(selectedColumns) {
-      const rows = [];
-      rows.push(["Категорія", "Підкатегорія", ...selectedColumns]);
+      const header = ["Категорія", "Підкатегорія", ...selectedColumns];
+      const rows = [header];
+      const makeBlankRow = () => new Array(header.length).fill("");
+
+      const addCategoryHeader = (name) => {
+        const row = makeBlankRow();
+        row[0] = `Категорія: ${name}`;
+        rows.push(row);
+      };
+
+      const addSubcategoryHeader = (name) => {
+        const row = makeBlankRow();
+        row[1] = `Підкатегорія: ${name}`;
+        rows.push(row);
+      };
 
       state.categoryTree.forEach((category) => {
         const catId = (category.id || "").trim();
         const grouped = state.groupedProducts.get(catId);
         if (!grouped) return;
 
+        const categoryLabel = category.name || catId || "Категорія без назви";
+        addCategoryHeader(categoryLabel);
+
         const processProducts = (products, subLabel = "") => {
           products.forEach((product) => {
             const row = [
-              category.name || catId,
+              categoryLabel,
               subLabel,
               ...selectedColumns.map((col) => sanitizeValue(product[col])),
             ];
@@ -721,21 +762,31 @@
           });
         };
 
+        const handledSubcategories = new Set();
+
         (category.children || []).forEach((child) => {
           const subId = (child.id || "").trim();
+          handledSubcategories.add(subId);
           const products = grouped.subcategories.get(subId) || [];
-          processProducts(products, child.name || subId);
+          if (!products.length) return;
+          const subLabel = child.name || subId;
+          addSubcategoryHeader(subLabel);
+          processProducts(products, subLabel);
         });
 
         grouped.subcategories.forEach((products, subId) => {
-          if ((category.children || []).some((c) => (c.id || "").trim() === subId)) return;
+          if (handledSubcategories.has(subId) || !products.length) return;
           const fallbackName = state.categoryMap.get(subId)?.name || subId;
+          addSubcategoryHeader(fallbackName);
           processProducts(products, fallbackName);
         });
 
         if (grouped.noSubcategory.length) {
+          addSubcategoryHeader("Без підкатегорії");
           processProducts(grouped.noSubcategory, "-");
         }
+
+        rows.push(makeBlankRow());
       });
 
       const csvContent = rows.map((row) => row.map(escapeCSV).join(",")).join("\n");
