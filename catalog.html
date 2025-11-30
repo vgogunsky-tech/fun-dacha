@@ -758,21 +758,12 @@
     }
 
     function exportCSV(selectedColumns) {
-      const header = ["Категорія", "Підкатегорія", ...selectedColumns];
+      const header = [
+        "Категорія",
+        "Підкатегорія",
+        ...selectedColumns.map((col) => getColumnLabel(col)),
+      ];
       const rows = [header];
-      const makeBlankRow = () => new Array(header.length).fill("");
-
-      const addCategoryHeader = (name) => {
-        const row = makeBlankRow();
-        row[0] = `Категорія: ${name}`;
-        rows.push(row);
-      };
-
-      const addSubcategoryHeader = (name) => {
-        const row = makeBlankRow();
-        row[1] = `Підкатегорія: ${name}`;
-        rows.push(row);
-      };
 
       state.categoryTree.forEach((category) => {
         const catId = (category.id || "").trim();
@@ -780,7 +771,6 @@
         if (!grouped) return;
 
         const categoryLabel = category.name || catId || "Категорія без назви";
-        addCategoryHeader(categoryLabel);
 
         const processProducts = (products, subLabel = "") => {
           products.forEach((product) => {
@@ -801,23 +791,18 @@
           const products = grouped.subcategories.get(subId) || [];
           if (!products.length) return;
           const subLabel = child.name || subId;
-          addSubcategoryHeader(subLabel);
           processProducts(products, subLabel);
         });
 
         grouped.subcategories.forEach((products, subId) => {
           if (handledSubcategories.has(subId) || !products.length) return;
           const fallbackName = state.categoryMap.get(subId)?.name || subId;
-          addSubcategoryHeader(fallbackName);
           processProducts(products, fallbackName);
         });
 
         if (grouped.noSubcategory.length) {
-          addSubcategoryHeader("Без підкатегорії");
-          processProducts(grouped.noSubcategory, "-");
+          processProducts(grouped.noSubcategory, "");
         }
-
-        rows.push(makeBlankRow());
       });
 
       const csvContent = rows.map((row) => row.map(escapeCSV).join(",")).join("\n");
