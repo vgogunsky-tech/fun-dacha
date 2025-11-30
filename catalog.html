@@ -207,6 +207,7 @@
       text-align: left;
       flex: 1 1 clamp(140px, 22%, 220px);
       min-width: 140px;
+      position: relative;
       padding-right: 3rem;
       line-height: 1.3;
       box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
@@ -277,6 +278,48 @@
       color: var(--accent);
       font-size: 0.85rem;
       font-weight: 600;
+    }
+
+    .critical-summary {
+      margin-top: 1.2rem;
+      padding: 1rem;
+      border-radius: 0.9rem;
+      border: 1px solid rgba(15, 23, 42, 0.12);
+      background: rgba(16, 185, 129, 0.08);
+    }
+
+    .critical-summary-title {
+      margin: 0 0 0.5rem;
+      font-weight: 600;
+      color: #065f46;
+    }
+
+    .critical-summary-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: grid;
+      gap: 0.4rem;
+    }
+
+    .critical-summary-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.95rem;
+    }
+
+    .critical-name {
+      font-weight: 600;
+    }
+
+    .critical-count {
+      font-weight: 600;
+      color: var(--accent);
+    }
+
+    .critical-missing .critical-count {
+      color: #dc2626;
     }
 
     .subcategory {
@@ -505,6 +548,7 @@
     };
 
     const popularColumns = ["id", "name_uk", "availability", "year", "weight", "weight_class", "price"];
+    const CRITICAL_CATEGORY_IDS = ["408"];
 
     const COLUMN_ALIASES = {
       name: "name_uk",
@@ -725,6 +769,22 @@
       return total;
     }
 
+    function getProductCountById(categoryId) {
+      const key = (categoryId || "").trim();
+      if (!key) return 0;
+      const direct = getCategoryProductCount(key);
+      if (direct) return direct;
+
+      const meta = state.categoryMap.get(key);
+      if (!meta) return 0;
+      const parentId = (meta.parentId || meta.parent_id || "").trim();
+      if (!parentId) return direct;
+      const parentGroup = state.groupedProducts.get(parentId);
+      if (!parentGroup) return 0;
+      const products = parentGroup.subcategories.get(key);
+      return products ? products.length : 0;
+    }
+
     function populateColumnSelect() {
       const select = document.getElementById("column-select");
       select.innerHTML = "";
@@ -792,6 +852,34 @@
         { label: "Усього товарів", value: totalProducts },
       ];
 
+      const criticalDetails = CRITICAL_CATEGORY_IDS.map((id) => {
+        const meta = state.categoryMap.get(id);
+        return {
+          id,
+          name: meta?.name || meta?.name_uk || `Категорія ${id}`,
+          count: getProductCountById(id),
+          missing: !meta,
+        };
+      });
+
+      const criticalSummaryMarkup = criticalDetails.length
+        ? `
+        <div class="critical-summary" role="group" aria-label="Ключові категорії">
+          <p class="critical-summary-title">Ключові категорії</p>
+          <ul class="critical-summary-list">
+            ${criticalDetails
+              .map(
+                (item) => `
+              <li class="critical-summary-item ${item.missing ? "critical-missing" : ""}">
+                <span class="critical-name">${item.name}</span>
+                <span class="critical-count">${item.count}</span>
+              </li>`
+              )
+              .join("")}
+          </ul>
+        </div>`
+        : "";
+
       summary.innerHTML = `
         <p class="summary-note">${message}</p>
         <div class="summary-grid">
@@ -805,6 +893,7 @@
             )
             .join("")}
         </div>
+        ${criticalSummaryMarkup}
       `;
       summary.classList.add("active");
     }
