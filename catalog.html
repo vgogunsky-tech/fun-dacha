@@ -18,13 +18,6 @@
       font-size: clamp(15px, 1.2vw, 16px);
     }
 
-    .product-table td.description-cell {
-      max-width: 360px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
     * {
       box-sizing: border-box;
     }
@@ -358,7 +351,7 @@
       groupedProducts: new Map(),
     };
 
-    const popularColumns = ["id", "name_uk", "availability", "year", "weight", "price"];
+    const popularColumns = ["id", "name_uk", "availability", "year", "weight", "weight_class", "price"];
 
     const COLUMN_LABELS = {
       id: "ID",
@@ -399,7 +392,7 @@
 
     const getColumnLabel = (key) => COLUMN_LABELS[key] || key;
 
-    const TABLE_COLUMNS = ["id", "name_uk", "availability", "year", "weight", "price", "description_uk"].map(
+    const TABLE_COLUMNS = ["id", "name_uk", "availability", "year", "weight", "weight_class", "price"].map(
       (key) => ({ key, label: getColumnLabel(key) })
     );
 
@@ -723,10 +716,6 @@
             } else if (column.key === "description_uk") {
               rawValue = product.description_ru;
             }
-          }
-          if (column.key === "description_uk") {
-            cell.classList.add("description-cell");
-            cell.title = formatValue(rawValue);
           }
           cell.textContent = formatValue(rawValue);
           row.appendChild(cell);
