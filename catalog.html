@@ -280,48 +280,6 @@
       font-weight: 600;
     }
 
-    .critical-summary {
-      margin-top: 1.2rem;
-      padding: 1rem;
-      border-radius: 0.9rem;
-      border: 1px solid rgba(15, 23, 42, 0.12);
-      background: rgba(16, 185, 129, 0.08);
-    }
-
-    .critical-summary-title {
-      margin: 0 0 0.5rem;
-      font-weight: 600;
-      color: #065f46;
-    }
-
-    .critical-summary-list {
-      list-style: none;
-      padding: 0;
-      margin: 0;
-      display: grid;
-      gap: 0.4rem;
-    }
-
-    .critical-summary-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 0.95rem;
-    }
-
-    .critical-name {
-      font-weight: 600;
-    }
-
-    .critical-count {
-      font-weight: 600;
-      color: var(--accent);
-    }
-
-    .critical-missing .critical-count {
-      color: #dc2626;
-    }
-
     .subcategory {
       margin-top: 0.5rem;
     }
@@ -548,7 +506,6 @@
     };
 
     const popularColumns = ["id", "name_uk", "availability", "year", "weight", "weight_class", "price"];
-    const CRITICAL_CATEGORY_IDS = ["408"];
 
     const COLUMN_ALIASES = {
       name: "name_uk",
@@ -769,22 +726,6 @@
       return total;
     }
 
-    function getProductCountById(categoryId) {
-      const key = (categoryId || "").trim();
-      if (!key) return 0;
-      const direct = getCategoryProductCount(key);
-      if (direct) return direct;
-
-      const meta = state.categoryMap.get(key);
-      if (!meta) return 0;
-      const parentId = (meta.parentId || meta.parent_id || "").trim();
-      if (!parentId) return direct;
-      const parentGroup = state.groupedProducts.get(parentId);
-      if (!parentGroup) return 0;
-      const products = parentGroup.subcategories.get(key);
-      return products ? products.length : 0;
-    }
-
     function populateColumnSelect() {
       const select = document.getElementById("column-select");
       select.innerHTML = "";
@@ -842,9 +783,6 @@
         return;
       }
 
-      const message = totalCategories
-        ? `Після останнього оновлення залишилося ${totalCategories} основних категорій.`
-        : "Категорії відсутні, але товари залишилися.";
       const cards = [
         { label: "Категорій зараз", value: totalCategories },
         { label: "Підкатегорій", value: totalSubcategories },
@@ -852,36 +790,7 @@
         { label: "Усього товарів", value: totalProducts },
       ];
 
-      const criticalDetails = CRITICAL_CATEGORY_IDS.map((id) => {
-        const meta = state.categoryMap.get(id);
-        return {
-          id,
-          name: meta?.name || meta?.name_uk || `Категорія ${id}`,
-          count: getProductCountById(id),
-          missing: !meta,
-        };
-      });
-
-      const criticalSummaryMarkup = criticalDetails.length
-        ? `
-        <div class="critical-summary" role="group" aria-label="Ключові категорії">
-          <p class="critical-summary-title">Ключові категорії</p>
-          <ul class="critical-summary-list">
-            ${criticalDetails
-              .map(
-                (item) => `
-              <li class="critical-summary-item ${item.missing ? "critical-missing" : ""}">
-                <span class="critical-name">${item.name}</span>
-                <span class="critical-count">${item.count}</span>
-              </li>`
-              )
-              .join("")}
-          </ul>
-        </div>`
-        : "";
-
       summary.innerHTML = `
-        <p class="summary-note">${message}</p>
         <div class="summary-grid">
           ${cards
             .map(
@@ -893,7 +802,6 @@
             )
             .join("")}
         </div>
-        ${criticalSummaryMarkup}
       `;
       summary.classList.add("active");
     }
@@ -915,14 +823,15 @@
         const btn = document.createElement("button");
         btn.type = "button";
         const productCount = getCategoryProductCount(cat.id);
+        const label = cat.name || cat.name_uk || `Категорія ${cat.id}`;
         btn.innerHTML = `
-          <span class="nav-label">${cat.name || `Категорія ${cat.id}`}</span>
+          <span class="nav-label">${label}</span>
           <span class="nav-count">${productCount}</span>
         `;
         btn.classList.toggle("is-empty", !productCount);
         btn.setAttribute(
           "aria-label",
-          `${cat.name || `Категорія ${cat.id}`}. Товарів: ${productCount}`
+          `${label}. Товарів: ${productCount}`
         );
         btn.addEventListener("click", () => {
           const section = document.getElementById(`category-${cat.id}`);
@@ -974,7 +883,7 @@
             const block = document.createElement("article");
             block.className = "subcategory";
             block.innerHTML = `
-              <h3>${child.name}</h3>
+              <h3>${child.name || child.name_uk || `Підкатегорія ${child.id}`}</h3>
               ${child.description ? `<p>${child.description}</p>` : ""}
             `;
             block.appendChild(
@@ -985,9 +894,11 @@
 
           grouped.subcategories.forEach((products, subId) => {
             if (renderedSubcategories.has(subId)) return;
+            const meta = state.categoryMap.get(subId);
+            if (!meta) return;
             const fallbackBlock = document.createElement("article");
             fallbackBlock.className = "subcategory";
-            const fallbackName = state.categoryMap.get(subId)?.name || `Підкатегорія ${subId}`;
+            const fallbackName = meta.name || meta.name_uk || `Підкатегорія ${subId}`;
             fallbackBlock.innerHTML = `<h3>${fallbackName}</h3>`;
             fallbackBlock.appendChild(buildProductTable(products));
             content.appendChild(fallbackBlock);
