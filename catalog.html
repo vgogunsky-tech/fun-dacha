@@ -351,25 +351,50 @@
       groupedProducts: new Map(),
     };
 
-    const popularColumns = [
-      "id",
-      "Название (укр)",
-      "Описание (укр)",
-      "availability",
-      "year",
-      "weight",
-      "price",
-    ];
+    const popularColumns = ["id", "name_uk", "description_uk", "availability", "year", "weight", "price"];
 
-    const TABLE_COLUMNS = [
-      { key: "id", label: "ID" },
-      { key: "Название (укр)", label: "Name (UA)" },
-      { key: "Описание (укр)", label: "Description (UA)" },
-      { key: "availability", label: "Availability" },
-      { key: "year", label: "Year" },
-      { key: "weight", label: "Weight" },
-      { key: "price", label: "Price" },
-    ];
+    const COLUMN_LABELS = {
+      id: "ID",
+      name_uk: "Назва (укр)",
+      name_ru: "Назва (рос)",
+      description_uk: "Опис (укр)",
+      description_ru: "Опис (рос)",
+      primary_image: "Основне зображення",
+      category_id: "Категорія",
+      subcategory_id: "Підкатегорія",
+      product_id: "Код продукту",
+      year: "Рік",
+      availability: "Наявність",
+      images: "Зображення",
+      tags: "Теги",
+      price: "Ціна",
+      weight: "Вага",
+      length: "Довжина",
+      width: "Ширина",
+      height: "Висота",
+      model: "Модель",
+      seo: "SEO",
+      created_at: "Створено",
+      updated_at: "Оновлено",
+      status: "Статус",
+      sku: "SKU",
+      quantity: "Кількість",
+      minimum: "Мінімум",
+      subtract: "Списання",
+      stock_status_id: "Статус складу",
+      shipping: "Доставка",
+      points: "Бали",
+      weight_class_id: "Клас ваги",
+      length_class_id: "Клас довжини",
+      sort_order: "Порядок сортування",
+      date_available: "Дата доступності",
+    };
+
+    const getColumnLabel = (key) => COLUMN_LABELS[key] || key;
+
+    const TABLE_COLUMNS = ["id", "name_uk", "description_uk", "availability", "year", "weight", "price"].map(
+      (key) => ({ key, label: getColumnLabel(key) })
+    );
 
     document.addEventListener("DOMContentLoaded", init);
 
@@ -475,13 +500,21 @@
     function buildCategoryTree(categories) {
       const map = new Map();
       categories.forEach((cat) => {
-        const clone = { ...cat, children: [] };
+        const parentId = (cat.parentId || cat.parent_id || "").trim();
+        const clone = {
+          ...cat,
+          name: cat.name || cat.name_uk || "",
+          description: cat.description || cat.description_uk || "",
+          parentId,
+          parent_id: parentId,
+          children: [],
+        };
         map.set((cat.id || "").trim(), clone);
       });
 
       const roots = [];
       map.forEach((cat) => {
-        const parentId = (cat.parentId || "").trim();
+        const parentId = (cat.parentId || cat.parent_id || "").trim();
         if (parentId && map.has(parentId)) {
           map.get(parentId).children.push(cat);
         } else {
@@ -526,7 +559,7 @@
       state.productHeaders.forEach((header) => {
         const option = document.createElement("option");
         option.value = header;
-        option.textContent = header || "Untitled column";
+        option.textContent = getColumnLabel(header);
         option.selected = popularColumns.includes(header);
         select.appendChild(option);
       });
@@ -669,7 +702,7 @@
         headerRow.appendChild(th);
       });
       const tagsHeader = document.createElement("th");
-      tagsHeader.textContent = "Tags";
+      tagsHeader.textContent = getColumnLabel("tags");
       headerRow.appendChild(tagsHeader);
       thead.appendChild(headerRow);
       table.appendChild(thead);
@@ -679,9 +712,14 @@
         const row = document.createElement("tr");
         TABLE_COLUMNS.forEach((column) => {
           const cell = document.createElement("td");
-          const rawValue =
-            product[column.key] ??
-            (column.key === "Название (укр)" ? product["Название (рус)"] : "");
+          let rawValue = product[column.key];
+          if (rawValue === undefined) {
+            if (column.key === "name_uk") {
+              rawValue = product.name_ru;
+            } else if (column.key === "description_uk") {
+              rawValue = product.description_ru;
+            }
+          }
           cell.textContent = formatValue(rawValue);
           row.appendChild(cell);
         });
