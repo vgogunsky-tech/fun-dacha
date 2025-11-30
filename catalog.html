@@ -18,6 +18,13 @@
       font-size: clamp(15px, 1.2vw, 16px);
     }
 
+    .product-table td.description-cell {
+      max-width: 360px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
     * {
       box-sizing: border-box;
     }
@@ -719,6 +726,10 @@
             } else if (column.key === "description_uk") {
               rawValue = product.description_ru;
             }
+          }
+          if (column.key === "description_uk") {
+            cell.classList.add("description-cell");
+            cell.title = formatValue(rawValue);
           }
           cell.textContent = formatValue(rawValue);
           row.appendChild(cell);
