@@ -51,9 +51,10 @@
     }
 
     main {
-      width: min(1200px, calc(100% - clamp(2rem, 6vw, 5rem)));
+      width: min(1200px, 100%);
+      max-width: 100vw;
       margin: 0 auto 3rem;
-      padding: 1.5rem 0 3rem;
+      padding: 1.5rem clamp(1rem, 4vw, 2.5rem) 3rem;
       display: grid;
       gap: 1.5rem;
       flex: 1 0 auto;
@@ -141,8 +142,9 @@
 
     .quick-nav {
       display: flex;
+      flex-wrap: wrap;
       gap: 0.75rem;
-      overflow-x: auto;
+      overflow-x: visible;
       padding-bottom: 0.5rem;
       scrollbar-width: thin;
     }
@@ -151,7 +153,11 @@
       background: #fff;
       color: var(--fg);
       border: 1px solid var(--border);
-      white-space: nowrap;
+      white-space: normal;
+      text-align: left;
+      flex: 1 1 clamp(140px, 22%, 220px);
+      min-width: 140px;
+      line-height: 1.3;
       box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
     }
 
@@ -206,6 +212,7 @@
       text-align: left;
       border-bottom: 1px solid var(--border);
       vertical-align: top;
+      word-break: break-word;
     }
 
     .product-table th {
@@ -239,6 +246,28 @@
       padding: 0.12rem 0.6rem;
       font-size: 0.75rem;
       font-weight: 600;
+    }
+
+    .product-table th.column-id,
+    .product-table td.column-id,
+    .product-table th.column-availability,
+    .product-table td.column-availability,
+    .product-table th.column-year,
+    .product-table td.column-year,
+    .product-table th.column-weight,
+    .product-table td.column-weight,
+    .product-table th.column-weight_class,
+    .product-table td.column-weight_class,
+    .product-table th.column-price,
+    .product-table td.column-price {
+      width: 100px;
+      max-width: 100px;
+    }
+
+    .product-table th.column-name_uk,
+    .product-table td.column-name_uk {
+      width: auto;
+      min-width: 240px;
     }
 
     .empty-message {
@@ -694,11 +723,22 @@
       const table = document.createElement("table");
       table.className = "product-table";
 
+      const colgroup = document.createElement("colgroup");
+      TABLE_COLUMNS.forEach((column) => {
+        const col = document.createElement("col");
+        if (column.key !== "name_uk") {
+          col.style.width = "100px";
+        }
+        colgroup.appendChild(col);
+      });
+      table.appendChild(colgroup);
+
       const thead = document.createElement("thead");
       const headerRow = document.createElement("tr");
       TABLE_COLUMNS.forEach((column) => {
         const th = document.createElement("th");
         th.textContent = column.label;
+        th.classList.add(`column-${column.key}`);
         headerRow.appendChild(th);
       });
       thead.appendChild(headerRow);
@@ -709,6 +749,7 @@
         const row = document.createElement("tr");
         TABLE_COLUMNS.forEach((column) => {
           const cell = document.createElement("td");
+          cell.classList.add(`column-${column.key}`);
           let rawValue = product[column.key];
           if (rawValue === undefined) {
             if (column.key === "name_uk") {
