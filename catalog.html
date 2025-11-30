@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="uk">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Каталог продукції | FUN DACHA</title>
+  <title>Product Catalog | FUN DACHA</title>
   <style>
     :root {
       color-scheme: light dark;
@@ -28,10 +28,13 @@
       background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 50%, #fff 100%);
       color: var(--fg);
       min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
     }
 
     header {
-      padding: 2.5rem clamp(1.25rem, 4vw, 3.5rem) 1rem;
+      padding: 1.75rem clamp(1rem, 4vw, 3rem) 1rem;
       background: radial-gradient(circle at top left, #d1fae5, transparent 55%),
         radial-gradient(circle at top right, #fee2e2, transparent 45%), var(--bg);
       border-bottom: 1px solid var(--border);
@@ -39,6 +42,7 @@
       top: 0;
       z-index: 10;
       backdrop-filter: blur(6px);
+      width: 100%;
     }
 
     header h1 {
@@ -46,17 +50,13 @@
       font-size: clamp(1.8rem, 3vw, 2.6rem);
     }
 
-    header p {
-      margin: 0;
-      color: var(--muted);
-      max-width: 720px;
-      line-height: 1.5;
-    }
-
     main {
-      padding: 1.5rem clamp(1.25rem, 4vw, 3.5rem) 3rem;
+      width: min(1200px, calc(100% - clamp(2rem, 6vw, 5rem)));
+      margin: 0 auto 3rem;
+      padding: 1.5rem 0 3rem;
       display: grid;
       gap: 1.5rem;
+      flex: 1 0 auto;
     }
 
     section {
@@ -300,36 +300,29 @@
 </head>
 <body>
   <header>
-    <h1>Каталог продукції FUN DACHA</h1>
-    <p>
-      Одна сторінка зі швидкою навігацією по категоріях та можливістю експортувати
-      потрібні колонки в CSV. Натисніть на категорію у швидкому меню, щоб плавно
-      перейти до розділу нижче. Під час експорту CSV до файлу потрапляє лише таблиця
-      продукції, згрупована за категоріями — панель навігації пропускається.
-    </p>
+    <h1>FUN DACHA Product Catalog</h1>
   </header>
 
   <main>
     <section class="toolbar">
       <div class="toolbar-grid">
         <div>
-          <label for="column-select">Колонки для експорту (Ctrl/Cmd + клік)</label>
+          <label for="column-select">Columns to export (Ctrl/Cmd + click)</label>
           <select id="column-select" multiple></select>
-          <small class="helper-text">За замовчуванням обрано найуживаніші поля, але ви можете
-            експортувати будь-яку комбінацію стовпців.</small>
+          <small class="helper-text">Defaults select the most common fields. You can export any combination.</small>
         </div>
         <div>
-          <label>Дії з вибраними колонками</label>
+          <label>Bulk actions</label>
           <div class="toolbar-actions">
-            <button id="preset-columns" type="button" class="secondary">Популярні поля</button>
-            <button id="select-all" type="button" class="secondary">Усе</button>
-            <button id="clear-selection" type="button" class="secondary">Очистити</button>
-            <button id="export-btn" type="button" class="primary">Експортувати CSV</button>
+            <button id="preset-columns" type="button" class="secondary">Popular set</button>
+            <button id="select-all" type="button" class="secondary">Select all</button>
+            <button id="clear-selection" type="button" class="secondary">Clear</button>
+            <button id="export-btn" type="button" class="primary">Export CSV</button>
           </div>
           <div id="status"></div>
           <div class="loading" id="loading-indicator">
             <span class="spinner" aria-hidden="true"></span>
-            <span>Завантаження даних…</span>
+            <span>Loading data…</span>
           </div>
         </div>
       </div>
@@ -337,12 +330,12 @@
 
     <section class="quick-nav-wrapper">
       <div class="section-title">
-        <h2>Швидкі посилання на категорії</h2>
+        <h2>Quick category shortcuts</h2>
         <p class="helper-text">
-          Клік по кнопці плавно прокрутить сторінку до потрібного блоку категорії.
+          Click a button to smoothly scroll to its category section below.
         </p>
       </div>
-      <div id="category-nav" class="quick-nav" aria-label="Швидкі посилання"></div>
+      <div id="category-nav" class="quick-nav" aria-label="Category shortcuts"></div>
     </section>
 
     <div id="catalog"></div>
@@ -370,12 +363,12 @@
 
     const TABLE_COLUMNS = [
       { key: "id", label: "ID" },
-      { key: "Название (укр)", label: "Назва (укр)" },
-      { key: "Описание (укр)", label: "Опис (укр)" },
-      { key: "availability", label: "Наявність" },
-      { key: "year", label: "Рік" },
-      { key: "weight", label: "Вага" },
-      { key: "price", label: "Ціна" },
+      { key: "Название (укр)", label: "Name (UA)" },
+      { key: "Описание (укр)", label: "Description (UA)" },
+      { key: "availability", label: "Availability" },
+      { key: "year", label: "Year" },
+      { key: "weight", label: "Weight" },
+      { key: "price", label: "Price" },
     ];
 
     document.addEventListener("DOMContentLoaded", init);
@@ -385,11 +378,11 @@
       try {
         const [categoryText, productText] = await Promise.all([
           fetch("data/categories_list.csv").then((r) => {
-            if (!r.ok) throw new Error("categories_list.csv недоступний");
+            if (!r.ok) throw new Error("Unable to load categories_list.csv");
             return r.text();
           }),
           fetch("data/list.csv").then((r) => {
-            if (!r.ok) throw new Error("list.csv недоступний");
+            if (!r.ok) throw new Error("Unable to load list.csv");
             return r.text();
           }),
         ]);
@@ -410,11 +403,11 @@
         renderQuickNav();
         renderCatalog();
         showStatus(
-          `Завантажено ${state.categories.length} категорій та ${state.products.length} продуктів.`
+          `Loaded ${state.categories.length} categories and ${state.products.length} products.`
         );
       } catch (error) {
         console.error(error);
-        showStatus(error.message || "Сталася помилка під час завантаження.", true);
+        showStatus(error.message || "Something went wrong during loading.", true);
       } finally {
         toggleLoading(false);
       }
@@ -533,7 +526,7 @@
       state.productHeaders.forEach((header) => {
         const option = document.createElement("option");
         option.value = header;
-        option.textContent = header || "Колонка без назви";
+        option.textContent = header || "Untitled column";
         option.selected = popularColumns.includes(header);
         select.appendChild(option);
       });
@@ -559,7 +552,7 @@
       document.getElementById("export-btn").addEventListener("click", () => {
         const selected = [...select.selectedOptions].map((opt) => opt.value);
         if (!selected.length) {
-          showStatus("Оберіть хоча б одну колонку перед експортом.", true);
+          showStatus("Select at least one column before exporting.", true);
           return;
         }
         exportCSV(selected);
@@ -571,14 +564,14 @@
       nav.innerHTML = "";
 
       if (!state.categoryTree.length) {
-        nav.textContent = "Категорії не знайдені";
+        nav.textContent = "No categories found";
         return;
       }
 
       state.categoryTree.forEach((cat) => {
         const btn = document.createElement("button");
         btn.type = "button";
-        btn.textContent = cat.name || `Категорія ${cat.id}`;
+        btn.textContent = cat.name || `Category ${cat.id}`;
         btn.addEventListener("click", () => {
           const section = document.getElementById(`category-${cat.id}`);
           section?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -599,7 +592,7 @@
         const header = document.createElement("div");
         header.className = "category-header";
         header.innerHTML = `
-          <h2>${category.name || "Категорія без назви"}</h2>
+          <h2>${category.name || "Untitled category"}</h2>
           ${category.description ? `<p>${category.description}</p>` : ""}
         `;
 
@@ -627,7 +620,7 @@
             if (renderedSubcategories.has(subId)) return;
             const fallbackBlock = document.createElement("article");
             fallbackBlock.className = "subcategory";
-            const fallbackName = state.categoryMap.get(subId)?.name || `Підкатегорія ${subId}`;
+            const fallbackName = state.categoryMap.get(subId)?.name || `Subcategory ${subId}`;
             fallbackBlock.innerHTML = `<h3>${fallbackName}</h3>`;
             fallbackBlock.appendChild(buildProductTable(products));
             content.appendChild(fallbackBlock);
@@ -636,14 +629,14 @@
           if (grouped.noSubcategory.length) {
             const directBlock = document.createElement("article");
             directBlock.className = "subcategory";
-            directBlock.innerHTML = "<h3>Продукти без підкатегорії</h3>";
+            directBlock.innerHTML = "<h3>Items without subcategory</h3>";
             directBlock.appendChild(buildProductTable(grouped.noSubcategory));
             content.appendChild(directBlock);
           }
         } else {
           const empty = document.createElement("p");
           empty.className = "empty-message";
-          empty.textContent = "Немає продуктів у цій категорії.";
+          empty.textContent = "No products in this category.";
           content.appendChild(empty);
         }
 
@@ -660,7 +653,7 @@
       if (!products.length) {
         const empty = document.createElement("p");
         empty.className = "empty-message";
-        empty.textContent = "Немає продуктів.";
+        empty.textContent = "No products.";
         wrapper.appendChild(empty);
         return wrapper;
       }
@@ -676,7 +669,7 @@
         headerRow.appendChild(th);
       });
       const tagsHeader = document.createElement("th");
-      tagsHeader.textContent = "Теги";
+      tagsHeader.textContent = "Tags";
       headerRow.appendChild(tagsHeader);
       thead.appendChild(headerRow);
       table.appendChild(thead);
