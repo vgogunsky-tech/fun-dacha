@@ -399,7 +399,7 @@
 
     const getColumnLabel = (key) => COLUMN_LABELS[key] || key;
 
-    const TABLE_COLUMNS = ["id", "name_uk", "description_uk", "availability", "year", "weight", "price"].map(
+    const TABLE_COLUMNS = ["id", "name_uk", "availability", "year", "weight", "price", "description_uk"].map(
       (key) => ({ key, label: getColumnLabel(key) })
     );
 
