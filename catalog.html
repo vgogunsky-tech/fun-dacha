@@ -984,7 +984,7 @@
           let rawValue = product[column.key];
           if (rawValue === undefined) {
             if (column.key === "name_uk") {
-              rawValue = product.name_ru;
+              rawValue = product.name ?? product.name_ru;
             } else if (column.key === "description_uk") {
               rawValue = product.description_ru;
             }
